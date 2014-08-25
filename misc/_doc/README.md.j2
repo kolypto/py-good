@@ -1,9 +1,50 @@
 [![Build Status](https://api.travis-ci.org/kolypto/py-good.png?branch=master)](https://travis-ci.org/kolypto/py-good)
 
+
+{% macro argspec(args) -%}
+{% for a in args %}{% if a.doc %}* `{{ a.name }}`: {{ a.doc }}{% endif %}
+{% endfor %}
+{%- endmacro %}
+
+
+{% macro clsdoc(cls) -%}
+```python
+{{ cls.signature|wordwrap(60)|indent(1+cls.name|length) }}
+```
+
+{{ cls.doc }}
+
+{{ argspec(cls.args) }}
+{%- endmacro %}
+
+
+{% macro fdoc(func) -%}
+```python
+{{ func.signature|wordwrap(60)|indent(1+func.name|length) }}
+```
+
+{{ func.doc }}
+
+{{ argspec(func.args) }}
+{%if func.ret %}Returns: `{{ func.ret.type }}` {{ func.ret.doc }}{% endif %}
+{%- endmacro %}
+
 Good
 ====
 
 {{ good.doc }}
 
+
 Table of Contents
 =================
+
+
+Schema
+======
+
+{{ Schema.cls.clsdoc }}
+
+Creating a Schema
+-----------------
+{{ clsdoc(Schema.cls) }}
+
