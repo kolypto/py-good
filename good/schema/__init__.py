@@ -1,5 +1,5 @@
-from .errors import Invalid, MultipleInvalid
-from .util import get_type_name
+from .compiler import CompiledSchema
+from . import markers
 
 
 class Schema(object):
@@ -50,7 +50,11 @@ class Schema(object):
     4. **`Schema`**: a schema may contain sub-schemas:
 
         ```python
-        Schema(Schema(int))
+        sub_schema = Schema(int)
+        schema = Schema([None, sub_schema])
+
+        schema([None, 1, 2])  #-> [None, 1, 2]
+        schema([None, '1'])  #-> Invalid: invalid value
         ```
 
         Since `Schema` is callable, validation transparently by just calling it :)
@@ -132,19 +136,37 @@ class Schema(object):
         3. Validate input values with the corresponding value in the schema.
 
         In addition, certain keys can be marked as [`Required`](#required) and [`Optional`](#optional).
-        The default behavior is to have all keys optional, but this can be changed by providing
-        `required=True` argument to the Schema.
+        The default behavior is to have all keys required, but this can be changed by providing
+        `default_keys=Optional` argument to the Schema.
 
         Finally, a mapping does not allow any extra keys (keys not defined in the schema). To change this, provide
-        `extra=True` to the `Schema` constructor.
+        `extra_keys=Anything` to the `Schema` constructor.
 
     These are just the basic rules, and for sure `Schema` can do much more than that!
     Additional logic is implemented through [Markers](#markers) and [Validators](#validators),
     which are described in the next chapters.
     """
 
-    def __init__(self, schema, required=False, extra=False):
+    compiled_schema_cls = CompiledSchema
+
+    def __init__(self, schema, default_keys=markers.Required, extra_keys=markers.Reject):
         """ Create a `Schema` object from the given schema.
 
-
+        :param schema: Schema to use for validation
+        :param default_keys: Default dictionary keys behavior (a Marker class)
+        :type default_keys: type
+        :param extra_keys: Default extra keys behavior (schema, or a Marker class)
+        :type extra_keys: *
+        :raises SchemaError: Schema compilation error
         """
+        self._schema = self.compiled_schema_cls([], schema, default_keys, extra_keys)
+
+    def __call__(self, value):
+        """ Validate the given input value against the schema
+
+        :param value: Input value to validate
+        :return: Sanitized value
+        :raises good.Invalid: Validation error on a single value
+        :raises good.MultipleInvalid: Validation error on multiple values
+        """
+        return self._schema(value)

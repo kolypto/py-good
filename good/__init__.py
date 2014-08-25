@@ -16,5 +16,8 @@ import gettext
 gettext.install('good', unicode=True)
 
 
+from .schema.errors import SchemaError, Invalid, MultipleInvalid
+from .schema.util import register_type_name
+
 from .schema import Schema
-from .schema.errors import SchemaError, Invalid, MultipleInvalid, register_type_name
+from .schema.markers import *

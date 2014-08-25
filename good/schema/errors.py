@@ -12,6 +12,8 @@ class SchemaError(BaseError):
 class Invalid(BaseError):
     """ Validation error for a single value.
 
+    Note: validators can skip `provided`, `path`, `validator`: Schema will set it dynamically
+
     :param message: Validation error message
     :type message: unicode
     :param expected: Expectation message (which can be messy in some cases)
@@ -29,13 +31,24 @@ class Invalid(BaseError):
     :type info: dict
     """
 
-    def __init__(self, message, expected, provided, path, validator, **info):
+    def __init__(self, message, expected, provided=None, path=None, validator=None, **info):
         super(Invalid, self).__init__(message, expected, path, validator)
+        self.message = message
         self.expected = expected
         self.provided = provided
         self.path = path
         self.validator = validator
         self.info = info
+
+    def __repr__(self):
+        return '{cls}({0.message!r}, ' \
+               'expected={0.expected!r}, ' \
+               'provided={0.provided!r}, ' \
+               'path={0.path!r}, ' \
+               'validator={0.validator!r}, ' \
+               'info={0.info!r})' \
+            .format(self, cls=type(self).__name__,)
+    __str__ = __repr__
 
     def __unicode__(self):
         return u'{0.message} @ {path}: expected {0.expected}, got {0.provided}'.format(
