@@ -39,24 +39,24 @@ Once the Schema is defined, validation can be triggered by calling it:
 
 The following rules exist:
 
-1. Literal: plain value is validated with direct comparison (equality
-   check):
+1. **Literal**: plain value is validated with direct comparison
+   (equality check):
 
    .. code:: python
 
        Schema(1)(1)  #-> 1
        Schema(1)(2)  #-> Incorrect value
 
-2. Type: is tested with ``instanceof()`` check:
+2. **Type**: is tested with ``instanceof()`` check:
 
    .. code:: python
 
        Schema(int)(1)    #-> 1
        Schema(int)('1')  #-> Invalid: expecting an integer, string given
 
-3. Callable: is applied to the value and the result is used as the final
-   value. Any errors raised by the callable are treated as validation
-   errors.
+3. **Callable**: is applied to the value and the result is used as the
+   final value. Any errors raised by the callable are treated as
+   validation errors.
 
 In addition, validators are allowed to mutate a value to a given form.
 For instance, ```Coerce(int)`` <#coerce>`__ returns a callable which
@@ -71,7 +71,7 @@ value \`\`\`
 If the callable trows ```Invalid`` <#invalid>`__ exception, it's used as
 is. Other exceptions are wrapped into ``Invalid`` and re-raised.
 
-4. ``Schema``: a schema may contain sub-schemas:
+4. **``Schema``**: a schema may contain sub-schemas:
 
    .. code:: python
 
@@ -83,7 +83,7 @@ is. Other exceptions are wrapped into ``Invalid`` and re-raised.
 Moreover, instances of the following types are converted to callables on
 the compilation phase:
 
-1. Iterables (``list``, ``tuple``, ``set``, custom iterables):
+1. **Iterables** (``list``, ``tuple``, ``set``, custom iterables):
 
    Iterables are treated as a set of valid values, where each value in
    the input is compared against the given set of valid values.
@@ -114,19 +114,18 @@ the compilation phase:
 
    This example works like this:
 
-   a. Validate that the input value has the matching type: ``list`` in
+   1. Validate that the input value has the matching type: ``list`` in
       this case
-   b. For every member of the list, test that there is a matching value
+   2. For every member of the list, test that there is a matching value
       in the schema.
 
-      Since lists are ordered, the first schema that didn't fail is
-      used.
+   Since lists are ordered, the first schema that didn't fail is used.
 
-      E.g. for value ``1`` -- ``int`` matches (immediate
-      ``instanceof()`` check). However, for value ``'3'`` -- ``int``
-      fails, but the callable manages to do it with no errors.
+   E.g. for value ``1`` -- ``int`` matches (immediate ``instanceof()``
+   check). However, for value ``'3'`` -- ``int`` fails, but the callable
+   manages to do it with no errors.
 
-2. Mappings (``dict``, custom mappings):
+2. **Mappings** (``dict``, custom mappings):
 
    Each key-value pair in the input mapping is validated against the
    corresponding schema pair:
@@ -160,10 +159,10 @@ the compilation phase:
 
    This works like this:
 
-   a. Test that the input has a matching type (``dict``)
-   b. For each key in the input mapping, matching keys are selected from
+   1. Test that the input has a matching type (``dict``)
+   2. For each key in the input mapping, matching keys are selected from
       the schema
-   c. Validate input values with the corresponding value in the schema.
+   3. Validate input values with the corresponding value in the schema.
 
    In addition, certain keys can be marked as
    ```Required`` <#required>`__ and ```Optional`` <#optional>`__. The
