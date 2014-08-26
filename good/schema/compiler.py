@@ -12,22 +12,25 @@ class CompiledSchema(object):
 
     Converts a Schema into a callable, recursively.
 
-    :param path: Path to this schema
     :param schema: Schema to use for validation
+    :param path: Path to this schema
     :param default_keys: Default dictionary keys behavior (marker class)
-    :param extra_keys: Default extra keys behavior (schema)
+    :param extra_keys: Default extra keys behavior (schema | marker class)
     """
 
     #: Types that are treated as literals
     _literal_types = six.integer_types + (six.text_type, six.binary_type) + (bool, float, complex, object, type(None))
 
-    def __init__(self, path, schema, default_keys, extra_keys):
+    def __init__(self, schema, path, default_keys, extra_keys):
         assert issubclass(default_keys, markers.Marker), '`default_keys` value must be a Marker'
 
         self.path = path
         self.schema = schema
         self.default_keys = default_keys
         self.extra_keys = extra_keys
+
+        # Compile
+        self.name = None
         self.compiled = self.compile_schema(self.schema)
 
     def __call__(self, value):
@@ -38,7 +41,66 @@ class CompiledSchema(object):
         """
         return self.compiled(value)
 
+    def __repr__(self):
+        return '{cls}({0.schema!r}, ' \
+               '{0.path!r}, ' \
+               '{default_keys}, ' \
+               '{extra_keys})' \
+            .format(
+                self,
+                cls=type(self).__name__,
+                default_keys=self.default_keys.__name__,
+                extra_keys=self.extra_keys.__name__ if isinstance(self.extra_keys, type) else repr(self.extra_keys)
+            )
+
+    def __unicode__(self):
+        return self.name
+
     #region Compilation
+
+    def sub_compile(self, schema, path=None):
+        """ Compile a sub-schema
+
+        :param schema: Validation schema
+        :type schema: *
+        :param path: Path to this schema, if any
+        :type path: list|None
+        :rtype: CompiledSchema
+        """
+        return type(self)(
+            schema,
+            self.path + (path or []),
+            self.default_keys,
+            self.extra_keys
+        )
+
+    def Invalid(self, message, expected):
+        """ Helper for Invalid errors.
+
+        Typical use:
+
+        err_type = self.Invalid(_(u'Message'), self.name)
+        raise err_type(<provided-value>)
+
+        :type message: unicode
+        :type expected: unicode
+        """
+        def InvalidPartial(provided, path=None, **info):
+            """ Create an Invalid exception
+
+            :type provided: unicode
+            :type path: list|None
+            :rtype: Invalid
+            """
+            return Invalid(
+                message,
+                expected,
+                provided,
+                self.path + (path or []),
+                self.schema,
+                **info
+            )
+        return InvalidPartial
 
     def compile_schema(self, schema):
         """ Compile the current schema into a callable validator
@@ -54,7 +116,7 @@ class CompiledSchema(object):
         if schema_type in self._literal_types:
             compiler = self._compile_literal
         # Type
-        elif isinstance(schema_type, six.class_types):
+        elif issubclass(schema_type, six.class_types):
             compiler = self._compile_type
         # Mapping
         elif isinstance(schema, collections.Mapping):
@@ -68,6 +130,7 @@ class CompiledSchema(object):
         # Callable
         elif callable(schema):
             compiler = self._compile_callable
+
         # Finish
         if compiler is None:
             raise SchemaError('Unsupported schema data type {!r}'.format(schema_type.__name__))
@@ -75,38 +138,87 @@ class CompiledSchema(object):
 
     def _compile_literal(self, schema):
         """ Compile literal schema: type and value matching """
-        schema_type = type(schema)
-        err = partial(Invalid, path=self.path, validator=schema)
-        err_type = partial(err, _(u'Wrong value type'), expected=get_type_name(schema_type))
-        err_value = partial(err, _(u'Invalid value'), expected=unicode(schema))
+        self.name = unicode(schema)
 
+        # Prepare
+        schema_type = type(schema)
+        err_type  = self.Invalid(_(u'Wrong value type'), get_type_name(schema_type))
+        err_value = self.Invalid(_(u'Invalid value'), self.name)
+
+        # Validator
         def validate_literal(v):
             # Type check
-            if not isinstance(v, schema_type):
+            if type(v) != schema_type:
                 # expected=<type>, provided=<type>
-                raise err_type(provided=get_type_name(type(v)))
+                raise err_type(get_type_name(type(v)))
             # Equality check
             if v != schema:
                 # expected=<value>, provided=<value>
-                raise err_value(provided=unicode(v))
+                raise err_value(unicode(v))
             # Fine
             return v
         return validate_literal
 
     def _compile_type(self, schema):
         """ Compile type schema: plain type matching """
-        err_type = partial(Invalid, expected=get_type_name(schema), path=self.path, validator=schema)
+        self.name = get_type_name(schema)
 
+        # Prepare
+        err_type = self.Invalid(_(u'Wrong type'), self.name)
+
+        # Validator
         def validate_type(v):
             # Type check
-            if not isinstance(v, schema):
+            if type(v) != schema:  # strict!
                 # expected=<type>, provided=<type>
-                raise err_type(_(u'Wrong type'), provided=get_type_name(type(v)))
+                raise err_type(get_type_name(type(v)))
             # Fine
             return v
 
         return validate_type
 
+    def _compile_iterable(self, schema):
+        """ Compile iterable: iterable of schemas treated as allowed values """
+        # Compile each member as a schema
+        schema_type = type(schema)
+        schema_subs = map(self.sub_compile, schema)
+        self.name = _(u'|').join(x.name for x in schema_subs)
 
+        # Prepare
+        err_type = self.Invalid(_(u'Wrong value type'), get_type_name(schema_type))
+        err_value = self.Invalid(_(u'Invalid value'), self.name)
+
+        # Validator
+        def validate_iterable(v):
+            # Type check
+            if not isinstance(v, schema_type):
+                # expected=<type>, provided=<type>
+                raise err_type(provided=get_type_name(type(v)))
+
+            # Each `v` member should match to any `schema` member
+            errors = []  # Errors for every value
+            values = []  # Sanitized values
+            for value_index, value in enumerate(v):
+                # Walk through schema members and test if any of them match
+                for member in schema_subs:
+                    try:
+                        # Try to validate
+                        values.append(member(value))
+                        break  # Success!
+                    except Invalid as e:
+                        # Ignore errors and hope other members will succeed better
+                        pass
+                else:
+                    errors.append(err_value(unicode(value), path=[value_index]))
+
+            # Errors?
+            if errors:
+                if len(errors) == 1:
+                    raise errors.pop()
+                raise MultipleInvalid(errors)
+
+            # Typecast and finish
+            return schema_type(values)
+        return validate_iterable
 
     #endregion

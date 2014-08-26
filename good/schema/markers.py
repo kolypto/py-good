@@ -1,4 +1,9 @@
-class Marker(object): pass
+class Marker(object):
+    def __init__(self, schema):
+        self.schema = schema
+
+    def __repr__(self):
+        return '{cls}({0.schema!r})'.format(self, cls=type(self).__name__)
 
 #region Dictionary keys behavior
 

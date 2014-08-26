@@ -48,13 +48,14 @@ class Invalid(BaseError):
                'validator={0.validator!r}, ' \
                'info={0.info!r})' \
             .format(self, cls=type(self).__name__,)
+
     __str__ = __repr__
 
     def __unicode__(self):
         return u'{0.message} @ {path}: expected {0.expected}, got {0.provided}'.format(
             self,
             path=u''.join(map(
-                lambda (i, v): u'[{!r}]'.format(v),
+                lambda v: u'[{!r}]'.format(v),
                 self.path
             )),
         )

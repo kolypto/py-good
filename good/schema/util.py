@@ -10,6 +10,8 @@ __type_names = direct = {
     bool:       _(u'Boolean'),
     float:      _(u'Fractional number'),
     complex:    _(u'Complex number'),
+    six.text_type:    _(u'String'),
+    six.binary_type:  _(u'Binary String'),
     tuple:      _(u'Tuple'),
     list:       _(u'List'),
     set:        _(u'Set'),
@@ -44,12 +46,6 @@ def get_type_name(t):
         # Specific types
         if issubclass(t, six.integer_types):
             return _(u'Integer number')
-        if issubclass(t, six.text_type):
-            return _(u'Unicode string')
-        if issubclass(t, six.binary_type):
-            return _(u'Binary string')
-        if issubclass(t, six.text_type):
-            return _(u'String')
 
         # Get name from the Type itself
         return unicode(t.__name__).capitalize()

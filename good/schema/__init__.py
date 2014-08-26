@@ -159,7 +159,7 @@ class Schema(object):
         :type extra_keys: *
         :raises SchemaError: Schema compilation error
         """
-        self._schema = self.compiled_schema_cls([], schema, default_keys, extra_keys)
+        self._schema = self.compiled_schema_cls(schema, [], default_keys, extra_keys)
 
     def __call__(self, value):
         """ Validate the given input value against the schema

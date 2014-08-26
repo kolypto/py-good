@@ -49,7 +49,7 @@ class SchemaTest(unittest.TestCase):
         :param e_info: Expected Invalid.info value
         """
         with self.assertRaises(Invalid) as ecm:
-            schema(value)
+            print 'False positive:', repr(schema(value))
         e = ecm.exception
 
         # Check error
@@ -79,8 +79,9 @@ class SchemaTest(unittest.TestCase):
         # Integer
         schema = Schema(1)
         self.assertValid(schema, 1)
-        self.assertInvalid(schema, 1.0, [], 1, s.es_value_type, s.t_int, s.t_float)
-        self.assertInvalid(schema, 2,   [], 1, s.es_value, u'1', u'2')
+        self.assertInvalid(schema, True, [], 1, s.es_value_type, s.t_int, s.t_bool)
+        self.assertInvalid(schema, 1.0,  [], 1, s.es_value_type, s.t_int, s.t_float)
+        self.assertInvalid(schema, 2,    [], 1, s.es_value, u'1', u'2')
 
         # Float
         schema = Schema(1.0)
@@ -112,11 +113,13 @@ class SchemaTest(unittest.TestCase):
         # Bool
         schema = Schema(bool)
         self.assertValid(schema, True)
-        self.assertInvalid(schema, 1, [], bool, s.es_type, s.t_bool, s.t_int)
+        self.assertInvalid(schema, 1,    [], bool, s.es_type, s.t_bool, s.t_int)
+        self.assertInvalid(schema, None, [], bool, s.es_type, s.t_bool, s.t_none)
 
         # Integer
         schema = Schema(int)
         self.assertValid(schema, 1)
+        self.assertInvalid(schema, True, [], int, s.es_type, s.t_int, s.t_bool)
         self.assertInvalid(schema, None, [], int, s.es_type, s.t_int, s.t_none)
 
         # Float
@@ -134,4 +137,41 @@ class SchemaTest(unittest.TestCase):
         schema = Schema(six.text_type)
         self.assertValid(schema, u'a')
         self.assertInvalid(schema, 'a', [], six.text_type, s.es_type, s.t_unicode, s.t_str)
-        self.assertInvalid(schema, 1,    [], six.text_type, s.es_type, s.t_unicode, s.t_int)
+        self.assertInvalid(schema, 1,   [], six.text_type, s.es_type, s.t_unicode, s.t_int)
+
+    def test_iterable(self):
+        """ Test Schema(<iterable>) """
+        list_schema = [1, 2, six.text_type]
+
+        # Test common cases
+        schemas = (
+            (tuple,     Schema(tuple(list_schema))),
+            (list,      Schema(list(list_schema))),
+            (set,       Schema(set(list_schema))),
+            (frozenset, Schema(frozenset(list_schema))),
+        )
+        valid_inputs = (
+            (),
+            (1,),
+            (u'a',),
+            (1, 1, 2, u'a', u'b', u'c')
+        )
+
+        for type, schema in schemas:
+            # Test valid inputs
+            for v in valid_inputs:
+                # Typecast to the correct value
+                value = type(v)
+                # Should be valid
+                self.assertValid(schema, value)
+
+        # Test specific cases
+        schema = Schema(list_schema)
+        self.assertInvalid(schema, (), [], list_schema, s.es_value_type, u'List', u'Tuple')
+        self.assertInvalid(schema, [True,], [0], list_schema, s.es_value, u'1|2|String', u'True')
+        self.assertInvalid(schema, [1, 4],  [1], list_schema, s.es_value, u'1|2|String', u'4')
+        self.assertInvalid(schema, [1, 4],  [1], list_schema, s.es_value, u'1|2|String', u'4')
+
+    def test_iterable_deep(self):
+        """ Test Schema(<iterable of schemas>) """
+
