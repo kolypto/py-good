@@ -1,3 +1,4 @@
+from __future__ import print_function
 import unittest
 import six
 from good import Schema, Invalid, MultipleInvalid
@@ -49,7 +50,7 @@ class SchemaTest(unittest.TestCase):
         :param e_info: Expected Invalid.info value
         """
         with self.assertRaises(Invalid) as ecm:
-            print 'False positive:', repr(schema(value))
+            print('False positive:', repr(schema(value)))
         e = ecm.exception
 
         # Check error
@@ -167,11 +168,10 @@ class SchemaTest(unittest.TestCase):
 
         # Test specific cases
         schema = Schema(list_schema)
-        self.assertInvalid(schema, (), [], list_schema, s.es_value_type, u'List', u'Tuple')
+        self.assertInvalid(schema, (),      [],  list_schema, s.es_value_type, u'List', u'Tuple')
         self.assertInvalid(schema, [True,], [0], list_schema, s.es_value, u'1|2|String', u'True')
         self.assertInvalid(schema, [1, 4],  [1], list_schema, s.es_value, u'1|2|String', u'4')
         self.assertInvalid(schema, [1, 4],  [1], list_schema, s.es_value, u'1|2|String', u'4')
 
     def test_iterable_deep(self):
         """ Test Schema(<iterable of schemas>) """
-
