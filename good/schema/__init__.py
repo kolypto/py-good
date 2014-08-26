@@ -1,3 +1,5 @@
+import six
+
 from .compiler import CompiledSchema
 from . import markers
 
@@ -45,7 +47,7 @@ class Schema(object):
        ```
 
        If the callable trows [`Invalid`](#invalid) exception, it's used as is.
-       Other exceptions are wrapped into `Invalid` and re-raised.
+       Other exceptions are wrapped into `Invalid` and re-raised (with poor explanations).
 
     4. **`Schema`**: a schema may contain sub-schemas:
 
@@ -163,6 +165,12 @@ class Schema(object):
 
     def __repr__(self):
         return repr(self._schema)
+
+    def __unicode__(self):
+        return six.text_type(self._schema)
+
+    if six.PY3:
+        __str__ = __unicode__
 
     def __call__(self, value):
         """ Validate the given input value against the schema

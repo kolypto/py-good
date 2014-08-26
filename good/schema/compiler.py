@@ -1,6 +1,6 @@
 import collections
 import six
-from functools import partial
+from functools import partial, wraps
 
 from . import markers
 from .errors import SchemaError, Invalid, MultipleInvalid
@@ -32,6 +32,7 @@ class CompiledSchema(object):
         # Compile
         self.name = None
         self.compiled = self.compile_schema(self.schema)
+        assert isinstance(self.name, six.text_type), 'Compiler did not set a valid schema name: {!r} (must be unicode)'.format(self.name)
 
     def __call__(self, value):
         """ Validate value against the compiled schema
@@ -55,6 +56,9 @@ class CompiledSchema(object):
 
     def __unicode__(self):
         return self.name
+
+    if six.PY3:
+        __str__ = __unicode__
 
     #region Compilation
 
@@ -135,7 +139,7 @@ class CompiledSchema(object):
 
         # Finish
         if compiler is None:
-            raise SchemaError('Unsupported schema data type {!r}'.format(schema_type.__name__))
+            raise SchemaError(_(u'Unsupported schema data type {!r}').format(schema_type.__name__))
         return compiler(schema)
 
     def _compile_literal(self, schema):
@@ -179,12 +183,56 @@ class CompiledSchema(object):
 
         return validate_type
 
+    def _compile_callable(self, schema):
+        """ Compile callable: wrap exceptions with correct paths """
+        if hasattr(schema, 'name'):
+            self.name = six.text_type(schema.name)
+        elif hasattr(schema, '__name__'):
+            self.name = six.text_type(schema.__name__) + u'()'
+        else:
+            self.name = six.text_type(schema)
+
+        # Prepare
+        def enrich_exception(e, value):
+            """ Enrich an exception """
+            if e.expected is None:
+                e.expected = _(u'<???>')
+            if e.provided is None:
+                e.provided = six.text_type(value)
+            e.path = self.path + e.path
+            if e.validator is None:
+                e.validator = schema
+            return e
+
+        # Validator
+        @wraps(schema)
+        def validate_with_callable(value):
+            try:
+                # Try this callable
+                return schema(value)
+            except Invalid as e:
+                # Enrich & re-raise
+                enrich_exception(e, value)
+                raise
+            except Exception as e:
+                e = Invalid(
+                    _(u'{Exception}: {message}').format(
+                        Exception=type(e).__name__,
+                        message=six.text_type(e))
+                )
+                raise enrich_exception(e, value)
+
+        return validate_with_callable
+
     def _compile_iterable(self, schema):
         """ Compile iterable: iterable of schemas treated as allowed values """
         # Compile each member as a schema
         schema_type = type(schema)
-        schema_subs = tuple(self.sub_compile(x) for x in schema)
-        self.name = _(u'|').join(x.name for x in schema_subs)
+        schema_subs = tuple(map(self.sub_compile, schema))
+        self.name = _(u'{iterable_cls}[{iterable_options}]').format(
+            iterable_cls=get_type_name(schema_type),
+            iterable_options=_(u'|').join(x.name for x in schema_subs)
+        )
 
         # Prepare
         err_type = self.Invalid(_(u'Wrong value type'), get_type_name(schema_type))
@@ -215,12 +263,16 @@ class CompiledSchema(object):
 
             # Errors?
             if errors:
-                if len(errors) == 1:
-                    raise errors.pop()
-                raise MultipleInvalid(errors)
+                raise MultipleInvalid.if_multiple(errors)
 
             # Typecast and finish
             return schema_type(values)
+
         return validate_iterable
+
+    def _compile_mapping(self, schema):
+        """ Compile mapping: key-value matching """
+
+
 
     #endregion

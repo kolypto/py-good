@@ -1,4 +1,4 @@
-from .util import get_type_name, register_type_name
+import six
 
 
 class BaseError(Exception):
@@ -31,12 +31,12 @@ class Invalid(BaseError):
     :type info: dict
     """
 
-    def __init__(self, message, expected, provided=None, path=None, validator=None, **info):
+    def __init__(self, message, expected=None, provided=None, path=None, validator=None, **info):
         super(Invalid, self).__init__(message, expected, path, validator)
         self.message = message
         self.expected = expected
         self.provided = provided
-        self.path = path
+        self.path = path or []
         self.validator = validator
         self.info = info
 
@@ -49,8 +49,6 @@ class Invalid(BaseError):
                'info={0.info!r})' \
             .format(self, cls=type(self).__name__,)
 
-    __str__ = __repr__
-
     def __unicode__(self):
         return u'{0.message} @ {path}: expected {0.expected}, got {0.provided}'.format(
             self,
@@ -59,6 +57,9 @@ class Invalid(BaseError):
                 self.path
             )),
         )
+
+    if six.PY3:
+        __str__ = __unicode__
 
 
 class MultipleInvalid(Invalid):
@@ -78,3 +79,15 @@ class MultipleInvalid(Invalid):
 
     def __repr__(self):
         return '{0}({1!r})'.format(type(self).__name__, self.errors)
+
+    @classmethod
+    def if_multiple(cls, errors):
+        """ Provided a list of errors, choose which one to throw: `Invalid` or `MultipleInvalid`.
+
+        `MultipleInvalid` is only used for multiple errors.
+
+        :param errors: The list of collected errors
+        :type errors: list[Invalid]
+        :rtype: Invalid|MultipleInvalid
+        """
+        return errors[0] if len(errors) == 1 else MultipleInvalid(errors)

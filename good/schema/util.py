@@ -47,4 +47,4 @@ def get_type_name(t):
             return _(u'Integer number')
 
         # Get name from the Type itself
-        return unicode(t.__name__).capitalize()
+        return six.text_type(t.__name__).capitalize()

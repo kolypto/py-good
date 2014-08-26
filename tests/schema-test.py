@@ -49,11 +49,14 @@ class SchemaTest(unittest.TestCase):
         :param e_provided: Expected Invalid.provided value
         :param e_info: Expected Invalid.info value
         """
+        repr(schema), six.text_type(schema)  # no errors
+
         with self.assertRaises(Invalid) as ecm:
             print('False positive:', repr(schema(value)))
         e = ecm.exception
 
         # Check error
+        repr(e), six.text_type(e)  # no errors
         self.assertIs(type(e), Invalid)  # Strict type
         self.assertEqual(e.path, e_path)
         self.assertEqual(e.validator, e_validator)
@@ -169,9 +172,46 @@ class SchemaTest(unittest.TestCase):
         # Test specific cases
         schema = Schema(list_schema)
         self.assertInvalid(schema, (),      [],  list_schema, s.es_value_type, u'List', u'Tuple')
-        self.assertInvalid(schema, [True,], [0], list_schema, s.es_value, u'1|2|String', u'True')
-        self.assertInvalid(schema, [1, 4],  [1], list_schema, s.es_value, u'1|2|String', u'4')
-        self.assertInvalid(schema, [1, 4],  [1], list_schema, s.es_value, u'1|2|String', u'4')
+        self.assertInvalid(schema, [True,], [0], list_schema, s.es_value, u'List[1|2|String]', u'True')
+        self.assertInvalid(schema, [1, 4],  [1], list_schema, s.es_value, u'List[1|2|String]', u'4')
+        self.assertInvalid(schema, [1, 4],  [1], list_schema, s.es_value, u'List[1|2|String]', u'4')
+
+    def test_callable(self):
+        """ Test Schema(<callable>) """
+        def intify(v):
+            return int(v)
+
+        # Simple callable
+        schema = Schema(intify)
+
+        self.assertValid(schema, 1)
+        self.assertValid(schema, True, 1)
+        self.assertValid(schema, '1', 1)
+
+        self.assertInvalid(schema, None, [], intify, u'TypeError: int() argument must be a string or a number, not \'NoneType\'', u'<???>', s.t_none)
+        self.assertInvalid(schema, u'a', [], intify, u'ValueError: invalid literal for int() with base 10: \'a\'', u'<???>', u'a')
+
+        # Nested callable
+        str_or_int = [
+            intify,
+            six.text_type
+        ]
+        schema = Schema(str_or_int)
+
+        self.assertValid(schema, [u'a'])
+        self.assertValid(schema, [1])
+        self.assertValid(schema, [u'1', 1], [1, 1])
+        self.assertValid(schema, [b'1'], [1])
+
+        self.assertInvalid(schema, [b'abc'], [0], str_or_int, u'Invalid value', u'List[intify()|String]', six.text_type(b'abc'))
+
+        # Nested callable that trows Invalid
+
+    def test_schema_schema(self):
+        """ Test Schema(Schema) """
+
+    def test_mapping(self):
+        """ Test Schema(<mapping>) """
 
 
 
