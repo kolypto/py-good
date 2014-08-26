@@ -95,7 +95,7 @@ class SchemaTest(unittest.TestCase):
         self.assertValid(schema,   b'1')
         self.assertInvalid(schema,   1,  [], b'1', s.es_value_type, s.t_str, s.t_int)
         self.assertInvalid(schema, u'1', [], b'1', s.es_value_type, s.t_str, s.t_unicode)
-        self.assertInvalid(schema, b'2', [], b'1', s.es_value, u'1', u'2')
+        self.assertInvalid(schema, b'2', [], b'1', s.es_value, six.text_type(b'1'), six.text_type(b'2'))
 
         # Unicode
         schema = Schema(u'1')
@@ -137,8 +137,8 @@ class SchemaTest(unittest.TestCase):
         # Unicode
         schema = Schema(six.text_type)
         self.assertValid(schema, u'a')
-        self.assertInvalid(schema, 'a', [], six.text_type, s.es_type, s.t_unicode, s.t_str)
-        self.assertInvalid(schema, 1,   [], six.text_type, s.es_type, s.t_unicode, s.t_int)
+        self.assertInvalid(schema, b'a', [], six.text_type, s.es_type, s.t_unicode, s.t_str)
+        self.assertInvalid(schema, 1,    [], six.text_type, s.es_type, s.t_unicode, s.t_int)
 
     def test_iterable(self):
         """ Test Schema(<iterable>) """
@@ -173,5 +173,5 @@ class SchemaTest(unittest.TestCase):
         self.assertInvalid(schema, [1, 4],  [1], list_schema, s.es_value, u'1|2|String', u'4')
         self.assertInvalid(schema, [1, 4],  [1], list_schema, s.es_value, u'1|2|String', u'4')
 
-    def test_iterable_deep(self):
-        """ Test Schema(<iterable of schemas>) """
+
+

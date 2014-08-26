@@ -82,6 +82,8 @@ class CompiledSchema(object):
         err_type = self.Invalid(_(u'Message'), self.name)
         raise err_type(<provided-value>)
 
+        Note: `provided` and `expected` are unicode-typecasted automatically
+
         :type message: unicode
         :type expected: unicode
         """
@@ -94,8 +96,8 @@ class CompiledSchema(object):
             """
             return Invalid(
                 message,
-                expected,
-                provided,
+                six.text_type(expected),
+                six.text_type(provided),
                 self.path + (path or []),
                 self.schema,
                 **info
@@ -138,7 +140,7 @@ class CompiledSchema(object):
 
     def _compile_literal(self, schema):
         """ Compile literal schema: type and value matching """
-        self.name = unicode(schema)
+        self.name = six.text_type(schema)
 
         # Prepare
         schema_type = type(schema)
@@ -154,7 +156,7 @@ class CompiledSchema(object):
             # Equality check
             if v != schema:
                 # expected=<value>, provided=<value>
-                raise err_value(unicode(v))
+                raise err_value(v)
             # Fine
             return v
         return validate_literal
@@ -181,7 +183,7 @@ class CompiledSchema(object):
         """ Compile iterable: iterable of schemas treated as allowed values """
         # Compile each member as a schema
         schema_type = type(schema)
-        schema_subs = map(self.sub_compile, schema)
+        schema_subs = tuple(self.sub_compile(x) for x in schema)
         self.name = _(u'|').join(x.name for x in schema_subs)
 
         # Prepare
@@ -209,7 +211,7 @@ class CompiledSchema(object):
                         # Ignore errors and hope other members will succeed better
                         pass
                 else:
-                    errors.append(err_value(unicode(value), path=[value_index]))
+                    errors.append(err_value(value, path=[value_index]))
 
             # Errors?
             if errors:

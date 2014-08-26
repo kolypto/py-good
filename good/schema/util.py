@@ -1,12 +1,11 @@
 """ Misc utilities """
 
 import six
-from types import NoneType
 
 
 __type_names = direct = {
-    None:       _(u'None'),
-    NoneType:   _(u'None'),
+    None:             _(u'None'),
+    type(None):       _(u'None'),
     bool:       _(u'Boolean'),
     float:      _(u'Fractional number'),
     complex:    _(u'Complex number'),

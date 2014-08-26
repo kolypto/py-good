@@ -161,6 +161,9 @@ class Schema(object):
         """
         self._schema = self.compiled_schema_cls(schema, [], default_keys, extra_keys)
 
+    def __repr__(self):
+        return repr(self._schema)
+
     def __call__(self, value):
         """ Validate the given input value against the schema
 
