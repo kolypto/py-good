@@ -4,7 +4,8 @@ Core features:
 
 * Simple
 * Customizable
-* Supports nested validation
+* Supports nested model validation
+* Error paths (which field contains the error)
 * User-friendly error messages
 * Internationalization!
 * Python 2.7, 3.3+ compatible

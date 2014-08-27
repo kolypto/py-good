@@ -40,6 +40,13 @@ class Invalid(BaseError):
         self.validator = validator
         self.info = info
 
+    def __iter__(self):
+        """ Iterate over container errors.
+
+        For `Invalid`, just yields self, however for `MultipleInvalid` it yields every contained errors.
+        """
+        yield self
+
     def __repr__(self):
         return '{cls}({0.message!r}, ' \
                'expected={0.expected!r}, ' \
@@ -58,6 +65,33 @@ class Invalid(BaseError):
             )),
         )
 
+    def enrich(self, expected=None, provided=None, path=None, validator=None, path_prefix=True):
+        """ Enrich the error.
+
+        This works with both Invalid and MultipleInvalid (thanks to __iter__ method).
+
+        :param expected: Invalid.expected default
+        :param provided: Invalid.provided default
+        :param path: Invalid.path chunk
+        :param validator: Invalid.validator default
+        :param path_prefix: Whether `path` should be prepended? Otherwise, it's appended
+        :type path_prefix: bool
+        :rtype: Invalid|MultipleInvalid
+        """
+        for e in self:
+            if e.expected is None and expected is not None:
+                e.expected = expected
+            if e.provided is None and provided is not None:
+                e.provided = provided
+            if e.validator is None and validator is not None:
+                e.validator = validator
+
+            if path_prefix:
+                e.path = (path or []) + e.path
+            else:
+                e.path = (path or []) + e.path
+        return self
+
     if six.PY3:
         __str__ = __unicode__
 
@@ -66,19 +100,45 @@ class MultipleInvalid(Invalid):
     """ Validation errors for multiple values.
 
     It wraps multiple validation errors, given as `errors`.
-    Inherited methods (e.g. `__unicode__()`) are proxied to the first reported error
+    Inherited methods (e.g. `__unicode__()`) are proxied to the first reported error.
 
-    :param errors: The reported errors
+    :param errors: The reported errors.
+
+        If it contains MultipleInvalid errors -- the list is recursively flattened so all of them are guaranteed to be instances of `Invalid`
+
     :type errors: list[Invalid]
     """
     def __init__(self, errors):
-        super(MultipleInvalid, self).__init__(*errors[0].args)
+        # Flatten errors
+        errors = self.flatten(errors)
+
+        # Create from errors
+        e = errors[0]
+        super(MultipleInvalid, self).__init__(e.message, e.expected, e.provided, e.path, e.validator, **e.info)
 
         #: The collected errors
         self.errors = errors
 
+    def __iter__(self):
+        return iter(self.errors)
+
     def __repr__(self):
-        return '{0}({1!r})'.format(type(self).__name__, self.errors)
+        return '{cls}({0!r})'.format(self.errors, cls=type(self).__name__)
+
+    @classmethod
+    def flatten(cls, errors):
+        """ Unwind `MultipleErrors` to have a plain list of `Invalid`
+
+        :type errors: list[Invalid|MultipleInvalid]
+        :rtype: list[Invalid]
+        """
+        ers = []
+        for e in errors:
+            if isinstance(e, MultipleInvalid):
+                ers.extend(cls.flatten(e.errors))
+            else:
+                ers.append(e)
+        return ers
 
     @classmethod
     def if_multiple(cls, errors):

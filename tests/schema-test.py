@@ -1,7 +1,8 @@
 from __future__ import print_function
-import unittest
 import six
-from good import Schema, Invalid, MultipleInvalid, Required, Optional, Extra, Remove, Reject
+import unittest
+
+from good import Schema, Invalid, MultipleInvalid, Required, Optional, Extra, Remove, Reject, Allow
 from good.schema.util import get_type_name
 
 
@@ -39,14 +40,64 @@ class SchemaTest(unittest.TestCase):
         :type expected: Invalid
         """
         repr(actual), six.text_type(actual)  # repr() works fine
+        self.assertEqual(type(expected), type(actual))  # type matches
 
-        self.assertEqual(type(expected), type(actual))
+        if isinstance(actual, MultipleInvalid):
+            return self.assertMultipleInvalidError(actual, expected)
+
         self.assertEqual(expected.path, actual.path)
         self.assertEqual(expected.validator, actual.validator)
         self.assertEqual(expected.message, actual.message)
-        self.assertEqual(expected.expected, actual.expected)
         self.assertEqual(expected.provided, actual.provided)
+        self.assertEqual(expected.expected, actual.expected)
         self.assertEqual(expected.info, actual.info)
+
+    def assertMultipleInvalidError(self, actual, expected):
+        """ Assert that the two MultipleInvalid exceptions are the same
+
+        :param actual: Actual exception
+        :type actual: MultipleInvalid
+        :param expected: Expected exception
+        :type expected: MultipleInvalid
+        """
+        # Match lists
+        expected_errors = expected.errors[:]
+        extra_errors = []
+        raised_expectedly = 0
+
+        for actual_e in actual.errors:
+            # Find the matching error
+            for i, expected_e in enumerate(expected_errors):
+                try:
+                    # Matches?
+                    self.assertInvalidError(actual_e, expected_e)
+                except self.failureException:
+                    pass
+                else:
+                    # Matches!
+                    expected_errors.pop(i)
+                    raised_expectedly += 1
+                    break
+            else:
+                expected_e = None
+
+            # No match
+            if not expected_e:
+                extra_errors.append(actual_e)
+
+        # All ok?
+        if not expected_errors and not extra_errors:
+            return
+
+        # Throw errors
+        self.fail(
+            u'MultipleError failed:\n' +
+            u'\nNot raised:\n'
+            u' * ' + '\n * '.join(map(repr, expected_errors)) +
+            u'\nGot instead:\n' +
+            u' * ' + '\n * '.join(map(repr, extra_errors)) +
+            u'\nRaised expectedly: {}\n'.format(raised_expectedly)
+        )
 
     def assertValid(self, schema, value, validated_value=None):
         """ Try the given Schema against a value and expect that it's valid
@@ -71,13 +122,13 @@ class SchemaTest(unittest.TestCase):
         """
         repr(schema), six.text_type(schema)  # no errors
 
-        with self.assertRaises(Invalid) as ecm:
-            print('False positive:', repr(schema(value)))
+        try:
+            sanitized = schema(value)
+            self.fail(u'False positive: {!r}\nExpected: {!r}'.format(sanitized, e))
+        except Invalid as exc:
+            self.assertInvalidError(exc, e)
 
-        self.assertInvalidError(ecm.exception, e)
 
-
-    #region Schema(<literal>)
 
     def test_literal(self):
         """ Test Schema(<literal>) """
@@ -232,3 +283,144 @@ class SchemaTest(unittest.TestCase):
     @unittest.skip
     def test_schema_schema(self):
         """ Test Schema(Schema) """
+
+    def test_mapping_literal(self):
+        """ Test Schema(<mapping>), literal keys """
+        structure = {
+            'name': six.text_type,
+            'age': int,
+            'sex': u'f',  # girls only :)
+        }
+        schema = Schema(structure)
+
+        # Okay
+        self.assertValid(schema, {'name': u'A', 'age': 18, 'sex': u'f'})
+
+        # Wrong type
+        self.assertInvalid(schema, [],
+                           Invalid(s.es_value_type, s.t_dict, s.t_list, [], structure))
+
+        # Wrong 'sex'
+        self.assertInvalid(schema, {'name': u'A', 'age': 18, 'sex': None},
+                           Invalid(s.es_value_type, s.t_unicode,            s.t_none,               ['sex'],    u'f'))
+        self.assertInvalid(schema, {'name': u'A', 'age': 18, 'sex': u'm'},
+                           Invalid(s.es_value,      u'f',                   u'm',                   ['sex'],    u'f'))
+        # Wrong 'name' and 'age'
+        self.assertInvalid(schema, {'name': None, 'age': None, 'sex': u'f'}, MultipleInvalid([
+                           Invalid(s.es_type,       s.t_unicode,            s.t_none,               ['name'],   six.text_type),
+                           Invalid(s.es_type,       s.t_int,                s.t_none,               ['age'],    int),
+        ]))
+
+        # Missing key 'sex'
+        self.assertInvalid(schema, {'name': u'A', 'age': 18},
+                           Invalid(s.es_required,   six.text_type('name'),  None,                   ['sex'],    Required))
+        # Extra key 'lol'
+        self.assertInvalid(schema, {'name': u'A', 'age': 18, 'sex': 'f', 'lol': 1},
+                           Invalid(s.es_extra,      None,                   six.text_type('lol'),   ['lol'],    Extra))
+        # Missing keys 'age', 'sex', extra keys 'lol', 'hah'
+        self.assertInvalid(schema, {'name': None, 'lol': 1, 'hah': 1}, MultipleInvalid([
+                           Invalid(s.es_required,   six.text_type('age'),   None,                   ['age'],    Required),
+                           Invalid(s.es_required,   six.text_type('sex'),   None,                   ['sex'],    Required),
+                           Invalid(s.es_extra,      None,                   six.text_type('lol'),   ['lol'],    Extra),
+                           Invalid(s.es_extra,      None,                   six.text_type('hah'),   ['hah'],    Extra),
+        ]))
+
+    def test_mapping_type(self):
+        """ Test Schema(<mapping>), type keys """
+        schema = Schema({
+            'name': 1,
+            int: bool,
+        })
+
+        # Okay
+        self.assertValid(schema, {'name': 1})
+        self.assertValid(schema, {'name': 1, 1: True, 2: True})
+
+        # Wrong value type
+        self.assertInvalid(schema, {'name': 1, 1: True, 2: u'WROOONG'},
+                           Invalid(s.es_type, s.t_bool, s.t_unicode, [2], bool))
+
+        return  # TODO: uncomment
+
+        # Wrong key type (meaning, extra key `'2'`)
+        self.assertInvalid(schema, {'name': 1, u'1': True},
+                           Invalid(s.es_extra, None, s.t_unicode, [u'1'], Extra))
+
+    def test_mapping_callable(self):
+        """ Test Schema(<mapping>), callable keys """
+        def multikey(*keys):
+            def validate(v):
+                assert v in keys
+                return v
+            return validate
+
+        def intify(v):
+            return int(v)
+
+        schema = Schema({
+            # Values for ('a', 'b', 'c') are int()ified
+            multikey('a', 'b', 'c'): intify,
+            # Other keys are int()ified and should be boolean
+            intify: bool
+        })
+
+        # Okay
+        self.assertValid(schema, {})
+        self.assertValid(schema, {'a': 1})
+        self.assertValid(schema, {'a': 1, 'b': '2'})
+        self.assertValid(schema, {'a': 1, 'b': '2', 1: True})
+        self.assertValid(schema, {'a': 1, 'b': '2', 1: True, '2': False})
+
+        # Wrong values
+        return  # TODO: wrong values test
+
+    def test_mapping_markers(self):
+        """ Test Schema(<mapping>), with Markers """
+        # Required, literal
+        schema = Schema({
+            Required(u'a'): 1,
+            u'b': 2,
+            Required(int): bool,
+        })
+
+        # Optional
+        schema = Schema({
+            Optional(u'a'): 1,
+            u'b': 2,
+            Optional(int): bool,
+        })
+
+        # Remove
+        schema = Schema({
+            Remove(u'a'): 1,
+            Remove(int): bool,
+            u'b': 2
+        })
+
+        # Extra
+        schema = Schema({
+            u'a': 1,
+            Extra: int
+        })
+
+        # Extra: Reject
+        schema = Schema({
+            u'a': 1,
+            Extra: Reject
+        })
+
+        # Extra: Remove
+        schema = Schema({
+            u'a': 1,
+        }, extra_keys=Remove)
+
+        # Extra: Allow
+        schema = Schema({
+            u'a': 1,
+        }, extra_keys=Allow)
+
+        # Reject
+        schema = Schema({
+            u'a': 1,
+            str: Reject,
+        })
