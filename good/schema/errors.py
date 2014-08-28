@@ -1,5 +1,5 @@
 """
-Source: <good/schema/errors.py>
+Source: [good/schema/errors.py](good/schema/errors.py)
 
 When [validating user input](#validating), [`Schema`](#schema) collects all errors and throws these
 after the whole input value is validated. This makes sure that you can report *all* errors at once.

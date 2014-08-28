@@ -36,7 +36,8 @@ class Schema(object):
 
         ```python
         Schema(int)(1)    #-> 1
-        Schema(int)('1')  #-> Invalid: Wrong type: expected Integer number, got Binary String
+        Schema(int)('1')
+        #-> Invalid: Wrong type: expected Integer number, got Binary String
         ```
 
     3. **Callable**: is applied to the value and the result is used as the final value.
@@ -51,7 +52,8 @@ class Schema(object):
 
        Schema(CoerceInt)(1)    #-> 1
        Schema(CoerceInt)('1')  #-> 1
-       Schema(CoerceInt)('a')  #-> Invalid: ValueError: invalid literal for int(): expected CoerceInt(), got a
+       Schema(CoerceInt)('a')
+       #-> Invalid: ValueError: invalid literal for int(): expected CoerceInt(), got a
        ```
 
     4. **`Schema`**: a schema may contain sub-schemas:
@@ -161,24 +163,24 @@ class Schema(object):
 
     Notes to consider about *callable* schemas:
 
-        * Throwing errors.
+    * Throwing errors.
 
-            If the callable throws [`Invalid`](#invalid) exception, it's used as is with all the rich info it provides.
-            Schema is smart enough to fill into most of the arguments (see [`Invalid.enrich`](#Invalid-enrich)),
-            so it's enough to use a custom message, and probably, set a human-friendly `expected` field.
+        If the callable throws [`Invalid`](#invalid) exception, it's used as is with all the rich info it provides.
+        Schema is smart enough to fill into most of the arguments (see [`Invalid.enrich`](#Invalid-enrich)),
+        so it's enough to use a custom message, and probably, set a human-friendly `expected` field.
 
-            If the callable throws anything else (e.g. `ValueError`), these are wrapped into `Invalid`.
-            Schema tries to do its best, but such messages will probably be cryptic for the user.
-            Hence, always raise meaningful errors when creating custom validators.
+        If the callable throws anything else (e.g. `ValueError`), these are wrapped into `Invalid`.
+        Schema tries to do its best, but such messages will probably be cryptic for the user.
+        Hence, always raise meaningful errors when creating custom validators.
 
-        * Naming.
+    * Naming.
 
-            If the provided callable does not specify `Invalid.expected` expected value,
-            the `__name__` of the callable is be used instead.
-            E.g. `def intify(v):pass` becomes `'intify()'` in reported errors.
+        If the provided callable does not specify `Invalid.expected` expected value,
+        the `__name__` of the callable is be used instead.
+        E.g. `def intify(v):pass` becomes `'intify()'` in reported errors.
 
-            If a custom name is desired on the callable -- set the `name` attribute on the callable object.
-            This works best with classes, however a function can accept `name` attribute as well.
+        If a custom name is desired on the callable -- set the `name` attribute on the callable object.
+        This works best with classes, however a function can accept `name` attribute as well.
     """
 
     compiled_schema_cls = CompiledSchema
