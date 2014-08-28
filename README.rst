@@ -23,6 +23,18 @@ readability and robustness. And yeah, the docs are now exhaustive :)
 Table of Contents
 =================
 
+-  Good
+-  Table of Contents
+-  Schema
+
+   -  Callables
+   -  Priorities
+   -  Creating a Schema
+   -  Validating
+
+-  Errors \* Invalid \* Invalid.enrich() \* MultipleInvalid
+-  Markers \* Required \* Optional \* Remove \* Reject \* Allow \* Extra
+
 Schema
 ======
 
@@ -209,7 +221,7 @@ validation:
    If the callable throws ```Invalid`` <#invalid>`__ exception, it's
    used as is with all the rich info it provides. Schema is smart enough
    to fill into most of the arguments (see
-   ```Invalid.enrich`` <#Invalid-enrich>`__), so it's enough to use a
+   ```Invalid.enrich`` <#invalidenrich>`__), so it's enough to use a
    custom message, and probably, set a human-friendly ``expected``
    field.
 
@@ -361,9 +373,9 @@ for the user.
 
 Enrich this error with additional information.
 
-This works with both Invalid and MultipleInvalid (thanks to
-```__iter__`` <#invalid-iter>`__ method): in the latter case, the
-defaults are applied to all collected errors.
+This works with both Invalid and MultipleInvalid (thanks to ``Invalid``
+being iterable): in the latter case, the defaults are applied to all
+collected errors.
 
 The specified arguments are only set on ``Invalid`` errors which do not
 have any value on the property.

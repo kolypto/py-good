@@ -166,7 +166,7 @@ class Schema(object):
     * Throwing errors.
 
         If the callable throws [`Invalid`](#invalid) exception, it's used as is with all the rich info it provides.
-        Schema is smart enough to fill into most of the arguments (see [`Invalid.enrich`](#Invalid-enrich)),
+        Schema is smart enough to fill into most of the arguments (see [`Invalid.enrich`](#invalidenrich)),
         so it's enough to use a custom message, and probably, set a human-friendly `expected` field.
 
         If the callable throws anything else (e.g. `ValueError`), these are wrapped into `Invalid`.

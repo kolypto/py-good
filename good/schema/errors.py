@@ -95,7 +95,7 @@ class Invalid(BaseError):
     def enrich(self, expected=None, provided=None, path=None, validator=None):
         """ Enrich this error with additional information.
 
-        This works with both Invalid and MultipleInvalid (thanks to [`__iter__`](#invalid-iter) method):
+        This works with both Invalid and MultipleInvalid (thanks to `Invalid` being iterable):
         in the latter case, the defaults are applied to all collected errors.
 
         The specified arguments are only set on `Invalid` errors which do not have any value on the property.

@@ -28,6 +28,25 @@ The whole internals have been reworked towards readability and robustness. And y
 Table of Contents
 =================
 
+* <a href="#good">Good</a>
+* <a href="#table-of-contents">Table of Contents</a>
+* <a href="#schema">Schema</a>
+    * <a href="#callables">Callables</a>
+    * <a href="#priorities">Priorities</a>
+    * <a href="#creating-a-schema">Creating a Schema</a>
+    * <a href="#validating">Validating</a>
+* <a href="#errors">Errors</a>
+        * <a href="#invalid">Invalid</a>
+            * <a href="#invalidenrich">Invalid.enrich()</a>
+        * <a href="#multipleinvalid">MultipleInvalid</a>
+* <a href="#markers">Markers</a>
+        * <a href="#required">Required</a>
+        * <a href="#optional">Optional</a>
+        * <a href="#remove">Remove</a>
+        * <a href="#reject">Reject</a>
+        * <a href="#allow">Allow</a>
+        * <a href="#extra">Extra</a> 
+
 
 Schema
 ======
@@ -193,7 +212,7 @@ Finally, here are the things to consider when using custom callables for validat
 * Throwing errors.
 
     If the callable throws [`Invalid`](#invalid) exception, it's used as is with all the rich info it provides.
-    Schema is smart enough to fill into most of the arguments (see [`Invalid.enrich`](#Invalid-enrich)),
+    Schema is smart enough to fill into most of the arguments (see [`Invalid.enrich`](#invalidenrich)),
     so it's enough to use a custom message, and probably, set a human-friendly `expected` field.
 
     If the callable throws anything else (e.g. `ValueError`), these are wrapped into `Invalid`.
@@ -328,7 +347,7 @@ Invalid.enrich(expected=None, provided=None, path=None,
 
 Enrich this error with additional information.
 
-This works with both Invalid and MultipleInvalid (thanks to [`__iter__`](#invalid-iter) method):
+This works with both Invalid and MultipleInvalid (thanks to `Invalid` being iterable):
 in the latter case, the defaults are applied to all collected errors.
 
 The specified arguments are only set on `Invalid` errors which do not have any value on the property.
