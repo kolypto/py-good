@@ -71,7 +71,7 @@ class Invalid(BaseError):
             )
         )
 
-    def enrich(self, expected=None, provided=None, path=None, validator=None, path_prefix=True):
+    def enrich(self, expected=None, provided=None, path=None, validator=None):
         """ Enrich the error.
 
         This works with both Invalid and MultipleInvalid (thanks to __iter__ method).
@@ -85,17 +85,15 @@ class Invalid(BaseError):
         :rtype: Invalid|MultipleInvalid
         """
         for e in self:
+            # defaults on fields
             if e.expected is None and expected is not None:
                 e.expected = expected
             if e.provided is None and provided is not None:
                 e.provided = provided
             if e.validator is None and validator is not None:
                 e.validator = validator
-
-            if path_prefix:
-                e.path = (path or []) + e.path
-            else:
-                e.path = (path or []) + e.path
+            # path prefix
+            e.path = (path or []) + e.path
         return self
 
     if six.PY3:

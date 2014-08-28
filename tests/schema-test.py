@@ -24,6 +24,7 @@ class s:
 
     es_required = u'Required key not provided'
     es_extra = u'Extra keys not allowed'
+    es_rejected = u'Value rejected'
 
 
 class SchemaTest(unittest.TestCase):
@@ -118,7 +119,7 @@ class SchemaTest(unittest.TestCase):
 
         :type schema: Schema
         :param value: The value to validate
-        :param e: Expected exception
+        :param e: Expected exception, or `None` if you don't care about it
         :type e: Invalid|MultipleInvalid
         """
         repr(schema), six.text_type(schema)  # no errors
@@ -127,7 +128,8 @@ class SchemaTest(unittest.TestCase):
             sanitized = schema(value)
             self.fail(u'False positive: {!r}\nExpected: {!r}'.format(sanitized, e))
         except Invalid as exc:
-            self.assertInvalidError(exc, e)
+            if e is not None:
+                self.assertInvalidError(exc, e)
 
 
 
@@ -401,44 +403,79 @@ class SchemaTest(unittest.TestCase):
             Required(int): bool,
         })
 
+        self.assertValid(schema,   {u'a': 1, u'b': 2, 3: True})
+        self.assertInvalid(schema, {u'a': 1,          3: True},
+                           Invalid(s.es_required, u'b', None, [u'b'], Required(u'b')))
+        self.assertInvalid(schema, {u'a': 1, u'b': 2},
+                           Invalid(s.es_required, s.t_int, None, [], Required(int)))
+
         # Optional
         schema = Schema({
             Optional(u'a'): 1,
             u'b': 2,
             Optional(int): bool,
         })
+        self.assertValid(schema,   {         u'b': 2         })
+        self.assertValid(schema,   {u'a': 1, u'b': 2         })
+        self.assertValid(schema,   {u'a': 1, u'b': 2, 3: True})
+        self.assertInvalid(schema, {u'a': 1                  },
+                           Invalid(s.es_required, u'b', None, [u'b'], Required(u'b')))
 
         # Remove
         schema = Schema({
             Remove(u'a'): 1,
+            u'b': 2,
             Remove(int): bool,
-            u'b': 2
         })
+        self.assertValid(schema, {           u'b': 2         })
+        self.assertValid(schema, {           u'b': 2, 1: True}, {u'b': 2})
+        self.assertValid(schema, {u'a': 1,   u'b': 2, 1: True}, {u'b': 2})
+        # removes invalid values before they're validated
+        self.assertValid(schema, {u'a': 'X', u'b': 2, 1: True}, {u'b': 2})
+        self.assertValid(schema, {u'a': 'X', u'b': 2, 1: 'X' }, {u'b': 2})
 
         # Extra
         schema = Schema({
-            u'a': 1,
+            u'b': 1,
             Extra: int
         })
+        self.assertValid(schema, {u'b': 1})
+        self.assertValid(schema, {u'b': 1, u'c': 1, 1: 2})
+        self.assertInvalid(schema, {u'b': 1, u'c': u'abc'},
+                           Invalid(s.es_type, s.t_int, s.t_unicode, [u'c'], int))
 
         # Extra: Reject
         schema = Schema({
             u'a': 1,
             Extra: Reject
         })
+        self.assertValid(schema, {u'a': 1})
+        self.assertInvalid(schema, {u'a': 1, u'b': 2},
+                           Invalid(s.es_extra, None, u'b', [u'b'], Extra))
 
         # Extra: Remove
         schema = Schema({
             u'a': 1,
         }, extra_keys=Remove)
+        self.assertValid(schema, {u'a': 1})
+        self.assertValid(schema, {u'a': 1, u'b': 2, u'c': 3}, {u'a': 1})
 
         # Extra: Allow
         schema = Schema({
             u'a': 1,
         }, extra_keys=Allow)
+        self.assertValid(schema, {u'a': 1})
+        self.assertValid(schema, {u'a': 1, u'b': 2, u'c': 3})
 
         # Reject
         schema = Schema({
             u'a': 1,
-            str: Reject,
+            Reject(six.text_type): int,
         })
+        self.assertValid(schema,   {u'a': 1})
+        self.assertInvalid(schema, {u'a': 1, u'b': 1},
+                           Invalid(s.es_rejected, None, u'b', [u'b'], Reject(six.text_type)))
+
+    def test_mapping_priority(self):
+        """ Test Schema(<mapping>), priority test """
+        # This test validates that schema key type priorities are working fine

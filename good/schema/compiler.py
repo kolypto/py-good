@@ -320,8 +320,7 @@ class CompiledSchema(object):
             expected=self.name,
             provided=six.text_type(value),
             path=self.path,
-            validator=schema,
-            path_prefix=True)
+            validator=schema)
 
         # Validator
         @wraps(schema)
@@ -410,14 +409,13 @@ class CompiledSchema(object):
         # Prepare self
         self.compiled_type = const.COMPILED_TYPE.MARKER
 
-        # If this marker is not instantiated -- do it with an all-valid callable: identity function
+        # If this marker is not instantiated -- do it with an identity callable which is valid for everything
         if issubclass(type(schema), six.class_types):
             identity = lambda v: v
             schema = schema(identity).on_compiled(name=_(u'*'))
 
         # Compile Marker's schema
-        # Also, Marker schemas are always matchers (since they're only used for mapping keys)
-        key_schema = self.sub_compile(schema.key, matcher=True)
+        key_schema = self.sub_compile(schema.key, matcher=self.matcher)
         schema.on_compiled(key_schema=key_schema, name=key_schema.name)
 
         # Marker is a callable
@@ -428,30 +426,35 @@ class CompiledSchema(object):
         """ Compile mapping: key-value matching """
         assert not self.matcher, 'Mappings cannot be matchers'
 
-        # Set default marker type on all keys
-        # This makes sure that keys specified as literals will still become markers,
-        # and hence have the correct default behavior
-        schema = {self.default_keys(k) if self.get_schema_type(k) != const.COMPILED_TYPE.MARKER else k: v
-                  for k,v in schema.items()}
+        # This stuff is tricky, but thankfully, I like comments :)
 
-        # Every Schema implicitly has an `Extra` that defaults to `extra_keys`
+        # Set default Marker on all keys.
+        # This makes sure that all keys will still become markers, and hence have the correct default behavior
+        schema = {self.default_keys(k) if self.get_schema_type(k) != const.COMPILED_TYPE.MARKER else k: v
+                  for k, v in schema.items()}
+
+        # Add `Extra`
+        # Every Schema implicitly has an `Extra` that defaults to `extra_keys`.
+        # Note that this is the only place in the code where Marker behavior is hardcoded :)
         schema.setdefault(markers.Extra, self.extra_keys)
 
-        # Compile both keys & values as schemas
-        # Note that key schemas are compiled as "Matchers" for performance
+        # Compile both keys & values as schemas.
+        # Key schemas are compiled as "Matchers" for performance.
         compiled = {self.sub_compile(key, matcher=True): self.sub_compile(value)
                     for key, value in schema.items()}
 
-        # Markers needs to be notified that they were compiled
+        # Notify Markers that they were compiled.
+        # _compile_marker() has already done part of the job: it only specified `key_schema`.
+        # Here we let the Marker know its `value_schema` as well.
         for key_schema, value_schema in compiled.items():
             if key_schema.compiled_type == const.COMPILED_TYPE.MARKER:
                 key_schema.compiled.on_compiled(value_schema=value_schema)
 
-        # Sort key schemas for matching
-        # Since different schema types have different priority, we need to sort these accordingly.
-        # Then, literals match before types, and Markers can define execution order
+        # Sort key schemas for matching.
+        # Since various schema types have different priority, we need to sort these accordingly.
+        # Then, literals match before types, and Markers can define execution order using `priority`.
         # For instance, Remove() should be called first (before any validation takes place),
-        # while Extra() should be called last (since it's a catch-all for extra keys)
+        # while Extra() should be checked last so it catches all extra keys that did not match other key schemas.
         compiled = [ (key_schema, compiled[key_schema])
                      for key_schema in self.sort_schemas(compiled.keys())]
         ''' :var  compiled: Sorted list of CompiledSchemas: (key-schema, value-schema),
@@ -476,80 +479,83 @@ class CompiledSchema(object):
                 # expected=<type>, provided=<type>
                 raise err_type(provided=get_type_name(type(d)))
 
-            # We're going to iterate it descructively, so need to make a fresh copy
+            # We're going to iterate it destructively, so need to make a fresh copy
             d = d.copy()
 
             # For each schema key, pick matching input key-value pairs.
             # Since we always have Extra which is a catch-all -- this will always result into a full input coverage.
-            # (meaning, that every input key will have a match).
-            # Since the schema keys are sorted according to the priority, we're handling each set of matching keys in order.
+            # Also, key schemas are sorted according to the priority, we're handling each set of matching keys in order.
 
             errors = []  # Collect errors on the fly
             output = schema_type()  # Rebuild the input (since schemas may sanitize keys)
 
             for key_schema, value_schema in compiled:
                 # First, collect matching (key, value) pairs for the `key_schema`.
-                # Note that `key_schema` can change the value (e.g. `Coerce(int)`).
-                # This results into a list of pairs: [(input-key, sanitized-input-key, input-value), ...].
+                # Note that `key_schema` can change the value (e.g. `Coerce(int)`), so for every key
+                # we store both the initial value (`input-key`) and the sanitized value (`sanitized-key`).
+                # This results into a list of triples: [(input-key, sanitized-key, input-value), ...].
 
                 matches = []
 
-                # TODO: shortcut for literals
-
-                # Walk all input values
+                # Walk all input values and pick those that match the current `key_schema`
                 for k in list(d.keys()):
                     # Exec key schema on the input key.
-                    # Since all key schemas are compiled as matchers -- we get a tuple which says
-                    # whether the value matched, and also provides the sanitized value.
+                    # Since all key schemas are compiled as matchers -- we get a tuple (key-matched, sanitized-key)
 
                     okay, sanitized_k = key_schema(k)
 
-                    # If this key has matched -- append it to the list of matches and remove it from the dict.
-                    # Since the compiled schema is sorted -- this will catch the first matching value.
-                    # E.g. literals will match before types.
+                    # If this key has matched -- append it to the list of matches for the current `key_schema`.
+                    # Also, remove the key from the original input so it does not match any other key schemas
+                    # with lower priorities.
                     if okay:
-                        # When a key matches -- we need to remove it from the original dictionary
-                        # so that no other schema will catch it.
                         matches.append(( k, sanitized_k, d.pop(k) ))
 
-                # Now, since the schema keys were sorted and the matches are still sorted,
-                # execute each key schema in accordance to its priority.
+                # Now, having a `key_schema` and a list of matches for it, do validation.
                 # If the key is a marker -- execute the marker first so it has a chance to modify the input,
-                # and then proceed with normal validation
+                # and then proceed with value validation.
 
                 # Execute Marker first.
-                # Note that markers can make changes to both the input `d` and to the `matches` list!
-                # Also they can raise errors
                 if key_schema.compiled_type == const.COMPILED_TYPE.MARKER:
+                    # Note that Markers can raise errors as well.
+                    # Since they're compiled -- all validation errors within the markers are `Invalid`, not anything else.
                     try:
-                        matches = key_schema.compiled.execute(d, matches)
+                        matches = key_schema.compiled.execute(matches)
                     except Invalid as e:
+                        # Add marker errors to the list of Invalid reports for this schema.
+                        # Using enrich(), we're also setting `path` prefix, and other info known at this step.
                         errors.append(e.enrich(
+                            # Markers are responsible to set `expected`, `provided`, `validator`
                             path=self.path,
-                            validator=key_schema.compiled,
-                            path_prefix=True
+                            validator=key_schema.compiled
                         ))
-                        # No further validation here
+                        # If a marker raised an error -- the (key, value) pair is already Invalid, and no
+                        # further validation is required.
                         continue
 
-                # Proceed with validation
+                # Proceed with validation.
+                # Now, we validate values for every (key, value) pairs in the current list of matches,
+                # and rebuild the mapping.
                 for k, sanitized_k, v in matches:
-                    # Now, proceed with validation
                     try:
+                        # Execute the value schema and store it into the rebuilt mapping
+                        # using the sanitized key, which might be different from the original key.
                         output[sanitized_k] = value_schema(v)
                     except Invalid as e:
+                        # Any value validation errors are appended to the list of Invalid reports for the schema
+                        # enrich() adds more info on the collected errors.
                         errors.append(e.enrich(
                             expected=value_schema.name,
                             provided=six.text_type(v),
-                            path=[k],
-                            validator=value_schema,
-                            path_prefix=True
+                            path=self.path + [k],
+                            validator=value_schema
                         ))
 
-            assert not d, 'Dict must be empty after desctructive iteration: {!r}'.format(d)
+            assert not d, 'Dict must be empty after destructive iteration: {!r}'.format(d)
 
             # Errors?
             if errors:
+                # Note that we did not care about whether a sub-schema raised a single Invalid or MultipleInvalid,
+                # since MultipleInvalid will flatten the list for us.
                 raise MultipleInvalid.if_multiple(errors)
 
             # Finish

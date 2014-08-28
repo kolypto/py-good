@@ -73,8 +73,8 @@ class const:
     #: See _schema_priority()
 
     compiled_type_priorities = {
-        COMPILED_TYPE.LITERAL:   20,
-        COMPILED_TYPE.TYPE:      10,
+        COMPILED_TYPE.LITERAL:   100,
+        COMPILED_TYPE.TYPE:      50,
         COMPILED_TYPE.SCHEMA:     0,
         COMPILED_TYPE.CALLABLE:   0,
         COMPILED_TYPE.ITERABLE:   0,

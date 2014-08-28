@@ -78,11 +78,9 @@ class Marker(object):
         """ Validate a key using this Marker's schema """
         return self.key_schema(v)
 
-    def execute(self, input, matches):
+    def execute(self, matches):
         """ Execute the marker against the input and the matching values
 
-        :param input: The whole input object
-        :type input: dict
         :param matches: List of (input-key, sanitized-input-key, input-value) triples that matched the given marker
         :type matches: list[tuple]
         :returns: The list of matches, potentially modified
@@ -98,7 +96,7 @@ class Required(Marker):
 
     error_message = _(u'Required key not provided')
 
-    def execute(self, input, matches):
+    def execute(self, matches):
         # If a Required() key is present -- it expects to ALWAYS have one or more matches
         if not matches:
             path = [self.key] if self.key_schema.compiled_type == const.COMPILED_TYPE.LITERAL else []
@@ -113,18 +111,16 @@ class Optional(Marker):
 class Remove(Marker):
     priority = 1000  # We always want to remove keys prior to any other actions
 
-    def execute(self, input, matches):
+    def execute(self, matches):
         # Remove all matching keys from the input
-        for k, sanitized_k, v in matches:
-            del input[k]
-        return matches
+        return []
 
 
 class Reject(Marker):
-
+    priority = -10
     error_message = _(u'Value rejected')
 
-    def execute(self, input, matches):
+    def execute(self, matches):
         # Complain on all values it gets
         if matches:
             errors = []
@@ -151,13 +147,13 @@ class Extra(Marker):
             value_schema.compiled.error_message = self.error_message
         return super(Extra, self).on_compiled(name, key_schema, value_schema)
 
-    def execute(self, input, matches):
+    def execute(self, matches):
         # Delegate the decision to the value.
 
         # If the value is a marker -- call execute() on it
         # This is for the cases when `Extra` is mapped to a marker
         if isinstance(self.value_schema.compiled, Marker):
-            return self.value_schema.compiled.execute(input, matches)
+            return self.value_schema.compiled.execute(matches)
 
         # Otherwise, it's a schema, which must be called on every value to validate it.
         # However, CompiledSchema does this anyway at the next step, so doing nothing here
