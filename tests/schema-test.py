@@ -22,7 +22,7 @@ class s:
     es_value_type = u'Wrong value type'
     es_value = u'Invalid value'
 
-    es_required = u'Required key missing'
+    es_required = u'Required key not provided'
     es_extra = u'Extra keys not allowed'
 
 
@@ -63,7 +63,7 @@ class SchemaTest(unittest.TestCase):
         # Match lists
         expected_errors = expected.errors[:]
         extra_errors = []
-        raised_expectedly = 0
+        raised_expectedly = []
 
         for actual_e in actual.errors:
             # Find the matching error
@@ -75,8 +75,8 @@ class SchemaTest(unittest.TestCase):
                     pass
                 else:
                     # Matches!
-                    expected_errors.pop(i)
-                    raised_expectedly += 1
+                    e = expected_errors.pop(i)
+                    raised_expectedly.append(e)
                     break
             else:
                 expected_e = None
@@ -96,7 +96,8 @@ class SchemaTest(unittest.TestCase):
             u' * ' + '\n * '.join(map(repr, expected_errors)) +
             u'\nGot instead:\n' +
             u' * ' + '\n * '.join(map(repr, extra_errors)) +
-            u'\nRaised expectedly: {}\n'.format(raised_expectedly)
+            u'\nRaised expectedly:\n' +
+            u' * ' + '\n * '.join(map(repr, raised_expectedly))
         )
 
     def assertValid(self, schema, value, validated_value=None):
@@ -313,12 +314,12 @@ class SchemaTest(unittest.TestCase):
 
         # Missing key 'sex'
         self.assertInvalid(schema, {'name': u'A', 'age': 18},
-                           Invalid(s.es_required,   six.text_type('name'),  None,                   ['sex'],    Required))
+                           Invalid(s.es_required,   six.text_type('sex'),   None,                   ['sex'],    Required('sex')))
         # Extra key 'lol'
-        self.assertInvalid(schema, {'name': u'A', 'age': 18, 'sex': 'f', 'lol': 1},
+        self.assertInvalid(schema, {'name': u'A', 'age': 18, 'sex': u'f', 'lol': 1},
                            Invalid(s.es_extra,      None,                   six.text_type('lol'),   ['lol'],    Extra))
         # Missing keys 'age', 'sex', extra keys 'lol', 'hah'
-        self.assertInvalid(schema, {'name': None, 'lol': 1, 'hah': 1}, MultipleInvalid([
+        self.assertInvalid(schema, {'name': u'A', 'lol': 1, 'hah': 2}, MultipleInvalid([
                            Invalid(s.es_required,   six.text_type('age'),   None,                   ['age'],    Required),
                            Invalid(s.es_required,   six.text_type('sex'),   None,                   ['sex'],    Required),
                            Invalid(s.es_extra,      None,                   six.text_type('lol'),   ['lol'],    Extra),
@@ -333,46 +334,63 @@ class SchemaTest(unittest.TestCase):
         })
 
         # Okay
-        self.assertValid(schema, {'name': 1})
         self.assertValid(schema, {'name': 1, 1: True, 2: True})
 
         # Wrong value type
+        self.assertInvalid(schema, {'name': 1},
+                           Invalid(s.es_required,   s.t_int,  None,        [],  Required(int)))
         self.assertInvalid(schema, {'name': 1, 1: True, 2: u'WROOONG'},
-                           Invalid(s.es_type, s.t_bool, s.t_unicode, [2], bool))
+                           Invalid(s.es_type,       s.t_bool, s.t_unicode, [2], bool))
 
-        return  # TODO: uncomment
-
-        # Wrong key type (meaning, extra key `'2'`)
-        self.assertInvalid(schema, {'name': 1, u'1': True},
-                           Invalid(s.es_extra, None, s.t_unicode, [u'1'], Extra))
+        # Wrong key type (meaning, `int` not provided, and extra key `'2'`)
+        self.assertInvalid(schema, {'name': 1, u'1': True}, MultipleInvalid([
+                           Invalid(s.es_extra,      None,     u'1',        [u'1'], Extra),
+                           Invalid(s.es_required,   s.t_int,  None,        [],  Required(int)),
+        ]))
 
     def test_mapping_callable(self):
         """ Test Schema(<mapping>), callable keys """
         def multikey(*keys):
-            def validate(v):
+            def multikey_validate(v):
                 assert v in keys
                 return v
-            return validate
+            return multikey_validate
 
         def intify(v):
-            return int(v)
+            try:
+                return int(v)
+            except ValueError as e:
+                raise Invalid(u'Int failed')
 
+        abc = multikey('a', 'b', 'c')
         schema = Schema({
             # Values for ('a', 'b', 'c') are int()ified
-            multikey('a', 'b', 'c'): intify,
+            abc: intify,
             # Other keys are int()ified and should be boolean
             intify: bool
         })
 
         # Okay
-        self.assertValid(schema, {})
-        self.assertValid(schema, {'a': 1})
-        self.assertValid(schema, {'a': 1, 'b': '2'})
-        self.assertValid(schema, {'a': 1, 'b': '2', 1: True})
-        self.assertValid(schema, {'a': 1, 'b': '2', 1: True, '2': False})
+        self.assertValid(schema, {'a': 1, 'b': '2', 1: True},             {'a': 1, 'b': 2, 1: True})
+        self.assertValid(schema, {'a': 1, 'b': '2', 1: True, '2': False}, {'a': 1, 'b': 2, 1: True, 2: False})
 
-        # Wrong values
-        return  # TODO: wrong values test
+        # Wrong value for `multikey()`
+        self.assertInvalid(schema, {'a': u'!', '1': True},
+                           Invalid(u'Int failed', u'intify()', u'!', ['a'], intify))
+        # Wrong value for `bool`
+        self.assertInvalid(schema, {'a': 1, '1': None},
+                           Invalid(s.es_type, s.t_bool, s.t_none, ['1'], bool))
+        # `intify()` did not match
+        self.assertInvalid(schema, {'a': 1},
+                           Invalid(u'Required key not provided', u'intify()', None, [], Required(intify)))
+        # `multikey()` did not match
+        self.assertInvalid(schema, {1: True},
+                           Invalid(u'Required key not provided', u'multikey_validate()', None, [], Required(abc)))
+        # Both `intify()` and `multikey()` did not match
+        self.assertInvalid(schema, {}, MultipleInvalid([
+            Invalid(u'Required key not provided', u'intify()', None, [], Required(intify)),
+            Invalid(u'Required key not provided', u'multikey_validate()', None, [], Required(abc)),
+        ]))
 
     def test_mapping_markers(self):
         """ Test Schema(<mapping>), with Markers """

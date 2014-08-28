@@ -150,4 +150,5 @@ class MultipleInvalid(Invalid):
         :type errors: list[Invalid]
         :rtype: Invalid|MultipleInvalid
         """
+        assert errors, 'Errors list is empty'
         return errors[0] if len(errors) == 1 else MultipleInvalid(errors)

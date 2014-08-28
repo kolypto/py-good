@@ -1,10 +1,10 @@
 import collections
 import six
-from functools import partial, wraps
+from functools import wraps
 
 from . import markers
 from .errors import SchemaError, Invalid, MultipleInvalid
-from .util import get_type_name
+from .util import get_type_name, const
 
 
 class CompiledSchema(object):
@@ -75,34 +75,43 @@ class CompiledSchema(object):
 
     #region Compilation Utils
 
-    #: Types that are treated as literals
-    _literal_types = six.integer_types + (six.text_type, six.binary_type) + (bool, float, complex, object, type(None))
+    def get_schema_type(self, schema):
+        """ Get schema type for the argument
 
-    class COMPILED_TYPE:
-        """ Compiled schema types """
+        :param schema: Schema to analyze
+        :return: COMPILED_TYPE constant
+        :rtype: str|None
+        """
+        schema_type = type(schema)
 
-        LITERAL = 'literal'
-        TYPE = 'type'
-        SCHEMA = 'schema'
-        CALLABLE = 'callable'
-
-        ITERABLE = 'iterable'
-        MAPPING = 'mapping'
-        MARKER = 'marker'
-
-    #: Prioritites for compiled types
-    #: This is used for mappings to determine the sequence with which the keys are processed
-    #: See _schema_priority()
-
-    _compiled_type_priorities = {
-        COMPILED_TYPE.LITERAL:   20,
-        COMPILED_TYPE.TYPE:      10,
-        COMPILED_TYPE.SCHEMA:     0,
-        COMPILED_TYPE.CALLABLE:   0,
-        COMPILED_TYPE.ITERABLE:   0,
-        COMPILED_TYPE.MAPPING:    0,
-        COMPILED_TYPE.MARKER:   None,  # Markers have their own priorities
-    }
+        # Marker
+        if issubclass(schema_type, markers.Marker):
+            return const.COMPILED_TYPE.MARKER
+        # Marker Type
+        elif issubclass(schema_type, six.class_types) and issubclass(schema, markers.Marker):
+            return const.COMPILED_TYPE.MARKER
+        # Literal
+        elif schema_type in const.literal_types:
+            return const.COMPILED_TYPE.LITERAL
+        # Type
+        elif issubclass(schema_type, six.class_types):
+            return const.COMPILED_TYPE.TYPE
+        # Mapping
+        elif isinstance(schema, collections.Mapping):
+            return const.COMPILED_TYPE.MAPPING
+        # Iterable
+        elif isinstance(schema, collections.Iterable):
+            return const.COMPILED_TYPE.ITERABLE
+        # CompiledSchema
+        elif isinstance(schema, CompiledSchema):
+            return const.COMPILED_TYPE.SCHEMA
+        # Schema
+        # elif isinstance(schema, Schema):
+        #    return const.COMPILED_TYPE.SCHEMA  # TODO: schema
+        #Callable
+        elif callable(schema):
+            return const.COMPILED_TYPE.CALLABLE
+        return None
 
     @property
     def priority(self):
@@ -113,11 +122,11 @@ class CompiledSchema(object):
         :rtype: int
         """
         # Markers have priority set on the class
-        if self.compiled_type == self.COMPILED_TYPE.MARKER:
+        if self.compiled_type == const.COMPILED_TYPE.MARKER:
             return self.compiled.priority
 
         # Other types have static priority
-        return self._compiled_type_priorities[self.compiled_type]
+        return const.compiled_type_priorities[self.compiled_type]
 
     @classmethod
     def sort_schemas(cls, schemas_list):
@@ -190,6 +199,31 @@ class CompiledSchema(object):
 
     #region Compilation Procedure
 
+    def get_schema_compiler(self, schema):
+        """ Get compiler method for the provided schema
+
+        :param schema: Schema to analyze
+        :return: Callable compiled
+        :rtype: callable|None
+        """
+        # Schema type
+        schema_type = self.get_schema_type(schema)
+        if schema_type is None:
+            return None
+
+        # Compiler
+        compilers = {
+            const.COMPILED_TYPE.LITERAL: self._compile_literal,
+            const.COMPILED_TYPE.TYPE: self._compile_type,
+            const.COMPILED_TYPE.SCHEMA: self._compile_schema,
+            const.COMPILED_TYPE.CALLABLE: self._compile_callable,
+            const.COMPILED_TYPE.ITERABLE: self._compile_iterable,
+            const.COMPILED_TYPE.MAPPING: self._compile_mapping,
+            const.COMPILED_TYPE.MARKER: self._compile_marker,
+        }
+
+        return compilers[schema_type]
+
     def compile_schema(self, schema):
         """ Compile the current schema into a callable validator
 
@@ -197,46 +231,17 @@ class CompiledSchema(object):
         :rtype: callable
         :raises SchemaError: Schema compilation error
         """
-        compiler = None
-        schema_type = type(schema)
+        compiler = self.get_schema_compiler(schema)
 
-        # Marker
-        if issubclass(schema_type, markers.Marker):
-            compiler = self._compile_marker
-        # Marker Type
-        elif issubclass(schema_type, six.class_types) and issubclass(schema, markers.Marker):
-            compiler = self._compile_marker
-        # Literal
-        elif schema_type in self._literal_types:
-            compiler = self._compile_literal
-        # Type
-        elif issubclass(schema_type, six.class_types):
-            compiler = self._compile_type
-        # Mapping
-        elif isinstance(schema, collections.Mapping):
-            compiler = self._compile_mapping
-        # Iterable
-        elif isinstance(schema, collections.Iterable):
-            compiler = self._compile_iterable
-        # CompiledSchema
-        elif isinstance(schema, CompiledSchema):
-            return schema.compiled
-        # TODO: Schema
-        #elif isinstance(schema, Schema):
-        #    return schema._schema
-        # Callable
-        elif callable(schema):
-            compiler = self._compile_callable
-
-        # Finish
         if compiler is None:
-            raise SchemaError(_(u'Unsupported schema data type {!r}').format(schema_type.__name__))
+            raise SchemaError(_(u'Unsupported schema data type {!r}').format(type(schema).__name__))
+
         return compiler(schema)
 
     def _compile_literal(self, schema):
         """ Compile literal schema: type and value matching """
         # Prepare self
-        self.compiled_type = self.COMPILED_TYPE.LITERAL
+        self.compiled_type = const.COMPILED_TYPE.LITERAL
         self.name = six.text_type(schema)
 
         # Error partials
@@ -267,7 +272,7 @@ class CompiledSchema(object):
     def _compile_type(self, schema):
         """ Compile type schema: plain type matching """
         # Prepare self
-        self.compiled_type = self.COMPILED_TYPE.TYPE
+        self.compiled_type = const.COMPILED_TYPE.TYPE
         self.name = get_type_name(schema)
 
         # Error partials
@@ -290,10 +295,19 @@ class CompiledSchema(object):
 
         return validate_type
 
+    def _compile_schema(self, schema):
+        """ Compile another schema """
+        assert self.matcher == schema.matcher
+
+        self.name = schema.name
+        self.compiled_type = schema.compiled_type
+
+        return schema.compiled
+
     def _compile_callable(self, schema):
         """ Compile callable: wrap exceptions with correct paths """
         # Prepare self
-        self.compiled_type = self.COMPILED_TYPE.CALLABLE
+        self.compiled_type = const.COMPILED_TYPE.CALLABLE
         if hasattr(schema, 'name'):
             self.name = six.text_type(schema.name)
         elif hasattr(schema, '__name__'):
@@ -345,7 +359,7 @@ class CompiledSchema(object):
         schema_subs = tuple(map(self.sub_compile, schema))
 
         # Prepare self
-        self.compiled_type = self.COMPILED_TYPE.ITERABLE
+        self.compiled_type = const.COMPILED_TYPE.ITERABLE
         self.name = _(u'{iterable_cls}[{iterable_options}]').format(
             iterable_cls=get_type_name(schema_type),
             iterable_options=_(u'|').join(x.name for x in schema_subs)
@@ -394,7 +408,7 @@ class CompiledSchema(object):
     def _compile_marker(self, schema):
         """ Compile marker: sub-schema with special type """
         # Prepare self
-        self.compiled_type = self.COMPILED_TYPE.MARKER
+        self.compiled_type = const.COMPILED_TYPE.MARKER
 
         # If this marker is not instantiated -- do it with an all-valid callable: identity function
         if issubclass(type(schema), six.class_types):
@@ -414,6 +428,12 @@ class CompiledSchema(object):
         """ Compile mapping: key-value matching """
         assert not self.matcher, 'Mappings cannot be matchers'
 
+        # Set default marker type on all keys
+        # This makes sure that keys specified as literals will still become markers,
+        # and hence have the correct default behavior
+        schema = {self.default_keys(k) if self.get_schema_type(k) != const.COMPILED_TYPE.MARKER else k: v
+                  for k,v in schema.items()}
+
         # Every Schema implicitly has an `Extra` that defaults to `extra_keys`
         schema.setdefault(markers.Extra, self.extra_keys)
 
@@ -424,7 +444,7 @@ class CompiledSchema(object):
 
         # Markers needs to be notified that they were compiled
         for key_schema, value_schema in compiled.items():
-            if key_schema.compiled_type == self.COMPILED_TYPE.MARKER:
+            if key_schema.compiled_type == const.COMPILED_TYPE.MARKER:
                 key_schema.compiled.on_compiled(value_schema=value_schema)
 
         # Sort key schemas for matching
@@ -439,7 +459,7 @@ class CompiledSchema(object):
         '''
 
         # Prepare self
-        self.compiled_type = self.COMPILED_TYPE.MAPPING
+        self.compiled_type = const.COMPILED_TYPE.MAPPING
         self.name = _(u'{mapping_cls}[{mapping_keys}]').format(
             mapping_cls=get_type_name(type(schema)),
             mapping_keys=_(u',').join(key_schema.name for key_schema, value_schema in compiled)
@@ -477,21 +497,20 @@ class CompiledSchema(object):
                 # TODO: shortcut for literals
 
                 # Walk all input values
-                for k in d:
+                for k in list(d.keys()):
                     # Exec key schema on the input key.
                     # Since all key schemas are compiled as matchers -- we get a tuple which says
                     # whether the value matched, and also provides the sanitized value.
 
                     okay, sanitized_k = key_schema(k)
 
-                    # If this key has matched -- append it to the list, and stop processing this key.
+                    # If this key has matched -- append it to the list of matches and remove it from the dict.
                     # Since the compiled schema is sorted -- this will catch the first matching value.
                     # E.g. literals will match before types.
                     if okay:
                         # When a key matches -- we need to remove it from the original dictionary
                         # so that no other schema will catch it.
                         matches.append(( k, sanitized_k, d.pop(k) ))
-                        break
 
                 # Now, since the schema keys were sorted and the matches are still sorted,
                 # execute each key schema in accordance to its priority.
@@ -501,13 +520,11 @@ class CompiledSchema(object):
                 # Execute Marker first.
                 # Note that markers can make changes to both the input `d` and to the `matches` list!
                 # Also they can raise errors
-                if key_schema.compiled_type == self.COMPILED_TYPE.MARKER:
+                if key_schema.compiled_type == const.COMPILED_TYPE.MARKER:
                     try:
                         matches = key_schema.compiled.execute(d, matches)
                     except Invalid as e:
                         errors.append(e.enrich(
-                            expected=value_schema.name,
-                            provided=u'<???>',
                             path=self.path,
                             validator=key_schema.compiled,
                             path_prefix=True
@@ -524,10 +541,12 @@ class CompiledSchema(object):
                         errors.append(e.enrich(
                             expected=value_schema.name,
                             provided=six.text_type(v),
-                            path=[sanitized_k],
+                            path=[k],
                             validator=value_schema,
                             path_prefix=True
                         ))
+
+            assert not d, 'Dict must be empty after desctructive iteration: {!r}'.format(d)
 
             # Errors?
             if errors:

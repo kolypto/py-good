@@ -1,10 +1,14 @@
 import six
 from .errors import Invalid, MultipleInvalid
+from .util import const
 
 
 class Marker(object):
     #: Marker priority
     priority = 0
+
+    #: The default marker error message
+    error_message = None
 
     def __init__(self, key):
         #: The original key
@@ -55,7 +59,9 @@ class Marker(object):
         return hash(self.key)
 
     def __eq__(self, other):
-        return self.key == (other.key if isinstance(other, Marker) else other)
+        # Marker equality comparison:
+        #  key == key | key == Marker.key | key is Marker
+        return self.key == (other.key if isinstance(other, Marker) else other) or other is type(self)
 
     def __str__(self):
         return six.binary_type(self.key)
@@ -85,14 +91,18 @@ class Marker(object):
         """
         return matches  # No-op by default
 
+
 #region Dictionary keys behavior
 
 class Required(Marker):
 
+    error_message = _(u'Required key not provided')
+
     def execute(self, input, matches):
         # If a Required() key is present -- it expects to ALWAYS have one or more matches
         if not matches:
-            raise Invalid(_(u'Required key not provided'), self.name, None, [self.key])
+            path = [self.key] if self.key_schema.compiled_type == const.COMPILED_TYPE.LITERAL else []
+            raise Invalid(self.error_message, self.name, None, path)
         return matches
 
 
@@ -109,37 +119,48 @@ class Remove(Marker):
             del input[k]
         return matches
 
+
 class Reject(Marker):
+
+    error_message = _(u'Value rejected')
 
     def execute(self, input, matches):
         # Complain on all values it gets
         if matches:
             errors = []
             for k, sanitized_k, v in matches:
-                errors.append(Invalid(_(u'Value rejected'), None, six.text_type(v), [k]))
+                errors.append(Invalid(self.error_message, None, six.text_type(k), [k]))
             raise MultipleInvalid.if_multiple(errors)
         return matches
 
+
 class Allow(Marker):
     pass
+
 
 class Extra(Marker):
     """ Catch-all marker for extra mapping keys """
     priority = -1000  # Extra should match last
 
+    error_message = _(u'Extra keys not allowed')
+
     def on_compiled(self, name=None, key_schema=None, value_schema=None):
+        # Special case
+        # When { Extra: Reject }, use a customized error message
+        if value_schema and isinstance(value_schema.compiled, Reject):
+            value_schema.compiled.error_message = self.error_message
         return super(Extra, self).on_compiled(name, key_schema, value_schema)
 
     def execute(self, input, matches):
         # Delegate the decision to the value.
 
         # If the value is a marker -- call execute() on it
-        # This is for Reject() so it has a chance to raise exceptions
+        # This is for the cases when `Extra` is mapped to a marker
         if isinstance(self.value_schema.compiled, Marker):
             return self.value_schema.compiled.execute(input, matches)
 
-        # Otherwise, it's a schema, which must be called on every value.
-        # However, CompiledSchema does this anyway as the next step, so do nothing
+        # Otherwise, it's a schema, which must be called on every value to validate it.
+        # However, CompiledSchema does this anyway at the next step, so doing nothing here
         return matches
 
 #endregion

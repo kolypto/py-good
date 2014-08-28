@@ -48,3 +48,36 @@ def get_type_name(t):
 
         # Get name from the Type itself
         return six.text_type(t.__name__).capitalize()
+
+
+class const:
+    """ Misc constants """
+    #: Types that are treated as literals
+    literal_types = six.integer_types + (six.text_type, six.binary_type) + (bool, float, complex, object, type(None))
+
+
+    class COMPILED_TYPE:
+        """ Compiled schema types """
+
+        LITERAL = 'literal'
+        TYPE = 'type'
+        SCHEMA = 'schema'
+        CALLABLE = 'callable'
+
+        ITERABLE = 'iterable'
+        MAPPING = 'mapping'
+        MARKER = 'marker'
+
+    #: Prioritites for compiled types
+    #: This is used for mappings to determine the sequence with which the keys are processed
+    #: See _schema_priority()
+
+    compiled_type_priorities = {
+        COMPILED_TYPE.LITERAL:   20,
+        COMPILED_TYPE.TYPE:      10,
+        COMPILED_TYPE.SCHEMA:     0,
+        COMPILED_TYPE.CALLABLE:   0,
+        COMPILED_TYPE.ITERABLE:   0,
+        COMPILED_TYPE.MAPPING:    0,
+        COMPILED_TYPE.MARKER:   None,  # Markers have their own priorities
+    }
