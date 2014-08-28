@@ -31,9 +31,22 @@ Table of Contents
    -  Priorities
    -  Creating a Schema
    -  Validating
+   -  Errors
 
--  Errors \* Invalid \* Invalid.enrich() \* MultipleInvalid
--  Markers \* Required \* Optional \* Remove \* Reject \* Allow \* Extra
+      -  Invalid
+
+         -  Invalid.enrich()
+
+      -  MultipleInvalid
+
+   -  Markers
+
+      -  Required
+      -  Optional
+      -  Remove
+      -  Reject
+      -  Allow
+      -  Extra
 
 Schema
 ======
@@ -318,7 +331,7 @@ values. See ```MultipleInvalid`` <#multipleinvalid>`__. \*
 ```Invalid`` <#invalid>`__.
 
 Errors
-======
+------
 
 Source: `good/schema/errors.py <good/schema/errors.py>`__
 
@@ -455,7 +468,7 @@ error strings for the user.
    ```Invalid`` <#invalid>`__.
 
 Markers
-=======
+-------
 
 A *Marker* is a proxy class which wraps some schema.
 

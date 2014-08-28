@@ -35,17 +35,17 @@ Table of Contents
     * <a href="#priorities">Priorities</a>
     * <a href="#creating-a-schema">Creating a Schema</a>
     * <a href="#validating">Validating</a>
-* <a href="#errors">Errors</a>
+    * <a href="#errors">Errors</a>
         * <a href="#invalid">Invalid</a>
             * <a href="#invalidenrich">Invalid.enrich()</a>
         * <a href="#multipleinvalid">MultipleInvalid</a>
-* <a href="#markers">Markers</a>
+    * <a href="#markers">Markers</a>
         * <a href="#required">Required</a>
         * <a href="#optional">Optional</a>
         * <a href="#remove">Remove</a>
         * <a href="#reject">Reject</a>
         * <a href="#allow">Allow</a>
-        * <a href="#extra">Extra</a> 
+        * <a href="#extra">Extra</a>
 
 
 Schema
@@ -297,7 +297,7 @@ Throws:
 
 
 Errors
-======
+------
 
 Source: [good/schema/errors.py](good/schema/errors.py)
 
@@ -423,7 +423,7 @@ In this example, we create a dictionary of paths (as strings) mapped to error st
 
 
 Markers
-=======
+-------
 
 A *Marker* is a proxy class which wraps some schema.
 
