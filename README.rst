@@ -229,6 +229,15 @@ validation:
    attribute on the callable object. This works best with classes,
    however a function can accept ``name`` attribute as well.
 
+-  Signals.
+
+   A callable may decide that the value is soooo invalid that it should
+   be dropped from the sanitized output. In this case, the callable
+   should raise ``good.schema.signals.RemoveValue``.
+
+   This is used by the ``Remove()`` marker, but can be leveraged by
+   other callables as well.
+
 Priorities
 ----------
 
