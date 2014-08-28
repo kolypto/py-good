@@ -95,33 +95,40 @@ class Invalid(BaseError):
     def enrich(self, expected=None, provided=None, path=None, validator=None):
         """ Enrich this error with additional information.
 
-        This works with both Invalid and MultipleInvalid (thanks to [`__iter__`](#invalid-iter) method).
+        This works with both Invalid and MultipleInvalid (thanks to [`__iter__`](#invalid-iter) method):
+        in the latter case, the defaults are applied to all collected errors.
 
-        One especially useful feature is to prepend values to `path`:
+        The specified arguments are only set on `Invalid` errors which do not have any value on the property.
+
+        One exclusion is `path`: if provided, it is prepended to `Invalid.path`.
+        This feature is especially useful when validating the whole input with multiple different schemas:
 
         ```python
         from good import Schema, Invalid
 
         schema = Schema(int)
         input = {
-            'age': 10,
+            'user': {
+                'age': 10,
+            }
         }
 
         try:
-            schema(input['age'])
+            schema(input['user']['age'])
         except Invalid as e:
-            e.enrich(path=['age'])  # Make sure path reflects the real path
+            e.enrich(path=['user', 'age'])  # Make the path reflect the reality
             raise  # re-raise the error with updated fields
         ```
 
         This is used when validating a value within a container.
 
         :param expected: Invalid.expected default
+        :type expected: unicode|None
         :param provided: Invalid.provided default
-        :param path: Invalid.path chunk
+        :type provided: unicode|None
+        :param path: Prefix to prepend to Invalid.path
+        :type path: list|None
         :param validator: Invalid.validator default
-        :param path_prefix: Whether `path` should be prepended? Otherwise, it's appended
-        :type path_prefix: bool
         :rtype: Invalid|MultipleInvalid
         """
         for e in self:

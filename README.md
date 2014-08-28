@@ -186,9 +186,9 @@ These are just the basic rules, and for sure `Schema` can do much more than that
 Additional logic is implemented through [Markers](#markers) and [Validators](#validators),
 which are described in the following chapters.
 
-Finally, here are the things to consider when using custom callables for validation:
+## Callables
 
-Notes to consider about *callable* schemas:
+Finally, here are the things to consider when using custom callables for validation:
 
 * Throwing errors.
 
@@ -208,6 +208,26 @@ Notes to consider about *callable* schemas:
 
     If a custom name is desired on the callable -- set the `name` attribute on the callable object.
     This works best with classes, however a function can accept `name` attribute as well.
+
+## Priorities
+
+Every schema type has a priority ([source](good/schema/util.py)),
+which define the sequence for matching keys in a mapping schema:
+
+1. Literals have highest priority
+2. Types has lower priorities than literals, hence schemas can define specific rules for individual keys,
+    and then declare general rules by type-matching:
+
+    ```python
+    Schema({
+        'name': str,  # Specific rule with a literal
+        str: int,     # General rule with a type
+    })
+    ```
+3. Callables, iterables, mappings -- have lower priorities.
+
+In addition, [Markers](#markers) have individual priorities,
+which can be higher that literals ([`Remove()`](#remove) marker) or lower than callables ([`Extra`](#extra) marker).
 
 Creating a Schema
 -----------------
@@ -293,7 +313,7 @@ This exception is guaranteed to contain text values which are meaningful for the
 
 
 
-#### Invalid.enrich()
+#### `Invalid.enrich()`
 ```python
 Invalid.enrich(expected=None, provided=None, path=None,
                validator=None)
@@ -301,22 +321,28 @@ Invalid.enrich(expected=None, provided=None, path=None,
 
 Enrich this error with additional information.
 
-This works with both Invalid and MultipleInvalid (thanks to [`__iter__`](#invalid-iter) method).
+This works with both Invalid and MultipleInvalid (thanks to [`__iter__`](#invalid-iter) method):
+in the latter case, the defaults are applied to all collected errors.
 
-One especially useful feature is to prepend values to `path`:
+The specified arguments are only set on `Invalid` errors which do not have any value on the property.
+
+One exclusion is `path`: if provided, it is prepended to `Invalid.path`.
+This feature is especially useful when validating the whole input with multiple different schemas:
 
 ```python
 from good import Schema, Invalid
 
 schema = Schema(int)
 input = {
-    'age': 10,
+    'user': {
+        'age': 10,
+    }
 }
 
 try:
-    schema(input['age'])
+    schema(input['user']['age'])
 except Invalid as e:
-    e.enrich(path=['age'])  # Make sure path reflects the real path
+    e.enrich(path=['user', 'age'])  # Make the path reflect the reality
     raise  # re-raise the error with updated fields
 ```
 
@@ -324,7 +350,7 @@ This is used when validating a value within a container.
 
 * `expected`: Invalid.expected default
 * `provided`: Invalid.provided default
-* `path`: Invalid.path chunk
+* `path`: Prefix to prepend to Invalid.path
 * `validator`: Invalid.validator default
 
 Returns: `Invalid|MultipleInvalid` 
@@ -365,6 +391,276 @@ In this example, we create a dictionary of paths (as strings) mapped to error st
 
     If it contains `MultipleInvalid` errors -- the list is recursively flattened
     so all of them are guaranteed to be instances of [`Invalid`](#invalid).
+
+
+
+
+
+Markers
+=======
+
+A *Marker* is a proxy class which wraps some schema.
+
+Immediately, the example is:
+
+```python
+from good import Schema, Required
+
+Schema({
+    'name': str,  # required key
+    Optional('age'): int,  # optional key
+}, default_keys=Required)
+```
+
+This way, keys marked with `Required()` will report errors if no value if provided.
+
+Typically, a marker "decorates" a mapping key, but some of them can be "standalone":
+
+```python
+from good import Schema, Extra
+Schema({
+    'name': str,
+    Extra: int  # allow any keys, provided their values are integer
+})
+```
+
+Each marker can have it's own unique behavior since nothing is hardcoded into the core [`Schema`](#schema).
+Keep on reading to learn how markers perform.
+
+
+### `Required`
+```python
+Required(key)
+```
+
+`Required(key)` is used to decorate mapping keys and hence specify that these keys must always be present in
+the input mapping.
+
+When compiled, [`Schema`](#schema) uses `default_keys` as the default marker:
+
+```python
+from good import Schema, Required
+
+schema = Schema({
+    'name': str,
+    'age': int
+}, default_keys=Required)  # wrap with Required() by default
+
+schema({'name': 'Mark'})
+#-> Invalid: Required key not provided @ ['age']: expected age, got -none-
+```
+
+Remember that mapping keys are schemas as well, and `Require` will expect to always have a match:
+
+```python
+schema = Schema({
+    Required(str): int,
+})
+
+schema({})  # no `str` keys provided
+#-> Invalid: Required key not provided: expected String, got -none-
+```
+
+
+
+
+
+
+
+### `Optional`
+```python
+Optional(key)
+```
+
+`Optional(key)` is controversial to [`Required(key)`](#required): specified that the mapping key is not required.
+
+This only has meaning when a [`Schema`](#schema) has `default_keys=Required`:
+then, it decorates all keys with `Required()`, unless a key is already decorated with some Marker.
+`Optional()` steps in: those keys are already decorated and hence are not wrapped with `Required()`.
+
+So, it's only used to prevent `Schema` from putting `Required()` on a key.
+In all other senses, it has absolutely no special behavior.
+
+As a result, optional key can be missing, but if it was provided -- its value must match the value schema.
+
+Example: use as `default_keys`:
+
+```python
+schema = Schema({
+    'name': str,
+    'age': int
+}, default_keys=Optional)  # Make all keys optional by default
+
+schema({})  #-> {} -- okay
+schema({'name': None})
+#->  Invalid: Wrong type @ ['name']: expected String, got None
+```
+
+Example: use to mark specific keys are not required:
+
+    ```python
+schema = Schema({
+    'name': str,
+    Optional(str): int  # key is optional
+})
+
+schema({'name': 'Mark'})  # valid
+schema({'name': 'Mark', 'age': 10})  # valid
+schema({'name': 'Mark', 'age': 'X'})
+#-> Invalid: Wrong type @ ['age']: expected Integer number, got Binary String
+```
+
+
+
+
+
+
+
+### `Remove`
+```python
+Remove(key)
+```
+
+`Remove(key)` marker is used to declare that the key, if encountered,
+should be removed, without validating the value.
+
+`Remove` has highest priority, so it operates before everything else in the schema.
+
+Example:
+
+```python
+schema = Schema({
+    Remove('name'): str,  # `str` does not mean anything since the key is removed anyway
+    'age': int
+})
+
+schema({'name': 111, 'age': 18})  #-> {'age': 18}
+```
+
+However, it's more natural to use `Remove()` on values.
+Remember that in this case `'name'` will become [`Required()`](#required),
+if not decorated with [`Optional()`](#optional):
+
+```python
+schema = Schema({
+    Optional('name'): Remove
+})
+
+schema({'name': 111, 'age': 18})  #-> {'age': 18}
+```
+
+**Bonus**: `Remove()` can be used in iterables as well:
+
+```python
+schema = Schema([str, Remove(int)])
+schema(['a', 'b', 1, 2])  #-> ['a', 'b']
+```
+
+
+
+
+
+
+
+### `Reject`
+```python
+Reject(key)
+```
+
+`Reject(key)` marker is used to report [`Invalid`](#invalid) errors every time is matches something in the input.
+
+It has lower priority than most of other schemas, so rejection will only happen
+if no other schemas has matched this value.
+
+Example:
+
+```python
+schema = Schema({
+    Reject('name'): None,  # Reject by key
+    Optional('age'): Msg(Reject, u"Field is not supported anymore"),  # alternative form
+})
+
+schema({'name': 111})
+#-> Invalid: Field is not supported anymore @ ['name']: expected -none-, got name
+```
+
+
+
+
+
+
+
+### `Allow`
+```python
+Allow(key)
+```
+
+`Allow(key)` is a no-op marker that never complains on anything.
+
+Designed to be used with [`Extra`](#extra).
+
+
+
+
+
+
+
+### `Extra`
+```python
+Extra(key)
+```
+
+`Extra` is a catch-all marker to define the behavior for mapping keys not defined in the schema.
+
+It has the lowest priority, and delegates its function to its value, which can be a schema, or another marker.
+
+Given without argument, it's compiled with an identity function `lambda x:x` which is a catch-all:
+it matches any value. Together with lowest priority, `Extra` will only catch values which did not match anything else.
+
+Every mapping has an `Extra` implicitly, and `extra_keys` argument controls the default behavior.
+
+Example with `Extra: <schema>`:
+
+```python
+schema = Schema({
+    'name': str,
+    Extra: int  # this will allow extra keys provided they're int
+})
+
+schema({'name': 'Alex', 'age': 18'})  #-> ok
+schema({'name': 'Alex', 'age': 'X'})
+#-> Invalid: Wrong type @ ['age']: expected Integer number, got Binary String
+```
+
+Example with `Extra: Reject`: reject all extra values:
+
+```python
+schema = Schema({
+    'name': str,
+    Extra: Reject
+})
+
+schema({'name': 'Alex', 'age': 'X'})
+#-> Invalid: Extra keys not allowed @ ['age']: expected -none-, got age
+```
+
+Example with `Extra: Remove`: silently discard all extra values:
+
+```python
+schema = Schema({'name': str}, extra_keys=Remove)
+schema({'name': 'Alex', 'age': 'X'})  #-> {'name': 'Alex'}
+```
+
+Example with `Extra: Allow`: allow any extra values:
+
+```python
+schema = Schema({'name': str}, extra_keys=Allow)
+schema({'name': 'Alex', 'age': 'X'})  #-> {'name': 'Alex', 'age': 'X'}
+```
+
+
+
+
 
 
 

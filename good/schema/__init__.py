@@ -159,9 +159,9 @@ class Schema(object):
     Additional logic is implemented through [Markers](#markers) and [Validators](#validators),
     which are described in the following chapters.
 
-    Finally, here are the things to consider when using custom callables for validation:
+    ## Callables
 
-    Notes to consider about *callable* schemas:
+    Finally, here are the things to consider when using custom callables for validation:
 
     * Throwing errors.
 
@@ -181,6 +181,26 @@ class Schema(object):
 
         If a custom name is desired on the callable -- set the `name` attribute on the callable object.
         This works best with classes, however a function can accept `name` attribute as well.
+
+    ## Priorities
+
+    Every schema type has a priority ([source](good/schema/util.py)),
+    which define the sequence for matching keys in a mapping schema:
+
+    1. Literals have highest priority
+    2. Types has lower priorities than literals, hence schemas can define specific rules for individual keys,
+        and then declare general rules by type-matching:
+
+        ```python
+        Schema({
+            'name': str,  # Specific rule with a literal
+            str: int,     # General rule with a type
+        })
+        ```
+    3. Callables, iterables, mappings -- have lower priorities.
+
+    In addition, [Markers](#markers) have individual priorities,
+    which can be higher that literals ([`Remove()`](#remove) marker) or lower than callables ([`Extra`](#extra) marker).
     """
 
     compiled_schema_cls = CompiledSchema

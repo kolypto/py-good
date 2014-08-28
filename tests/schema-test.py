@@ -257,6 +257,11 @@ class SchemaTest(unittest.TestCase):
         self.assertInvalid(schema, [1, 4],  Invalid(s.es_value,      u'List[1|2|String]', u'4',     [1], list_schema))
         self.assertInvalid(schema, [1, 4],  Invalid(s.es_value,      u'List[1|2|String]', u'4',     [1], list_schema))
 
+        # Remove() marker
+        schema = Schema([six.text_type, Remove(int)])
+        self.assertValid(schema, [u'a', u'b'])
+        self.assertValid(schema, [u'a', u'b', 1, 2], [u'a', u'b'])
+
     def test_callable(self):
         """ Test Schema(<callable>) """
         def intify(v):
@@ -441,7 +446,7 @@ class SchemaTest(unittest.TestCase):
         self.assertInvalid(schema, {u'a': 1                  },
                            Invalid(s.es_required, u'b', s.v_no, [u'b'], Required(u'b')))
 
-        # Remove
+        # Remove: as key
         schema = Schema({
             Remove(u'a'): 1,
             u'b': 2,
@@ -453,6 +458,15 @@ class SchemaTest(unittest.TestCase):
         # removes invalid values before they're validated
         self.assertValid(schema, {u'a': 'X', u'b': 2, 1: True}, {u'b': 2})
         self.assertValid(schema, {u'a': 'X', u'b': 2, 1: 'X' }, {u'b': 2})
+
+        # Remove: as value
+        schema = Schema({
+            u'a': Remove,
+            u'b': 2,
+            int: Remove(bool),  # it does not care about the value
+        })
+        self.assertValid(schema,   {u'a': None, u'b': 2, 1: True}, {u'b': 2})
+        self.assertValid(schema,   {u'a': None, u'b': 2, 1: None}, {u'b': 2})
 
         # Extra
         schema = Schema({
@@ -487,7 +501,7 @@ class SchemaTest(unittest.TestCase):
         self.assertValid(schema, {u'a': 1})
         self.assertValid(schema, {u'a': 1, u'b': 2, u'c': 3})
 
-        # Reject
+        # Reject: as key
         schema = Schema({
             u'a': 1,
             Reject(six.text_type): int,
@@ -495,6 +509,15 @@ class SchemaTest(unittest.TestCase):
         self.assertValid(schema,   {u'a': 1})
         self.assertInvalid(schema, {u'a': 1, u'b': 1},
                            Invalid(s.es_rejected, s.v_no, u'b', [u'b'], Reject(six.text_type)))
+
+        # Reject: as value
+        schema = Schema({
+            u'a': 1,
+            Optional(six.text_type): Reject,
+        })
+        self.assertValid(schema, {u'a': 1})
+        self.assertInvalid(schema, {u'a': 1, u'b': 1},
+                           Invalid(s.es_rejected, s.v_no, u'1', [u'b'], Reject))
 
     def test_mapping_priority(self):
         """ Test Schema(<mapping>), priority test """
@@ -562,6 +585,8 @@ class SchemaTest(unittest.TestCase):
         schema.pop(Extra)
 
     #endregion
+
+    pass
 
     #region Test Helpers
     # endregion

@@ -81,3 +81,4 @@ class const:
         COMPILED_TYPE.MAPPING:    0,
         COMPILED_TYPE.MARKER:   None,  # Markers have their own priorities
     }
+

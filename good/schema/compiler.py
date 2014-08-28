@@ -1,8 +1,7 @@
 import collections
 import six
-from functools import wraps
 
-from . import markers
+from . import markers, signals
 from .errors import SchemaError, Invalid, MultipleInvalid
 from .util import get_type_name, const
 
@@ -378,13 +377,16 @@ class CompiledSchema(object):
             # Each `v` member should match to any `schema` member
             errors = []  # Errors for every value
             values = []  # Sanitized values
-            for value_index, value in enumerate(l):
+            for value_index, value in list(enumerate(l)):
                 # Walk through schema members and test if any of them match
-                for member in schema_subs:
+                for value_schema in schema_subs:
                     try:
                         # Try to validate
-                        values.append(member(value))
+                        values.append(value_schema(value))
                         break  # Success!
+                    except signals.RemoveValue:
+                        # `value_schema` commanded to drop this value
+                        break
                     except Invalid as e:
                         # Ignore errors and hope other members will succeed better
                         pass
@@ -448,7 +450,7 @@ class CompiledSchema(object):
         # Here we let the Marker know its `value_schema` as well.
         for key_schema, value_schema in compiled.items():
             if key_schema.compiled_type == const.COMPILED_TYPE.MARKER:
-                key_schema.compiled.on_compiled(value_schema=value_schema)
+                key_schema.compiled.on_compiled(value_schema=value_schema, as_mapping_key=True)
 
         # Sort key schemas for matching.
         # Since various schema types have different priority, we need to sort these accordingly.
@@ -542,6 +544,9 @@ class CompiledSchema(object):
                         # Execute the value schema and store it into the rebuilt mapping
                         # using the sanitized key, which might be different from the original key.
                         output[sanitized_k] = value_schema(v)
+                    except signals.RemoveValue:
+                        # `value_schema` commanded to drop this value
+                        continue
                     except Invalid as e:
                         # Any value validation errors are appended to the list of Invalid reports for the schema
                         # enrich() adds more info on the collected errors.
