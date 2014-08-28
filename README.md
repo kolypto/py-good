@@ -28,8 +28,6 @@ The whole internals have been reworked towards readability and robustness. And y
 Table of Contents
 =================
 
-* <a href="#good">Good</a>
-* <a href="#table-of-contents">Table of Contents</a>
 * <a href="#schema">Schema</a>
     * <a href="#callables">Callables</a>
     * <a href="#priorities">Priorities</a>

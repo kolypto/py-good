@@ -23,8 +23,6 @@ readability and robustness. And yeah, the docs are now exhaustive :)
 Table of Contents
 =================
 
--  Good
--  Table of Contents
 -  Schema
 
    -  Callables
