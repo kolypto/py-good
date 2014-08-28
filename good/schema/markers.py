@@ -93,19 +93,21 @@ class Marker(object):
 #region Dictionary keys behavior
 
 class Required(Marker):
-
+    priority = 0
     error_message = _(u'Required key not provided')
 
     def execute(self, matches):
         # If a Required() key is present -- it expects to ALWAYS have one or more matches
         if not matches:
             path = [self.key] if self.key_schema.compiled_type == const.COMPILED_TYPE.LITERAL else []
-            raise Invalid(self.error_message, self.name, None, path)
+            raise Invalid(self.error_message, self.name, _(u'-none-'), path)
         return matches
 
 
 class Optional(Marker):
-    pass
+    priority = 0
+
+    pass  # no-op
 
 
 class Remove(Marker):
@@ -117,7 +119,7 @@ class Remove(Marker):
 
 
 class Reject(Marker):
-    priority = -10
+    priority = -50
     error_message = _(u'Value rejected')
 
     def execute(self, matches):
@@ -125,13 +127,15 @@ class Reject(Marker):
         if matches:
             errors = []
             for k, sanitized_k, v in matches:
-                errors.append(Invalid(self.error_message, None, six.text_type(k), [k]))
+                errors.append(Invalid(self.error_message, _(u'-none-'), six.text_type(k), [k]))
             raise MultipleInvalid.if_multiple(errors)
         return matches
 
 
 class Allow(Marker):
-    pass
+    priority = 0
+
+    pass  # no-op
 
 
 class Extra(Marker):

@@ -1,6 +1,8 @@
 from __future__ import print_function
 import six
 import unittest
+from collections import OrderedDict
+from random import shuffle
 
 from good import Schema, Invalid, MultipleInvalid, Required, Optional, Extra, Remove, Reject, Allow
 from good.schema.util import get_type_name
@@ -17,6 +19,8 @@ class s:
     t_unicode = get_type_name(six.text_type)  # Unicode string
     t_list = get_type_name(list)
     t_dict = get_type_name(dict)
+
+    v_no = u'-none-'
 
     es_type = u'Wrong type'
     es_value_type = u'Wrong value type'
@@ -52,6 +56,13 @@ class SchemaTest(unittest.TestCase):
         self.assertEqual(expected.provided, actual.provided)
         self.assertEqual(expected.expected, actual.expected)
         self.assertEqual(expected.info, actual.info)
+
+        # Also test that Errors always have the desired types
+        self.assertTrue(isinstance(actual.path,     list))           # Always a list
+        self.assertTrue(isinstance(actual.message,  six.text_type))  # Unicode
+        self.assertTrue(isinstance(actual.provided, six.text_type))  # Unicode
+        self.assertTrue(isinstance(actual.expected, six.text_type))  # Unicode
+        self.assertTrue(isinstance(actual.info,     dict))           # Dict
 
     def assertMultipleInvalidError(self, actual, expected):
         """ Assert that the two MultipleInvalid exceptions are the same
@@ -316,16 +327,16 @@ class SchemaTest(unittest.TestCase):
 
         # Missing key 'sex'
         self.assertInvalid(schema, {'name': u'A', 'age': 18},
-                           Invalid(s.es_required,   six.text_type('sex'),   None,                   ['sex'],    Required('sex')))
+                           Invalid(s.es_required,   six.text_type('sex'),   s.v_no,                 ['sex'],    Required('sex')))
         # Extra key 'lol'
         self.assertInvalid(schema, {'name': u'A', 'age': 18, 'sex': u'f', 'lol': 1},
-                           Invalid(s.es_extra,      None,                   six.text_type('lol'),   ['lol'],    Extra))
+                           Invalid(s.es_extra,      s.v_no,                 six.text_type('lol'),   ['lol'],    Extra))
         # Missing keys 'age', 'sex', extra keys 'lol', 'hah'
         self.assertInvalid(schema, {'name': u'A', 'lol': 1, 'hah': 2}, MultipleInvalid([
-                           Invalid(s.es_required,   six.text_type('age'),   None,                   ['age'],    Required),
-                           Invalid(s.es_required,   six.text_type('sex'),   None,                   ['sex'],    Required),
-                           Invalid(s.es_extra,      None,                   six.text_type('lol'),   ['lol'],    Extra),
-                           Invalid(s.es_extra,      None,                   six.text_type('hah'),   ['hah'],    Extra),
+                           Invalid(s.es_required,   six.text_type('age'),   s.v_no,                 ['age'],    Required),
+                           Invalid(s.es_required,   six.text_type('sex'),   s.v_no,                 ['sex'],    Required),
+                           Invalid(s.es_extra,      s.v_no,                 six.text_type('lol'),   ['lol'],    Extra),
+                           Invalid(s.es_extra,      s.v_no,                 six.text_type('hah'),   ['hah'],    Extra),
         ]))
 
     def test_mapping_type(self):
@@ -340,14 +351,14 @@ class SchemaTest(unittest.TestCase):
 
         # Wrong value type
         self.assertInvalid(schema, {'name': 1},
-                           Invalid(s.es_required,   s.t_int,  None,        [],  Required(int)))
+                           Invalid(s.es_required,   s.t_int,  s.v_no,      [],  Required(int)))
         self.assertInvalid(schema, {'name': 1, 1: True, 2: u'WROOONG'},
                            Invalid(s.es_type,       s.t_bool, s.t_unicode, [2], bool))
 
         # Wrong key type (meaning, `int` not provided, and extra key `'2'`)
         self.assertInvalid(schema, {'name': 1, u'1': True}, MultipleInvalid([
-                           Invalid(s.es_extra,      None,     u'1',        [u'1'], Extra),
-                           Invalid(s.es_required,   s.t_int,  None,        [],  Required(int)),
+                           Invalid(s.es_extra,      s.v_no,   u'1',        [u'1'], Extra),
+                           Invalid(s.es_required,   s.t_int,  s.v_no,      [],  Required(int)),
         ]))
 
     def test_mapping_callable(self):
@@ -384,14 +395,14 @@ class SchemaTest(unittest.TestCase):
                            Invalid(s.es_type, s.t_bool, s.t_none, ['1'], bool))
         # `intify()` did not match
         self.assertInvalid(schema, {'a': 1},
-                           Invalid(u'Required key not provided', u'intify()', None, [], Required(intify)))
+                           Invalid(u'Required key not provided', u'intify()', s.v_no, [], Required(intify)))
         # `multikey()` did not match
         self.assertInvalid(schema, {1: True},
-                           Invalid(u'Required key not provided', u'multikey_validate()', None, [], Required(abc)))
+                           Invalid(u'Required key not provided', u'multikey_validate()', s.v_no, [], Required(abc)))
         # Both `intify()` and `multikey()` did not match
         self.assertInvalid(schema, {}, MultipleInvalid([
-            Invalid(u'Required key not provided', u'intify()', None, [], Required(intify)),
-            Invalid(u'Required key not provided', u'multikey_validate()', None, [], Required(abc)),
+            Invalid(u'Required key not provided', u'intify()', s.v_no, [], Required(intify)),
+            Invalid(u'Required key not provided', u'multikey_validate()', s.v_no, [], Required(abc)),
         ]))
 
     def test_mapping_markers(self):
@@ -405,9 +416,9 @@ class SchemaTest(unittest.TestCase):
 
         self.assertValid(schema,   {u'a': 1, u'b': 2, 3: True})
         self.assertInvalid(schema, {u'a': 1,          3: True},
-                           Invalid(s.es_required, u'b', None, [u'b'], Required(u'b')))
+                           Invalid(s.es_required, u'b', s.v_no, [u'b'], Required(u'b')))
         self.assertInvalid(schema, {u'a': 1, u'b': 2},
-                           Invalid(s.es_required, s.t_int, None, [], Required(int)))
+                           Invalid(s.es_required, s.t_int, s.v_no, [], Required(int)))
 
         # Optional
         schema = Schema({
@@ -419,7 +430,7 @@ class SchemaTest(unittest.TestCase):
         self.assertValid(schema,   {u'a': 1, u'b': 2         })
         self.assertValid(schema,   {u'a': 1, u'b': 2, 3: True})
         self.assertInvalid(schema, {u'a': 1                  },
-                           Invalid(s.es_required, u'b', None, [u'b'], Required(u'b')))
+                           Invalid(s.es_required, u'b', s.v_no, [u'b'], Required(u'b')))
 
         # Remove
         schema = Schema({
@@ -451,7 +462,7 @@ class SchemaTest(unittest.TestCase):
         })
         self.assertValid(schema, {u'a': 1})
         self.assertInvalid(schema, {u'a': 1, u'b': 2},
-                           Invalid(s.es_extra, None, u'b', [u'b'], Extra))
+                           Invalid(s.es_extra, s.v_no, u'b', [u'b'], Extra))
 
         # Extra: Remove
         schema = Schema({
@@ -474,8 +485,70 @@ class SchemaTest(unittest.TestCase):
         })
         self.assertValid(schema,   {u'a': 1})
         self.assertInvalid(schema, {u'a': 1, u'b': 1},
-                           Invalid(s.es_rejected, None, u'b', [u'b'], Reject(six.text_type)))
+                           Invalid(s.es_rejected, s.v_no, u'b', [u'b'], Reject(six.text_type)))
 
     def test_mapping_priority(self):
         """ Test Schema(<mapping>), priority test """
         # This test validates that schema key type priorities are working fine
+
+        # Use different functions so they have different hashes and do not collapse into a single value.
+        identity1 = lambda x: x
+        identity2 = lambda x: x
+        identity3 = lambda x: x
+
+        # All key schemas will match integers, and values will show whether the priorities work fine
+        schema = {
+            # Remove has the highest priority
+            Remove(identity1): lambda x: None,
+            # These two are wrapped with Optional(), but still must be applied in order
+            # Literal, then type
+            100: lambda x: 'literal',
+            int: lambda x: 'type',
+            # Callable: lower than type
+            identity2: lambda x: 'callable',
+            # Reject: lower than callable
+            Reject(identity3): lambda x: None,
+            # Extra: absolutely last
+            Extra: lambda x: 'Extra'
+        }
+
+        assert len(schema), 6
+
+        def assertValid(schema, value, expected_result=None, expected_error=None):
+            """ Test a schema definition, randomizing the sequence every time """
+            schema_items = list(schema.items())
+            for i in range(0, 10):
+                shuffle(schema_items)
+                sch = Schema(OrderedDict(schema), default_keys=Optional)
+                if expected_error:
+                    self.assertInvalid(sch, value, expected_error)
+                else:
+                    self.assertValid(sch, value, expected_result)
+
+        # Now try matching the schema in multiple steps, dropping the top priority key every time
+        # This also ensures the dict is not modified by the schema itself.
+
+        # 1. Marker:Remove
+        assertValid(schema, {100: None}, {})
+        schema.pop(identity1)
+
+        # 2. literal
+        assertValid(schema, {100: None}, {100: 'literal'})
+        schema.pop(100)
+
+        # 3. type
+        assertValid(schema, {100: None}, {100: 'type'})
+        schema.pop(int)
+
+        # 4. callable
+        assertValid(schema, {100: None}, {100: 'callable'})
+        schema.pop(identity2)
+
+        # 5. Reject
+        assertValid(schema, {100: None}, expected_error=Invalid(s.es_rejected, s.v_no, u'100', [100], Reject(identity3)))
+        schema.pop(identity3)
+
+        # 6. Marker:Extra
+        assertValid(schema, {100: None}, {100: 'Extra'})
+        schema.pop(Extra)
+

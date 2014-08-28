@@ -139,11 +139,12 @@ class CompiledSchema(object):
         """
         return sorted(schemas_list,
                       key=lambda x: (
-                          # Top-level priority
+                          # Top-level priority:
+                          # priority of the schema itself
                           x.priority,
                           # Second-level priority (for markers of the common type)
                           # This ensures that Optional(1) always goes before Optional(int)
-                          x.key_schema.priority if isinstance(x, markers.Marker) else 0
+                          x.compiled.key_schema.priority if x.compiled_type == const.COMPILED_TYPE.MARKER else 0
                       ), reverse=True)
 
     def sub_compile(self, schema, path=None, matcher=False):
@@ -517,7 +518,7 @@ class CompiledSchema(object):
                 # Execute Marker first.
                 if key_schema.compiled_type == const.COMPILED_TYPE.MARKER:
                     # Note that Markers can raise errors as well.
-                    # Since they're compiled -- all validation errors within the markers are `Invalid`, not anything else.
+                    # Since they're compiled - all marker errors are raised as `Invalid`.
                     try:
                         matches = key_schema.compiled.execute(matches)
                     except Invalid as e:
@@ -525,6 +526,8 @@ class CompiledSchema(object):
                         # Using enrich(), we're also setting `path` prefix, and other info known at this step.
                         errors.append(e.enrich(
                             # Markers are responsible to set `expected`, `provided`, `validator`
+                            expected=key_schema.name,
+                            provided=None,  # Marker's required to set that
                             path=self.path,
                             validator=key_schema.compiled
                         ))

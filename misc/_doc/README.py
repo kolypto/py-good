@@ -13,4 +13,12 @@ data = {
     'Schema': doccls(good.Schema),
 }
 
-print json.dumps(data, indent=2)
+
+class MyJsonEncoder(json.JSONEncoder):
+    def default(self, o):
+        # Classes
+        if isinstance(o, type):
+            return o.__name__
+        return super(MyJsonEncoder, self).default(o)
+
+print json.dumps(data, indent=2, cls=MyJsonEncoder)

@@ -9,9 +9,11 @@ Core features:
 
 -  Simple
 -  Customizable
--  Supports nested validation
+-  Supports nested model validation
+-  Error paths (which field contains the error)
 -  User-friendly error messages
 -  Internationalization!
+-  Python 2.7, 3.3+ compatible
 
 Inspired by the amazing
 `alecthomas/voluptuous <https://github.com/alecthomas/voluptuous>`__ and
@@ -27,7 +29,12 @@ Schema
 Validation schema.
 
 A schema is a Python structure where nodes are pattern-matched against
-the corresponding values.
+the corresponding values. It leverages the full flexibility of Python,
+allowing you to match values, types, data sctructures and much more.
+
+When a schema is created, it's compiled into a callable function which
+does the validation, hence it does not need to analyze the schema every
+time.
 
 Once the Schema is defined, validation can be triggered by calling it:
 
@@ -45,37 +52,40 @@ The following rules exist:
    .. code:: python
 
        Schema(1)(1)  #-> 1
-       Schema(1)(2)  #-> Incorrect value
+       Schema(1)(2)  #-> Invalid: Invalid value: expected 1, got 2
 
-2. **Type**: is tested with ``instanceof()`` check:
+2. **Type**: type schema produces an ``instanceof()`` check on the input
+   value:
 
    .. code:: python
 
        Schema(int)(1)    #-> 1
-       Schema(int)('1')  #-> Invalid: expecting an integer, string given
+       Schema(int)('1')  #-> Invalid: Wrong type: expected Integer number, got Binary String
 
 3. **Callable**: is applied to the value and the result is used as the
    final value. Any errors raised by the callable are treated as
    validation errors.
 
-In addition, validators are allowed to mutate a value to a given form.
-For instance, ```Coerce(int)`` <#coerce>`__ returns a callable which
-will convert input values into ``int`` or fail.
+In addition, validators are allowed to transform a value to the required
+form. For instance, ```Coerce(int)`` <#coerce>`__ returns a callable
+which will convert input values into ``int`` or fail.
 
-\`\`\`python CoerceInt = lambda v: int(v) # naive Coerce(int)
-implementation
+\`\`\`python def CoerceInt(v): # naive Coerce(int) implementation return
+int(v)
 
-Schema(CoerceInt)(1) #-> 2 Schema(CoerceInt)('1') # Invalid: invalid
-value \`\`\`
-
-If the callable trows ```Invalid`` <#invalid>`__ exception, it's used as
-is. Other exceptions are wrapped into ``Invalid`` and re-raised.
+Schema(CoerceInt)(1) #-> 1 Schema(CoerceInt)('1') #-> 1
+Schema(CoerceInt)('a') #-> Invalid: ValueError: invalid literal for
+int(): expected CoerceInt(), got a \`\`\`
 
 4. **``Schema``**: a schema may contain sub-schemas:
 
    .. code:: python
 
-       Schema(Schema(int))
+       sub_schema = Schema(int)
+       schema = Schema([None, sub_schema])
+
+       schema([None, 1, 2])  #-> [None, 1, 2]
+       schema([None, '1'])  #-> Invalid: invalid value
 
    Since ``Schema`` is callable, validation transparently by just
    calling it :)
@@ -86,17 +96,19 @@ the compilation phase:
 1. **Iterables** (``list``, ``tuple``, ``set``, custom iterables):
 
    Iterables are treated as a set of valid values, where each value in
-   the input is compared against the given set of valid values.
+   the input is compared against each value in the schema.
 
-   In addition, the input iterable must have the given type:
+   In order for the input to be valid, it needs to have the same
+   iterable type, and all of its values should have at least one
+   matching value in the schema.
 
    .. code:: python
 
-       schema = Schema([1, 2, 3])
+       schema = Schema([1, 2, 3])  # List of valid values
 
-       schema([1, 2, 2])  #-> [1]
-       schema([1, 2, 4])  #-> Invalid: invalid list value @ [2]
-       schema((1, 2, 2))  #-> Invalid: expecting a list, tuple given
+       schema([1, 2, 2])  #-> [1, 2, 2]
+       schema([1, 2, 4])  #-> Invalid: Invalid value @ [2]: expected List[1|2|3], got 4
+       schema((1, 2, 2))  #-> Invalid: Wrong value type: expected List, got Tuple
 
    Each value within the iterable is a schema as well, and validation
    requires that each member of the input value matches *any* of the
@@ -119,11 +131,13 @@ the compilation phase:
    2. For every member of the list, test that there is a matching value
       in the schema.
 
-   Since lists are ordered, the first schema that didn't fail is used.
+      E.g. for value ``1`` -- ``int`` matches (immediate
+      ``instanceof()`` check). However, for value ``'3'`` -- ``int``
+      fails, but the callable manages to do it with no errors, and
+      transforms the value as well.
 
-   E.g. for value ``1`` -- ``int`` matches (immediate ``instanceof()``
-   check). However, for value ``'3'`` -- ``int`` fails, but the callable
-   manages to do it with no errors.
+      Since lists are ordered, the first schema that didn't fail is
+      used.
 
 2. **Mappings** (``dict``, custom mappings):
 
@@ -136,7 +150,7 @@ the compilation phase:
            'name': str,
            'age': lambda v: int(v)
        })({
-           'name':  'Alex',
+           'name': 'Alex',
            'age': '18',
        })  #-> {'name': 'Alex', 'age': 18}
 
@@ -166,26 +180,65 @@ the compilation phase:
 
    In addition, certain keys can be marked as
    ```Required`` <#required>`__ and ```Optional`` <#optional>`__. The
-   default behavior is to have all keys optional, but this can be
-   changed by providing ``required=True`` argument to the Schema.
+   default behavior is to have all keys required, but this can be
+   changed by providing ``default_keys=Optional`` argument to the
+   Schema.
 
    Finally, a mapping does not allow any extra keys (keys not defined in
-   the schema). To change this, provide ``extra=True`` to the ``Schema``
-   constructor.
+   the schema). To change this, provide ``extra_keys=Allow`` to the
+   ``Schema`` constructor.
 
 These are just the basic rules, and for sure ``Schema`` can do much more
 than that! Additional logic is implemented through
 `Markers <#markers>`__ and `Validators <#validators>`__, which are
-described in the next chapters.
+described in the following chapters.
+
+Finally, here are the things to consider when using custom callables for
+validation:
+
+Notes to consider about *callable* schemas:
+
+::
+
+    * Throwing errors.
+
+        If the callable throws [`Invalid`](#invalid) exception, it's used as is with all the rich info it provides.
+        Schema is smart enough to fill into most of the arguments (see [`Invalid.enrich`](#Invalid-enrich)),
+        so it's enough to use a custom message, and probably, set a human-friendly `expected` field.
+
+        If the callable throws anything else (e.g. `ValueError`), these are wrapped into `Invalid`.
+        Schema tries to do its best, but such messages will probably be cryptic for the user.
+        Hence, always raise meaningful errors when creating custom validators.
+
+    * Naming.
+
+        If the provided callable does not specify `Invalid.expected` expected value,
+        the `__name__` of the callable is be used instead.
+        E.g. `def intify(v):pass` becomes `'intify()'` in reported errors.
+
+        If a custom name is desired on the callable -- set the `name` attribute on the callable object.
+        This works best with classes, however a function can accept `name` attribute as well.
 
 Creating a Schema
 -----------------
 
 .. code:: python
 
-    Schema(schema, required=False, extra=False)
+    Schema(schema, default_keys=<class
+           'good.schema.markers.Required'>, extra_keys=<class
+           'good.schema.markers.Reject'>)
 
-Create a ``Schema`` object from the given schema.
+Creates a compiled ``Schema`` object from the given schema definition.
+
+Under the hood, it uses ``SchemaCompiler``: see the
+`source <good/schema/compiler.py>`__ if interested.
+
+-  ``schema``: Schema definition
+-  ``default_keys``: Default mapping keys behavior: a
+   ```Marker`` <#markers>`__ class used as a default on mapping keys
+   which are not Marker()ed with anything
+-  ``extra_keys``: Default extra keys behavior: sub-schema, or a
+   ```Marker`` <#markers>`__ class
 
 .. |Build Status| image:: https://api.travis-ci.org/kolypto/py-good.png?branch=master
    :target: https://travis-ci.org/kolypto/py-good
