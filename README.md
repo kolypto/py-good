@@ -505,7 +505,7 @@ schema({'name': None})
 
 Example: use to mark specific keys are not required:
 
-    ```python
+```python
 schema = Schema({
     'name': str,
     Optional(str): int  # key is optional

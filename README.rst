@@ -550,15 +550,17 @@ Example: use as ``default_keys``:
 
 Example: use to mark specific keys are not required:
 
-::
+.. code:: python
 
-    ```python
+    schema = Schema({
+        'name': str,
+        Optional(str): int  # key is optional
+    })
 
-schema = Schema({ 'name': str, Optional(str): int # key is optional })
-
-schema({'name': 'Mark'}) # valid schema({'name': 'Mark', 'age': 10}) #
-valid schema({'name': 'Mark', 'age': 'X'}) #-> Invalid: Wrong type @
-['age']: expected Integer number, got Binary String \`\`\`
+    schema({'name': 'Mark'})  # valid
+    schema({'name': 'Mark', 'age': 10})  # valid
+    schema({'name': 'Mark', 'age': 'X'})
+    #-> Invalid: Wrong type @ ['age']: expected Integer number, got Binary String
 
 ``Remove``
 ~~~~~~~~~~
