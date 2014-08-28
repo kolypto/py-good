@@ -16,6 +16,8 @@ class Schema(object):
     Once the Schema is defined, validation can be triggered by calling it:
 
     ```python
+    from good import Schema
+
     schema = Schema({ 'a': str })
     # Test
     schema({ 'a': 'i am a valid string' })
@@ -124,6 +126,8 @@ class Schema(object):
         For instance, let's use [`In`](#in) validator to match certain keys:
 
         ```python
+        from good import Schema, In
+
         Schema({
             # These two keys should have integer values
             In('age', 'height'): int,
@@ -205,7 +209,9 @@ class Schema(object):
         __str__ = __unicode__
 
     def __call__(self, value):
-        """ Validate the given input value against the schema.
+        """ Having a [`Schema`](#schema), user input can be validated by calling the Schema on the input value.
+
+        When called, the Schema will return sanitized value, or raise exceptions.
 
         :param value: Input value to validate
         :return: Sanitized value

@@ -9,7 +9,7 @@
 
 {% macro fdoc(func) -%}
 ```python
-{{ func.qsignature|wordwrap(60)|indent(1+func.name|length) }}
+{{ func.qsignature|wordwrap(60)|indent(1+func.qualname|length) }}
 ```
 
 {{ func.doc }}
@@ -39,7 +39,21 @@ Creating a Schema
 -----------------
 {{ fdoc(Schema.cls) }}
 
-Validating with a Schema
-------------------------
+Validating
+----------
 
 {{ fdoc(Schema.attrs.__call__) }}
+
+Errors
+======
+
+{{ errors.doc }}
+
+### {{ Invalid.cls.name }}
+{{ fdoc(Invalid.cls) }}
+
+#### {{ Invalid.attrs.enrich.qualname }}()
+{{ fdoc(Invalid.attrs.enrich) }}
+
+### {{ MultipleInvalid.cls.name }}
+{{ fdoc(MultipleInvalid.cls) }}

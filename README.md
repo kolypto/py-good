@@ -43,6 +43,8 @@ to analyze the schema every time.
 Once the Schema is defined, validation can be triggered by calling it:
 
 ```python
+from good import Schema
+
 schema = Schema({ 'a': str })
 # Test
 schema({ 'a': 'i am a valid string' })
@@ -151,6 +153,8 @@ Moreover, instances of the following types are converted to callables on the com
     For instance, let's use [`In`](#in) validator to match certain keys:
 
     ```python
+    from good import Schema, In
+
     Schema({
         # These two keys should have integer values
         In('age', 'height'): int,
@@ -206,9 +210,7 @@ Notes to consider about *callable* schemas:
 Creating a Schema
 -----------------
 ```python
-Schema(schema, default_keys=<class
-       'good.schema.markers.Required'>, extra_keys=<class
-       'good.schema.markers.Reject'>)
+Schema(schema, default_keys=Required, extra_keys=Reject)
 ```
 
 Creates a compiled `Schema` object from the given schema definition.
@@ -226,14 +228,16 @@ Throws:
 * `SchemaError`: Schema compilation error
 
 
-Validating with a Schema
-------------------------
+Validating
+----------
 
 ```python
 Schema.__call__(value)
 ```
 
-Validate the given input value against the schema.
+Having a [`Schema`](#schema), user input can be validated by calling the Schema on the input value.
+
+When called, the Schema will return sanitized value, or raise exceptions.
 
 * `value`: Input value to validate
 
@@ -242,3 +246,123 @@ Returns: `None` Sanitized value
 Throws:
 * `good.MultipleInvalid`: Validation error on multiple values. See [`MultipleInvalid`](#multipleinvalid).
 * `good.Invalid`: Validation error on a single value. See [`Invalid`](#invalid).
+
+
+Errors
+======
+
+Source: <good/schema/errors.py>
+
+When [validating user input](#validating), [`Schema`](#schema) collects all errors and throws these
+after the whole input value is validated. This makes sure that you can report *all* errors at once.
+
+With simple schemas, like `Schema(int)`, only a single error is available: e.g. wrong value type.
+In this case, [`Invalid`](#invalid) error is raised.
+
+However, with complex schemas with embedded structures and such, multiple errors can occur:
+then [`MultipleInvalid`] is reported.
+
+All errors are available right at the top-level:
+
+```python
+from good import Invalid, MultipleInvalid
+```
+
+### Invalid
+```python
+Invalid(message, expected=None, provided=None, path=None,
+        validator=None, **info)
+```
+
+Validation error for a single value.
+
+This exception is guaranteed to contain text values which are meaningful for the user.
+
+* `message`: Validation error message
+* `expected`: Expected value: info about the value the validator was expecting
+* `provided`: Provided value: info about the value that was actually supplied by the user
+* `path`: Path to the error value.
+
+    E.g. if an invalid value was encountered at ['a'].b[1], then path=['a', 'b', 1].
+* `validator`: The validator that has failed: a schema item
+
+
+
+
+
+
+#### Invalid.enrich()
+```python
+Invalid.enrich(expected=None, provided=None, path=None,
+               validator=None)
+```
+
+Enrich this error with additional information.
+
+This works with both Invalid and MultipleInvalid (thanks to [`__iter__`](#invalid-iter) method).
+
+One especially useful feature is to prepend values to `path`:
+
+```python
+from good import Schema, Invalid
+
+schema = Schema(int)
+input = {
+    'age': 10,
+}
+
+try:
+    schema(input['age'])
+except Invalid as e:
+    e.enrich(path=['age'])  # Make sure path reflects the real path
+    raise  # re-raise the error with updated fields
+```
+
+This is used when validating a value within a container.
+
+* `expected`: Invalid.expected default
+* `provided`: Invalid.provided default
+* `path`: Invalid.path chunk
+* `validator`: Invalid.validator default
+
+Returns: `Invalid|MultipleInvalid` 
+
+
+
+### MultipleInvalid
+```python
+MultipleInvalid(errors)
+```
+
+Validation errors for multiple values.
+
+This error is raised when the [`Schema`](#schema) has reported multiple errors, e.g. for several dictionary keys.
+
+`MultipleInvalid` has the same attributes as [`Invalid`](#invalid),
+but the values are taken from the first error in the list.
+
+In addition, it has the `errors` attribute, which is a list of [`Invalid`](#invalid) errors collected by the schema.
+The list is guaranteed to be plain: e.g. there will be no underlying hierarchy of `MultipleInvalid`.
+
+Note that both `Invalid` and `MultipleInvalid` are iterable, which allows to process them in singularity:
+
+```python
+try:
+    schema(input_value)
+except Invalid as ee:
+    reported_problems = {}
+    for e in ee:  # Iterate over `Invalid`
+        path_str = u'.'.join(e.path)  # 'a.b.c.d', JavaScript-friendly :)
+        reported_problems[path_str] = e.message
+    #.. send reported_problems to the user
+```
+
+In this example, we create a dictionary of paths (as strings) mapped to error strings for the user.
+
+* `errors`: The reported errors.
+
+    If it contains `MultipleInvalid` errors -- the list is recursively flattened
+    so all of them are guaranteed to be instances of [`Invalid`](#invalid).
+
+
+

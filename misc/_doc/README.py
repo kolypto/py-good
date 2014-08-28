@@ -1,4 +1,4 @@
-import good
+import good, good.schema.errors
 from exdoc import doc, getmembers
 
 import json
@@ -11,7 +11,12 @@ doccls = lambda cls, *allowed_keys: {
 data = {
     'good': doc(good),
     'Schema': doccls(good.Schema, None, '__call__'),
+    'errors': doc(good.schema.errors),
+    'Invalid': doccls(good.Invalid),
+    'MultipleInvalid': doccls(good.MultipleInvalid),
 }
+
+# Patches
 
 
 class MyJsonEncoder(json.JSONEncoder):
