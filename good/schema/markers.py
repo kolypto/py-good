@@ -304,7 +304,7 @@ class Reject(Marker):
     ```python
     schema = Schema({
         Reject('name'): None,  # Reject by key
-        Optional('age'): Msg(Reject, u"Field is not supported anymore"),  # alternative form
+        Optional('age'): Msg(Reject, u"Field is not supported anymore"), # alternative form
     })
 
     schema({'name': 111})
