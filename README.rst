@@ -580,7 +580,7 @@ Example:
 .. code:: python
 
     schema = Schema({
-        Remove('name'): str,  # `str` does not mean anything since the key is removed anyway
+        Remove('name'): str, # `str` does not mean anything since the key is removed anyway
         'age': int
     })
 
