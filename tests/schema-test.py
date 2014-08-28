@@ -294,9 +294,14 @@ class SchemaTest(unittest.TestCase):
 
         self.assertInvalid(schema, [b'abc'], Invalid(u'Invalid value', u'List[intify()|String]', six.text_type(b'abc'), [0], str_or_int))
 
-    @unittest.skip
     def test_schema_schema(self):
         """ Test Schema(Schema) """
+        sub_schema = Schema(int)
+        schema = Schema([None, sub_schema])
+
+        self.assertValid(schema, [None, 1, 2])
+        self.assertInvalid(schema, [None, u'1'],
+                           Invalid(s.es_value, u'List[None|Integer number]', u'1', [1], [None, sub_schema]))
 
     def test_mapping_literal(self):
         """ Test Schema(<mapping>), literal keys """

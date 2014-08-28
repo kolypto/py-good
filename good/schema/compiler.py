@@ -324,7 +324,6 @@ class CompiledSchema(object):
             validator=schema)
 
         # Validator
-        @wraps(schema)
         def validate_with_callable(v):
             try:
                 # Try this callable
