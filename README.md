@@ -33,17 +33,17 @@ Table of Contents
     * <a href="#priorities">Priorities</a>
     * <a href="#creating-a-schema">Creating a Schema</a>
     * <a href="#validating">Validating</a>
-    * <a href="#errors">Errors</a>
-        * <a href="#invalid">Invalid</a>
-            * <a href="#invalidenrich">Invalid.enrich()</a>
-        * <a href="#multipleinvalid">MultipleInvalid</a>
-    * <a href="#markers">Markers</a>
-        * <a href="#required">Required</a>
-        * <a href="#optional">Optional</a>
-        * <a href="#remove">Remove</a>
-        * <a href="#reject">Reject</a>
-        * <a href="#allow">Allow</a>
-        * <a href="#extra">Extra</a>
+* <a href="#errors">Errors</a>
+    * <a href="#invalid">Invalid</a>
+        * <a href="#invalidenrich">Invalid.enrich()</a>
+    * <a href="#multipleinvalid">MultipleInvalid</a>
+* <a href="#markers">Markers</a>
+    * <a href="#required">Required</a>
+    * <a href="#optional">Optional</a>
+    * <a href="#remove">Remove</a>
+    * <a href="#reject">Reject</a>
+    * <a href="#allow">Allow</a>
+    * <a href="#extra">Extra</a>
 
 
 Schema
@@ -295,7 +295,7 @@ Throws:
 
 
 Errors
-------
+======
 
 Source: [good/schema/errors.py](good/schema/errors.py)
 
@@ -314,7 +314,7 @@ All errors are available right at the top-level:
 from good import Invalid, MultipleInvalid
 ```
 
-### Invalid
+## Invalid
 ```python
 Invalid(message, expected=None, provided=None, path=None,
         validator=None, **info)
@@ -337,7 +337,7 @@ This exception is guaranteed to contain text values which are meaningful for the
 
 
 
-#### `Invalid.enrich()`
+### `Invalid.enrich()`
 ```python
 Invalid.enrich(expected=None, provided=None, path=None,
                validator=None)
@@ -381,7 +381,7 @@ Returns: `Invalid|MultipleInvalid`
 
 
 
-### MultipleInvalid
+## MultipleInvalid
 ```python
 MultipleInvalid(errors)
 ```
@@ -421,7 +421,7 @@ In this example, we create a dictionary of paths (as strings) mapped to error st
 
 
 Markers
--------
+=======
 
 A *Marker* is a proxy class which wraps some schema.
 
@@ -452,7 +452,7 @@ Each marker can have it's own unique behavior since nothing is hardcoded into th
 Keep on reading to learn how markers perform.
 
 
-### `Required`
+## `Required`
 ```python
 Required(key)
 ```
@@ -491,7 +491,7 @@ schema({})  # no `str` keys provided
 
 
 
-### `Optional`
+## `Optional`
 ```python
 Optional(key)
 ```
@@ -540,7 +540,7 @@ schema({'name': 'Mark', 'age': 'X'})
 
 
 
-### `Remove`
+## `Remove`
 ```python
 Remove(key)
 ```
@@ -586,7 +586,7 @@ schema(['a', 'b', 1, 2])  #-> ['a', 'b']
 
 
 
-### `Reject`
+## `Reject`
 ```python
 Reject(key)
 ```
@@ -614,7 +614,7 @@ schema({'name': 111})
 
 
 
-### `Allow`
+## `Allow`
 ```python
 Allow(key)
 ```
@@ -629,7 +629,7 @@ Designed to be used with [`Extra`](#extra).
 
 
 
-### `Extra`
+## `Extra`
 ```python
 Extra(key)
 ```

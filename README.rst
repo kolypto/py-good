@@ -29,22 +29,23 @@ Table of Contents
    -  Priorities
    -  Creating a Schema
    -  Validating
-   -  Errors
 
-      -  Invalid
+-  Errors
 
-         -  Invalid.enrich()
+   -  Invalid
 
-      -  MultipleInvalid
+      -  Invalid.enrich()
 
-   -  Markers
+   -  MultipleInvalid
 
-      -  Required
-      -  Optional
-      -  Remove
-      -  Reject
-      -  Allow
-      -  Extra
+-  Markers
+
+   -  Required
+   -  Optional
+   -  Remove
+   -  Reject
+   -  Allow
+   -  Extra
 
 Schema
 ======
@@ -329,7 +330,7 @@ values. See ```MultipleInvalid`` <#multipleinvalid>`__. \*
 ```Invalid`` <#invalid>`__.
 
 Errors
-------
+======
 
 Source: `good/schema/errors.py <good/schema/errors.py>`__
 
@@ -351,7 +352,7 @@ All errors are available right at the top-level:
     from good import Invalid, MultipleInvalid
 
 Invalid
-~~~~~~~
+-------
 
 .. code:: python
 
@@ -375,7 +376,7 @@ for the user.
 -  ``validator``: The validator that has failed: a schema item
 
 ``Invalid.enrich()``
-^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~
 
 .. code:: python
 
@@ -422,7 +423,7 @@ This is used when validating a value within a container.
 Returns: ``Invalid|MultipleInvalid``
 
 MultipleInvalid
-~~~~~~~~~~~~~~~
+---------------
 
 .. code:: python
 
@@ -466,7 +467,7 @@ error strings for the user.
    ```Invalid`` <#invalid>`__.
 
 Markers
--------
+=======
 
 A *Marker* is a proxy class which wraps some schema.
 
@@ -500,7 +501,7 @@ into the core ```Schema`` <#schema>`__. Keep on reading to learn how
 markers perform.
 
 ``Required``
-~~~~~~~~~~~~
+------------
 
 .. code:: python
 
@@ -537,7 +538,7 @@ expect to always have a match:
     #-> Invalid: Required key not provided: expected String, got -none-
 
 ``Optional``
-~~~~~~~~~~~~
+------------
 
 .. code:: python
 
@@ -586,7 +587,7 @@ Example: use to mark specific keys are not required:
     #-> Invalid: Wrong type @ ['age']: expected Integer number, got Binary String
 
 ``Remove``
-~~~~~~~~~~
+----------
 
 .. code:: python
 
@@ -629,7 +630,7 @@ not decorated with ```Optional()`` <#optional>`__:
     schema(['a', 'b', 1, 2])  #-> ['a', 'b']
 
 ``Reject``
-~~~~~~~~~~
+----------
 
 .. code:: python
 
@@ -654,7 +655,7 @@ Example:
     #-> Invalid: Field is not supported anymore @ ['name']: expected -none-, got name
 
 ``Allow``
-~~~~~~~~~
+---------
 
 .. code:: python
 
@@ -665,7 +666,7 @@ Example:
 Designed to be used with ```Extra`` <#extra>`__.
 
 ``Extra``
-~~~~~~~~~
+---------
 
 .. code:: python
 

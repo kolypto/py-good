@@ -34,17 +34,17 @@ Table of Contents
     * <a href="#priorities">Priorities</a>
     * <a href="#creating-a-schema">Creating a Schema</a>
     * <a href="#validating">Validating</a>
-    * <a href="#errors">Errors</a>
-        * <a href="#invalid">Invalid</a>
-            * <a href="#invalidenrich">Invalid.enrich()</a>
-        * <a href="#multipleinvalid">MultipleInvalid</a>
-    * <a href="#markers">Markers</a>
-        * <a href="#required">Required</a>
-        * <a href="#optional">Optional</a>
-        * <a href="#remove">Remove</a>
-        * <a href="#reject">Reject</a>
-        * <a href="#allow">Allow</a>
-        * <a href="#extra">Extra</a>
+* <a href="#errors">Errors</a>
+    * <a href="#invalid">Invalid</a>
+        * <a href="#invalidenrich">Invalid.enrich()</a>
+    * <a href="#multipleinvalid">MultipleInvalid</a>
+* <a href="#markers">Markers</a>
+    * <a href="#required">Required</a>
+    * <a href="#optional">Optional</a>
+    * <a href="#remove">Remove</a>
+    * <a href="#reject">Reject</a>
+    * <a href="#allow">Allow</a>
+    * <a href="#extra">Extra</a>
 
 
 Schema
@@ -62,26 +62,26 @@ Validating
 {{ fdoc(Schema.attrs.__call__) }}
 
 Errors
-------
+======
 
 {{ errors.doc }}
 
-### {{ Invalid.cls.name }}
+## {{ Invalid.cls.name }}
 {{ fdoc(Invalid.cls) }}
 
-#### `{{ Invalid.attrs.enrich.qualname }}()`
+### `{{ Invalid.attrs.enrich.qualname }}()`
 {{ fdoc(Invalid.attrs.enrich) }}
 
-### {{ MultipleInvalid.cls.name }}
+## {{ MultipleInvalid.cls.name }}
 {{ fdoc(MultipleInvalid.cls) }}
 
 Markers
--------
+=======
 
 {{ markers.module.doc }}
 
 {% for marker in markers.members %}
-### `{{ marker.qualname }}`
+## `{{ marker.qualname }}`
 {{ fdoc(marker) }}
 {% endfor %}
 
