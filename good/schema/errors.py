@@ -24,7 +24,7 @@ class Invalid(BaseError):
 
         E.g. if an invalid value was encountered at ['a'].b[1], then path=['a', 'b', 1]
 
-    :type path: list[str]
+    :type path: list
     :param validator: The validator that has failed: a schema item
     :type validator: *
     :param info: Custom values that might be supplied by the validator
@@ -32,7 +32,7 @@ class Invalid(BaseError):
     """
 
     def __init__(self, message, expected=None, provided=None, path=None, validator=None, **info):
-        super(Invalid, self).__init__(message, expected, path, validator)
+        super(Invalid, self).__init__(message, expected, provided, path, validator)
         self.message = message
         self.expected = expected
         self.provided = provided
@@ -56,13 +56,19 @@ class Invalid(BaseError):
                'info={0.info!r})' \
             .format(self, cls=type(self).__name__,)
 
+    def __str__(self):
+        return six.text_type(self).encode('utf8')
+
     def __unicode__(self):
-        return u'{0.message} @ {path}: expected {0.expected}, got {0.provided}'.format(
+        return u'{message}: expected {0.expected}, got {0.provided}'.format(
             self,
-            path=u''.join(map(
-                lambda v: u'[{!r}]'.format(v),
-                self.path
-            )),
+            message=self.message if not self.path else u'{} @ {}'.format(
+                self.message,
+                u''.join(map(
+                    lambda v: u'[{!r}]'.format(v),
+                    self.path
+                ))
+            )
         )
 
     def enrich(self, expected=None, provided=None, path=None, validator=None, path_prefix=True):
@@ -93,7 +99,7 @@ class Invalid(BaseError):
         return self
 
     if six.PY3:
-        __str__ = __unicode__
+        __bytes__, __str__ = __str__, __unicode__
 
 
 class MultipleInvalid(Invalid):

@@ -8,6 +8,10 @@ class Schema(object):
     """ Validation schema.
 
     A schema is a Python structure where nodes are pattern-matched against the corresponding values.
+    It leverages the full flexibility of Python, allowing you to match values, types, data sctructures and much more.
+
+    When a schema is created, it's compiled into a callable function which does the validation, hence it does not need
+    to analyze the schema every time.
 
     Once the Schema is defined, validation can be triggered by calling it:
 
@@ -23,31 +27,34 @@ class Schema(object):
 
         ```python
         Schema(1)(1)  #-> 1
-        Schema(1)(2)  #-> Incorrect value
+        Schema(1)(2)  #-> Invalid: Invalid value: expected 1, got 2
         ```
 
-    2. **Type**: is tested with `instanceof()` check:
+    2. **Type**: type schema produces an `instanceof()` check on the input value:
 
         ```python
         Schema(int)(1)    #-> 1
-        Schema(int)('1')  #-> Invalid: expecting an integer, string given
+        Schema(int)('1')  #-> Invalid: Wrong type: expected Integer number, got Binary String
         ```
 
     3. **Callable**: is applied to the value and the result is used as the final value.
        Any errors raised by the callable are treated as validation errors.
 
-       In addition, validators are allowed to mutate a value to a given form.
+       In addition, validators are allowed to transform a value to the required form.
        For instance, [`Coerce(int)`](#coerce) returns a callable which will convert input values into `int` or fail.
 
        ```python
-       CoerceInt = lambda v: int(v)  # naive Coerce(int) implementation
+       def CoerceInt(v):  # naive Coerce(int) implementation
+           return int(v)
 
-       Schema(CoerceInt)(1)    #-> 2
-       Schema(CoerceInt)('1')  # Invalid: invalid value
+       Schema(CoerceInt)(1)    #-> 1
+       Schema(CoerceInt)('1')  #-> 1
+       Schema(CoerceInt)('a')  #-> Invalid: ValueError: invalid literal for int(): expected CoerceInt(), got a
        ```
 
-       If the callable trows [`Invalid`](#invalid) exception, it's used as is.
-       Other exceptions are wrapped into `Invalid` and re-raised (with poor explanations).
+       If the callable throws [`Invalid`](#invalid) exception, it's used as is with all the rich info it provides.
+       Other exceptions are wrapped into `Invalid` and re-raised: then error description texts are probably not
+       much user-friendly
 
     4. **`Schema`**: a schema may contain sub-schemas:
 
@@ -66,16 +73,17 @@ class Schema(object):
     1. **Iterables** (`list`, `tuple`, `set`, custom iterables):
 
         Iterables are treated as a set of valid values,
-        where each value in the input is compared against the given set of valid values.
+        where each value in the input is compared against each value in the schema.
 
-        In addition, the input iterable must have the given type:
+        In order for the input to be valid, it needs to have the same iterable type, and all of its
+        values should have at least one matching value in the schema.
 
         ```python
-        schema = Schema([1, 2, 3])
+        schema = Schema([1, 2, 3])  # List of valid values
 
-        schema([1, 2, 2])  #-> [1]
-        schema([1, 2, 4])  #-> Invalid: invalid list value @ [2]
-        schema((1, 2, 2))  #-> Invalid: expecting a list, tuple given
+        schema([1, 2, 2])  #-> [1, 2, 2]
+        schema([1, 2, 4])  #-> Invalid: Invalid value @ [2]: expected List[1|2|3], got 4
+        schema((1, 2, 2))  #-> Invalid: Wrong value type: expected List, got Tuple
         ```
 
         Each value within the iterable is a schema as well, and validation requires that
@@ -96,10 +104,11 @@ class Schema(object):
         1. Validate that the input value has the matching type: `list` in this case
         2. For every member of the list, test that there is a matching value in the schema.
 
-        Since lists are ordered, the first schema that didn't fail is used.
+            E.g. for value `1` -- `int` matches (immediate `instanceof()` check).
+            However, for value `'3'` -- `int` fails, but the callable manages to do it with no errors,
+            and transforms the value as well.
 
-        E.g. for value `1` -- `int` matches (immediate `instanceof()` check). However, for value `'3'` -- `int` fails,
-        but the callable manages to do it with no errors.
+            Since lists are ordered, the first schema that didn't fail is used.
 
     2. **Mappings** (`dict`, custom mappings):
 
@@ -110,7 +119,7 @@ class Schema(object):
             'name': str,
             'age': lambda v: int(v)
         })({
-            'name':  'Alex',
+            'name': 'Alex',
             'age': '18',
         })  #-> {'name': 'Alex', 'age': 18}
         ```
@@ -142,11 +151,11 @@ class Schema(object):
         `default_keys=Optional` argument to the Schema.
 
         Finally, a mapping does not allow any extra keys (keys not defined in the schema). To change this, provide
-        `extra_keys=Anything` to the `Schema` constructor.
+        `extra_keys=Allow` to the `Schema` constructor.
 
     These are just the basic rules, and for sure `Schema` can do much more than that!
     Additional logic is implemented through [Markers](#markers) and [Validators](#validators),
-    which are described in the next chapters.
+    which are described in the following chapters.
     """
 
     compiled_schema_cls = CompiledSchema
