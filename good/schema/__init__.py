@@ -180,12 +180,16 @@ class Schema(object):
     compiled_schema_cls = CompiledSchema
 
     def __init__(self, schema, default_keys=markers.Required, extra_keys=markers.Reject):
-        """ Create a `Schema` object from the given schema.
+        """ Creates a compiled `Schema` object from the given schema definition.
 
-        :param schema: Schema to use for validation
-        :param default_keys: Default dictionary keys behavior (a Marker class)
+        Under the hood, it uses `SchemaCompiler`: see the [source](good/schema/compiler.py) if interested.
+
+        :param schema: Schema definition
+        :type schema: *
+        :param default_keys: Default mapping keys behavior:
+            a [`Marker`](#markers) class used as a default on mapping keys which are not Marker()ed with anything
         :type default_keys: type
-        :param extra_keys: Default extra keys behavior (schema, or a Marker class)
+        :param extra_keys: Default extra keys behavior: sub-schema, or a [`Marker`](#markers) class
         :type extra_keys: *
         :raises SchemaError: Schema compilation error
         """
@@ -201,11 +205,11 @@ class Schema(object):
         __str__ = __unicode__
 
     def __call__(self, value):
-        """ Validate the given input value against the schema
+        """ Validate the given input value against the schema.
 
         :param value: Input value to validate
         :return: Sanitized value
-        :raises good.Invalid: Validation error on a single value
-        :raises good.MultipleInvalid: Validation error on multiple values
+        :raises good.Invalid: Validation error on a single value. See [`Invalid`](#invalid).
+        :raises good.MultipleInvalid: Validation error on multiple values. See [`MultipleInvalid`](#multipleinvalid).
         """
         return self._schema(value)
