@@ -36,6 +36,8 @@ class SchemaTest(unittest.TestCase):
 
     longMessage = True
 
+    #region Assertions
+
     def assertInvalidError(self, actual, expected):
         """ Assert that the two Invalid exceptions are the same
 
@@ -142,7 +144,9 @@ class SchemaTest(unittest.TestCase):
             if e is not None:
                 self.assertInvalidError(exc, e)
 
+    #endregion
 
+    #region Test: Core
 
     def test_literal(self):
         """ Test Schema(<literal>) """
@@ -557,3 +561,28 @@ class SchemaTest(unittest.TestCase):
         assertValid(schema, {100: None}, {100: 'Extra'})
         schema.pop(Extra)
 
+    #endregion
+
+    #region Test Helpers
+    # endregion
+
+    #region Test Validators.Predicates
+    # endregion
+
+    #region Test Validators.Types
+    # endregion
+
+    #region Test Validators.Values
+    # endregion
+
+    #region Test Validators.Booleans
+    # endregion
+
+    #region Test Validators.Files
+    # endregion
+
+    #region Test Validators.Numbers
+    # endregion
+
+    #region Test Validators.Strings
+    # endregion

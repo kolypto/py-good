@@ -6,9 +6,6 @@
 
 
 
-
-
-
 Good
 ====
 
@@ -223,3 +220,25 @@ Under the hood, it uses `SchemaCompiler`: see the [source](good/schema/compiler.
     a [`Marker`](#markers) class used as a default on mapping keys which are not Marker()ed with anything
 * `extra_keys`: Default extra keys behavior: sub-schema, or a [`Marker`](#markers) class
 
+
+
+Throws:
+* `SchemaError`: Schema compilation error
+
+
+Validating with a Schema
+------------------------
+
+```python
+Schema.__call__(value)
+```
+
+Validate the given input value against the schema.
+
+* `value`: Input value to validate
+
+Returns: `None` Sanitized value
+
+Throws:
+* `good.MultipleInvalid`: Validation error on multiple values. See [`MultipleInvalid`](#multipleinvalid).
+* `good.Invalid`: Validation error on a single value. See [`Invalid`](#invalid).

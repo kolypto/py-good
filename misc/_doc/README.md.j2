@@ -7,26 +7,17 @@
 {%- endmacro %}
 
 
-{% macro clsdoc(cls) -%}
-```python
-{{ cls.signature|wordwrap(60)|indent(1+cls.name|length) }}
-```
-
-{{ cls.doc }}
-
-{{ argspec(cls.args) }}
-{%- endmacro %}
-
-
 {% macro fdoc(func) -%}
 ```python
-{{ func.signature|wordwrap(60)|indent(1+func.name|length) }}
+{{ func.qsignature|wordwrap(60)|indent(1+func.name|length) }}
 ```
 
 {{ func.doc }}
 
 {{ argspec(func.args) }}
 {%if func.ret %}Returns: `{{ func.ret.type }}` {{ func.ret.doc }}{% endif %}
+
+{%if func.exc %}Throws:{{ '\n' }}{% for e in func.exc %}* `{{ e.name }}`: {{ e.doc|indent(4) }}{{ '\n' }}{% endfor %}{% endif %}
 {%- endmacro %}
 
 Good
@@ -46,5 +37,9 @@ Schema
 
 Creating a Schema
 -----------------
-{{ clsdoc(Schema.cls) }}
+{{ fdoc(Schema.cls) }}
 
+Validating with a Schema
+------------------------
+
+{{ fdoc(Schema.attrs.__call__) }}
