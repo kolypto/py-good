@@ -149,15 +149,6 @@ if __name__ == '__main__':
                     best_for_size[valid, size],
                     validations_per_second)
 
-    # Calculate averages
-    for (valid, lib_name), stats_list in sorted(results.items()):
-        vps = sum(x['vps'] for x in stats_list) / len(stats_list)
-        print('AVG:{lib:<12} {valid:<8} {vps: 10.2f}'.format(
-            lib=lib_name,
-            valid='Valid' if valid else 'Invalid',
-            vps=vps
-        ), file=sys.stderr)
-
     # Print dataset
     for (valid, lib_name), stats_list in sorted(results.items()):
         # Dataset header
@@ -171,3 +162,12 @@ if __name__ == '__main__':
         for stat in stats_list:
             print('{size: 5d} {sec: 4.2f} {vps: 10.2f}'.format(**stat))
         print('\n')  # split datasets
+
+        # Calculate averages
+    for (valid, lib_name), stats_list in sorted(results.items()):
+        vps = sum(x['vps'] for x in stats_list) / len(stats_list)
+        print('AVG:{lib:<12} {valid:<8} {vps: 10.2f}'.format(
+            lib=lib_name,
+            valid='Valid' if valid else 'Invalid',
+            vps=vps
+        ), file=sys.stderr)

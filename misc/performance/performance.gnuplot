@@ -13,8 +13,6 @@ set grid
 set xlabel "Dictionary size"
 set ylabel "validations/s"
 
-set logscale y
-
 # good (Invalid)
 set style line 1 lc rgb "#00D000" linetype 0
 # voluptuous (Invalid)

@@ -10,6 +10,9 @@ The [test script](performance.py) generates random dictionary schemas,
 increasing its size, and compares how performant both libraries are
 on those schemas.
 
+Solid line shows the performance of successful validations.
+Dashed line shows the performance of invalid values (raising errors).
+
 Validations Per Second
 ----------------------
 
@@ -18,8 +21,8 @@ A "validation" is an attempt to validate a value against the schema only.
 
 <img src="performance-vps.png" />
 
-Keys Per Second
----------------
+Total Execution Time
+--------------------
 
 In this test, we compare how much time a library needs to validate 5000 dictionaries
 with a schema.
