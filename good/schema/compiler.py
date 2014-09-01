@@ -453,21 +453,27 @@ class CompiledSchema(object):
                 key_schema.compiled.on_compiled(value_schema=value_schema, as_mapping_key=True)
 
         # Sort key schemas for matching.
+
         # Since various schema types have different priority, we need to sort these accordingly.
         # Then, literals match before types, and Markers can define execution order using `priority`.
         # For instance, Remove() should be called first (before any validation takes place),
         # while Extra() should be checked last so it catches all extra keys that did not match other key schemas.
-        compiled = [ (key_schema, compiled[key_schema])
+
+        # In addition, since mapping keys are mostly literals, we want direct matching instead of the costly function calls.
+        # Hence, remember which of them are literals.
+        is_literal = lambda key_schema: key_schema.compiled.key_schema.compiled_type == const.COMPILED_TYPE.LITERAL
+
+        compiled = [ (key_schema, compiled[key_schema], is_literal(key_schema))
                      for key_schema in self.sort_schemas(compiled.keys())]
-        ''' :var  compiled: Sorted list of CompiledSchemas: (key-schema, value-schema),
-            :type compiled: list[CompiledSchema, CompiledSchema]
+        ''' :var  compiled: Sorted list of CompiledSchemas: (key-schema, value-schema, is-literal),
+            :type compiled: list[CompiledSchema, CompiledSchema, bool]
         '''
 
         # Prepare self
         self.compiled_type = const.COMPILED_TYPE.MAPPING
         self.name = _(u'{mapping_cls}[{mapping_keys}]').format(
             mapping_cls=get_type_name(type(schema)),
-            mapping_keys=_(u',').join(key_schema.name for key_schema, value_schema in compiled)
+            mapping_keys=_(u',').join(key_schema.name for key_schema, value_schema, is_literal in compiled)
         )
 
         # Error partials
@@ -488,7 +494,7 @@ class CompiledSchema(object):
             errors = []  # Collect errors on the fly
             d_keys = set(d.keys())  # Make a copy of dict keys for destructive iteration
 
-            for key_schema, value_schema in compiled:
+            for key_schema, value_schema, is_literal in compiled:
                 # First, collect matching (key, value) pairs for the `key_schema`.
                 # Note that `key_schema` can change the value (e.g. `Coerce(int)`), so for every key
                 # we store both the initial value (`input-key`) and the sanitized value (`sanitized-key`).
@@ -496,19 +502,31 @@ class CompiledSchema(object):
 
                 matches = []
 
-                # Walk all input values and pick those that match the current `key_schema`
-                for k in tuple(d_keys):
-                    # Exec key schema on the input key.
-                    # Since all key schemas are compiled as matchers -- we get a tuple (key-matched, sanitized-key)
-
-                    okay, sanitized_k = key_schema(k)
-
-                    # If this key has matched -- append it to the list of matches for the current `key_schema`.
-                    # Also, remove the key from the original input so it does not match any other key schemas
-                    # with lower priorities.
-                    if okay:
-                        matches.append(( k, sanitized_k, d[k] ))
+                if is_literal:
+                    # Since mapping keys are mostly literals --
+                    # save some iterations & function calls in favor of direct matching,
+                    # which introduces a HUGE performance improvement
+                    k = key_schema.schema
+                    if k in d:
+                        # (See comments below)
+                        matches.append(( k, k, d[k] ))
                         d_keys.remove(k)
+                else:
+                    # For non-literal schemas we have to walk all input keys
+                    # and detect those that match the current `key_schema`.
+                    # In contrast to literals, such keys may have multiple matches (e.g. `{ int: 1 }`).
+                    for k in tuple(d_keys):
+                        # Exec key schema on the input key.
+                        # Since all key schemas are compiled as matchers -- we get a tuple (key-matched, sanitized-key)
+
+                        okay, sanitized_k = key_schema(k)
+
+                        # If this key has matched -- append it to the list of matches for the current `key_schema`.
+                        # Also, remove the key from the original input so it does not match any other key schemas
+                        # with lower priorities.
+                        if okay:
+                            matches.append(( k, sanitized_k, d[k] ))
+                            d_keys.remove(k)
 
                 # Now, having a `key_schema` and a list of matches for it, do validation.
                 # If the key is a marker -- execute the marker first so it has a chance to modify the input,

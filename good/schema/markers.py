@@ -164,8 +164,6 @@ class Marker(object):
         return matches  # No-op by default
 
 
-#region Dictionary keys behavior
-
 class Required(Marker):
     """ `Required(key)` is used to decorate mapping keys and hence specify that these keys must always be present in
     the input mapping.
@@ -425,6 +423,5 @@ class Extra(Marker):
         # However, CompiledSchema does this anyway at the next step, so doing nothing here
         return matches
 
-#endregion
 
 __all__ = ('Required', 'Optional', 'Remove', 'Reject', 'Allow', 'Extra')
