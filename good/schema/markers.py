@@ -49,6 +49,10 @@ class Marker(object):
     (using `priority` to decide which of the markers will actually get the duck)
     and then calls execute() on the Marker so it can implement its logic.
 
+    Note that `execute()` is always called, regardless of whether the marker has matched anything:
+    this gives markers a chance to modify the input to its taste.
+    This opens the possibilities of implementing custom markers which validate the whole schema!
+
     Finally, note that a marker does not necessarily decorate something: it can be used as a class:
 
     ```python
@@ -144,9 +148,13 @@ class Marker(object):
         """ Validate a key using this Marker's schema """
         return self.key_schema(v)
 
-    def execute(self, matches):
+    def execute(self, d, matches):
         """ Execute the marker against the the matching values from the input.
 
+        Note that `execute()` is called precisely once, and even if there are no matches for the marker.
+
+        :param d: The original user input
+        :type d: dict
         :param matches: List of (input-key, sanitized-input-key, input-value) triples that matched the given marker
         :type matches: list[tuple]
         :returns: The list of matches, potentially modified
@@ -190,7 +198,7 @@ class Required(Marker):
     priority = 0
     error_message = _(u'Required key not provided')
 
-    def execute(self, matches):
+    def execute(self, d, matches):
         # If a Required() key is present -- it expects to ALWAYS have one or more matches
         if not matches:
             path = [self.key] if self.key_schema.compiled_type == const.COMPILED_TYPE.LITERAL else []
@@ -282,8 +290,12 @@ class Remove(Marker):
 
     priority = 1000  # We always want to remove keys prior to any other actions
 
-    def execute(self, matches):
+    def execute(self, d, matches):
         # Remove all matching keys from the input
+        for k, sanitized_k, v in matches:
+            d.pop(k)
+
+        # Clean the list of matches so further processing does not assign them again
         return []
 
     def __call__(self, v):
@@ -321,7 +333,7 @@ class Reject(Marker):
             raise Invalid(self.error_message, _(u'-none-'), six.text_type(v), validator=self)
         return super(Reject, self).__call__(v)
 
-    def execute(self, matches):
+    def execute(self, d, matches):
         # Complain on all values it gets
         if matches:
             errors = []
@@ -401,13 +413,13 @@ class Extra(Marker):
             value_schema.compiled.error_message = self.error_message
         return super(Extra, self).on_compiled(name, key_schema, value_schema, as_mapping_key)
 
-    def execute(self, matches):
+    def execute(self, d, matches):
         # Delegate the decision to the value.
 
         # If the value is a marker -- call execute() on it
         # This is for the cases when `Extra` is mapped to a marker
         if isinstance(self.value_schema.compiled, Marker):
-            return self.value_schema.compiled.execute(matches)
+            return self.value_schema.compiled.execute(d, matches)
 
         # Otherwise, it's a schema, which must be called on every value to validate it.
         # However, CompiledSchema does this anyway at the next step, so doing nothing here

@@ -481,15 +481,12 @@ class CompiledSchema(object):
                 # expected=<type>, provided=<type>
                 raise err_type(provided=get_type_name(type(d)))
 
-            # We're going to iterate it destructively, so need to make a fresh copy
-            d = d.copy()
-
             # For each schema key, pick matching input key-value pairs.
             # Since we always have Extra which is a catch-all -- this will always result into a full input coverage.
             # Also, key schemas are sorted according to the priority, we're handling each set of matching keys in order.
 
             errors = []  # Collect errors on the fly
-            output = schema_type()  # Rebuild the input (since schemas may sanitize keys)
+            d_keys = set(d.keys())  # Make a copy of dict keys for destructive iteration
 
             for key_schema, value_schema in compiled:
                 # First, collect matching (key, value) pairs for the `key_schema`.
@@ -500,7 +497,7 @@ class CompiledSchema(object):
                 matches = []
 
                 # Walk all input values and pick those that match the current `key_schema`
-                for k in list(d.keys()):
+                for k in tuple(d_keys):
                     # Exec key schema on the input key.
                     # Since all key schemas are compiled as matchers -- we get a tuple (key-matched, sanitized-key)
 
@@ -510,7 +507,8 @@ class CompiledSchema(object):
                     # Also, remove the key from the original input so it does not match any other key schemas
                     # with lower priorities.
                     if okay:
-                        matches.append(( k, sanitized_k, d.pop(k) ))
+                        matches.append(( k, sanitized_k, d[k] ))
+                        d_keys.remove(k)
 
                 # Now, having a `key_schema` and a list of matches for it, do validation.
                 # If the key is a marker -- execute the marker first so it has a chance to modify the input,
@@ -521,7 +519,7 @@ class CompiledSchema(object):
                     # Note that Markers can raise errors as well.
                     # Since they're compiled - all marker errors are raised as `Invalid`.
                     try:
-                        matches = key_schema.compiled.execute(matches)
+                        matches = key_schema.compiled.execute(d, matches)
                     except Invalid as e:
                         # Add marker errors to the list of Invalid reports for this schema.
                         # Using enrich(), we're also setting `path` prefix, and other info known at this step.
@@ -543,10 +541,14 @@ class CompiledSchema(object):
                     try:
                         # Execute the value schema and store it into the rebuilt mapping
                         # using the sanitized key, which might be different from the original key.
-                        output[sanitized_k] = value_schema(v)
+                        d[sanitized_k] = value_schema(v)
+
+                        # Remove the original key in case `key_schema` has transformed it.
+                        if k != sanitized_k:
+                            d.pop(k)
                     except signals.RemoveValue:
                         # `value_schema` commanded to drop this value
-                        continue
+                        d.pop(k)
                     except Invalid as e:
                         # Any value validation errors are appended to the list of Invalid reports for the schema
                         # enrich() adds more info on the collected errors.
@@ -557,7 +559,7 @@ class CompiledSchema(object):
                             validator=value_schema
                         ))
 
-            assert not d, 'Dict must be empty after destructive iteration: {!r}'.format(d)
+            assert not d_keys, 'Keys must be empty after destructive iteration. Remainder: {!r}'.format(d_keys)
 
             # Errors?
             if errors:
@@ -566,7 +568,7 @@ class CompiledSchema(object):
                 raise MultipleInvalid.if_multiple(errors)
 
             # Finish
-            return output
+            return d
 
         return validate_mapping
 

@@ -14,6 +14,7 @@ Inspired by the amazing [alecthomas/voluptuous](https://github.com/alecthomas/vo
 The whole internals have been reworked towards readability and robustness. And yeah, the docs are now exhaustive :)
 """
 
+# Init gettext translations
 import gettext
 import six
 

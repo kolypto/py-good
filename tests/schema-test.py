@@ -3,6 +3,7 @@ import six
 import unittest
 from collections import OrderedDict
 from random import shuffle
+from copy import deepcopy
 
 from good import Schema, Invalid, MultipleInvalid, Required, Optional, Extra, Remove, Reject, Allow
 from good.schema.util import get_type_name
@@ -121,9 +122,12 @@ class SchemaTest(unittest.TestCase):
         :param value: The value to validate
         :type validated_value: The expected validated value
         """
+        if validated_value is None:
+            validated_value = deepcopy(value)
+
         self.assertEqual(
             schema(value),
-            value if validated_value is None else validated_value,
+            validated_value,
             'Sanitized value is wrong'
         )
 
@@ -553,9 +557,9 @@ class SchemaTest(unittest.TestCase):
                 shuffle(schema_items)
                 sch = Schema(OrderedDict(schema), default_keys=Optional)
                 if expected_error:
-                    self.assertInvalid(sch, value, expected_error)
+                    self.assertInvalid(sch, deepcopy(value), expected_error)
                 else:
-                    self.assertValid(sch, value, expected_result)
+                    self.assertValid(sch, deepcopy(value), expected_result)
 
         # Now try matching the schema in multiple steps, dropping the top priority key every time
         # This also ensures the dict is not modified by the schema itself.
