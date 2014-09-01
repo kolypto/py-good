@@ -32,12 +32,10 @@ class s:
     es_rejected = u'Value rejected'
 
 
-class SchemaTest(unittest.TestCase):
-    """ Test Schema """
+class GoodTestBase(unittest.TestCase):
+    """ Helpers for testing """
 
     longMessage = True
-
-    #region Assertions
 
     def assertInvalidError(self, actual, expected):
         """ Assert that the two Invalid exceptions are the same
@@ -148,9 +146,9 @@ class SchemaTest(unittest.TestCase):
             if e is not None:
                 self.assertInvalidError(exc, e)
 
-    #endregion
 
-    #region Test: Core
+class SchemaCoreTest(GoodTestBase):
+    """ Test Schema (core) """
 
     def test_literal(self):
         """ Test Schema(<literal>) """
@@ -588,30 +586,35 @@ class SchemaTest(unittest.TestCase):
         assertValid(schema, {100: None}, {100: 'Extra'})
         schema.pop(Extra)
 
-    #endregion
 
+class HelpersTest(GoodTestBase):
+    """ Test: Helpers """
     pass
 
-    #region Test Helpers
-    # endregion
 
-    #region Test Validators.Predicates
-    # endregion
+class PredicatesTest(GoodTestBase):
+    """ Test: Validators.Predicates """
 
-    #region Test Validators.Types
-    # endregion
 
-    #region Test Validators.Values
-    # endregion
+class TypesTest(GoodTestBase):
+    """ Test: Validators.Types """
 
-    #region Test Validators.Booleans
-    # endregion
 
-    #region Test Validators.Files
-    # endregion
+class ValuesTest(GoodTestBase):
+    """ Test: Validators.Values """
 
-    #region Test Validators.Numbers
-    # endregion
 
-    #region Test Validators.Strings
-    # endregion
+class BooleansTest(GoodTestBase):
+    """ Test: Validators.Booleans """
+
+
+class FilesTest(GoodTestBase):
+    """ Test: Validators.Files """
+
+
+class NumbersTest(GoodTestBase):
+    """ Test: Validators.Numbers """
+
+
+class StringsTest(GoodTestBase):
+    """ Test: Validators.Strings """
