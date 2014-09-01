@@ -6,6 +6,17 @@ from .errors import SchemaError, Invalid, MultipleInvalid
 from .util import get_type_name, const
 
 
+def Identity(v):
+    """ Identity function.
+
+    Special `identity` function which matches everything.
+    Is primarily used for the `Extra` marker, as well as all other markers specified as classes.
+    """
+    return v
+Identity.name = _(u'*')  # Set a name on it (for repr())
+
+
+
 class CompiledSchema(object):
     """ Schema compiler.
 
@@ -413,8 +424,8 @@ class CompiledSchema(object):
 
         # If this marker is not instantiated -- do it with an identity callable which is valid for everything
         if issubclass(type(schema), six.class_types):
-            identity = lambda v: v
-            schema = schema(identity).on_compiled(name=_(u'*'))
+            schema = schema(Identity)  \
+                .on_compiled(name=Identity.name)  # Set a special name on it
 
         # Compile Marker's schema
         key_schema = self.sub_compile(schema.key, matcher=self.matcher)
@@ -460,10 +471,11 @@ class CompiledSchema(object):
         # while Extra() should be checked last so it catches all extra keys that did not match other key schemas.
 
         # In addition, since mapping keys are mostly literals, we want direct matching instead of the costly function calls.
-        # Hence, remember which of them are literals.
-        is_literal = lambda key_schema: key_schema.compiled.key_schema.compiled_type == const.COMPILED_TYPE.LITERAL
+        # Hence, remember which of them are literals or 'catch-all' markers.
+        is_literal  = lambda key_schema: key_schema.compiled.key_schema.compiled_type == const.COMPILED_TYPE.LITERAL
+        is_identity = lambda identity: key_schema.compiled.key_schema is Identity
 
-        compiled = [ (key_schema, compiled[key_schema], is_literal(key_schema))
+        compiled = [ (key_schema, compiled[key_schema], is_literal(key_schema), is_identity(key_schema))
                      for key_schema in self.sort_schemas(compiled.keys())]
         ''' :var  compiled: Sorted list of CompiledSchemas: (key-schema, value-schema, is-literal),
             :type compiled: list[CompiledSchema, CompiledSchema, bool]
@@ -473,7 +485,7 @@ class CompiledSchema(object):
         self.compiled_type = const.COMPILED_TYPE.MAPPING
         self.name = _(u'{mapping_cls}[{mapping_keys}]').format(
             mapping_cls=get_type_name(type(schema)),
-            mapping_keys=_(u',').join(key_schema.name for key_schema, value_schema, is_literal in compiled)
+            mapping_keys=_(u',').join(key_schema.name for key_schema, value_schema, is_literal, is_identity in compiled)
         )
 
         # Error partials
@@ -494,7 +506,7 @@ class CompiledSchema(object):
             errors = []  # Collect errors on the fly
             d_keys = set(d.keys())  # Make a copy of dict keys for destructive iteration
 
-            for key_schema, value_schema, is_literal in compiled:
+            for key_schema, value_schema, is_literal, is_identity in compiled:
                 # First, collect matching (key, value) pairs for the `key_schema`.
                 # Note that `key_schema` can change the value (e.g. `Coerce(int)`), so for every key
                 # we store both the initial value (`input-key`) and the sanitized value (`sanitized-key`).
@@ -502,7 +514,7 @@ class CompiledSchema(object):
 
                 matches = []
 
-                if is_literal:
+                if is_literal:  # (short-circuit for literals)
                     # Since mapping keys are mostly literals --
                     # save some iterations & function calls in favor of direct matching,
                     # which introduces a HUGE performance improvement
@@ -511,10 +523,20 @@ class CompiledSchema(object):
                         # (See comments below)
                         matches.append(( k, k, d[k] ))
                         d_keys.remove(k)
-                else:
+                elif is_identity:  # (short-circuit for Marker(Identity))
+                    # When this value is an identity function -- we plainly add all keys to it.
+                    # This is to short-circuit catch-all markers like `Extra`, which, being executed last,
+                    # just gets all remaining keys.
+                    matches.extend((k, k, d[k]) for k in d_keys)
+                    d_keys = None  # empty it since we've emptied everything
+                elif d_keys:
                     # For non-literal schemas we have to walk all input keys
                     # and detect those that match the current `key_schema`.
                     # In contrast to literals, such keys may have multiple matches (e.g. `{ int: 1 }`).
+
+                    # Note that this condition branch includes the logic from the short-circuited logic implemented above,
+                    # but is less performant.
+
                     for k in tuple(d_keys):
                         # Exec key schema on the input key.
                         # Since all key schemas are compiled as matchers -- we get a tuple (key-matched, sanitized-key)
