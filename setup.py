@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" Slim validation yet handsome library """
+""" Slim validation yet handsome library (voluptuous 2) """
 
 from setuptools import setup, find_packages
 
