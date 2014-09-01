@@ -8,6 +8,7 @@ Core features:
 * Error paths (which field contains the error)
 * User-friendly error messages
 * Internationalization!
+* [Robust](misc/performance/performance.md): 10 000 validations per second
 * Python 2.7, 3.3+ compatible
 
 Inspired by the amazing [alecthomas/voluptuous](https://github.com/alecthomas/voluptuous) and 100% compatible with it.
