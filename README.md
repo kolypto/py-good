@@ -279,6 +279,7 @@ Creates a compiled `Schema` object from the given schema definition.
 Under the hood, it uses `SchemaCompiler`: see the [source](good/schema/compiler.py) if interested.
 
 Arguments: 
+
 * `schema`: Schema definition
 * `default_keys`: Default mapping keys behavior:
     a [`Marker`](#markers) class used as a default on mapping keys which are not Marker()ed with anything.
@@ -291,6 +292,7 @@ Arguments:
 
 
 Throws:
+
 * `SchemaError`: Schema compilation error
 
 
@@ -306,11 +308,13 @@ Having a [`Schema`](#schema), user input can be validated by calling the Schema 
 When called, the Schema will return sanitized value, or raise exceptions.
 
 Arguments: 
+
 * `value`: Input value to validate
 
 Returns: `None` Sanitized value
 
 Throws:
+
 * `good.MultipleInvalid`: Validation error on multiple values. See [`MultipleInvalid`](#multipleinvalid).
 * `good.Invalid`: Validation error on a single value. See [`Invalid`](#invalid).
 
@@ -346,6 +350,7 @@ Validation error for a single value.
 This exception is guaranteed to contain text values which are meaningful for the user.
 
 Arguments: 
+
 * `message`: Validation error message.
 * `expected`: Expected value: info about the value the validator was expecting.
 
@@ -399,6 +404,7 @@ except Invalid as e:
 This is used when validating a value within a container.
 
 Arguments: 
+
 * `expected`: Invalid.expected default
 * `provided`: Invalid.provided default
 * `path`: Prefix to prepend to Invalid.path
@@ -439,6 +445,7 @@ except Invalid as ee:
 In this example, we create a dictionary of paths (as strings) mapped to error strings for the user.
 
 Arguments: 
+
 * `errors`: The reported errors.
 
     If it contains `MultipleInvalid` errors -- the list is recursively flattened
@@ -526,6 +533,7 @@ Arguments:
 
 
 
+
 ## `Optional`
 ```python
 Optional(key)
@@ -570,6 +578,7 @@ schema({'name': 'Mark', 'age': 'X'})
 ```
 
 Arguments: 
+
 
 
 
@@ -623,6 +632,7 @@ Arguments:
 
 
 
+
 ## `Reject`
 ```python
 Reject(key)
@@ -652,6 +662,7 @@ Arguments:
 
 
 
+
 ## `Allow`
 ```python
 Allow(key)
@@ -662,6 +673,7 @@ Allow(key)
 Designed to be used with [`Extra`](#extra).
 
 Arguments: 
+
 
 
 
@@ -729,6 +741,7 @@ Arguments:
 
 
 
+
 Validation Tools
 ================
 
@@ -777,6 +790,7 @@ This inherits the default required/extra keys behavior of the Schema.
 To override, use [`Optional()`](#optional) and [`Extra`](#extra) markers.
 
 Arguments: 
+
 * `schema`: Object schema, given as a mapping
 * `cls`: Require instances of a specific class. If `None`, allows all classes.
 
@@ -808,6 +822,7 @@ schema('a')
 ```
 
 Arguments: 
+
 * `schema`: The wrapped schema to modify the error for
 * `message`: Error message to use instead of the one that's reported by the underlying schema
 
@@ -831,6 +846,7 @@ def intify(v):
 ```
 
 Arguments: 
+
 * `message`: Error message to use instead
 * `name`: Override schema name as well. See [`name`](#name).
 
@@ -860,6 +876,7 @@ Note that it is only useful with lambdas, since function name is used if availab
 see notes on [Schema Callables](#callables).
 
 Arguments: 
+
 * `name`: Name to assign on the validator callable
 * `validator`: Validator callable. If not provided -- a decorator is returned instead:
 
@@ -895,6 +912,7 @@ schema('/404')
 ```
 
 Arguments: 
+
 * `message`: Validation error message
 * `expected`: Expected value string representation, or `None` to get it from the wrapped callable
 
@@ -931,7 +949,8 @@ schema(0)  #-> 'false'
 ```
 
 Arguments: 
-* `*schemas`: List of schemas to try
+
+* `*schemas`: List of schemas to try.
 
 
 
@@ -963,7 +982,40 @@ schema(99)
 ```
 
 Arguments: 
+
 * `*schemas`: List of schemas to apply.
+
+
+
+
+
+### `Neither`
+```python
+Neither(*schemas)
+```
+
+Value must not match any of the schemas.
+
+This is the *NOT* condition predicate: a value is considered valid if each schema has raised an error.
+
+```python
+from good import Schema, Neither
+
+schema = Schema(All(
+    # Integer
+    int,
+    # But not zero
+    Neither(0)
+))
+
+schema(1)  #-> 1
+schema(0)
+#-> Invalid:
+```
+
+Arguments: 
+
+* `*schemas`: List of schemas to check against.
 
 
 

@@ -321,20 +321,22 @@ Creates a compiled ``Schema`` object from the given schema definition.
 Under the hood, it uses ``SchemaCompiler``: see the
 `source <good/schema/compiler.py>`__ if interested.
 
-Arguments: \* ``schema``: Schema definition \* ``default_keys``: Default
-mapping keys behavior: a ```Marker`` <#markers>`__ class used as a
-default on mapping keys which are not Marker()ed with anything.
+Arguments:
 
-::
+-  ``schema``: Schema definition
+-  ``default_keys``: Default mapping keys behavior: a
+   ```Marker`` <#markers>`__ class used as a default on mapping keys
+   which are not Marker()ed with anything.
 
-    Defaults to `markers.Required`.
-
+   Defaults to ``markers.Required``.
 -  ``extra_keys``: Default extra keys behavior: sub-schema, or a
    ```Marker`` <#markers>`__ class.
 
    Defaults to ``markers.Reject``
 
-Throws: \* ``SchemaError``: Schema compilation error
+Throws:
+
+-  ``SchemaError``: Schema compilation error
 
 Validating
 ----------
@@ -349,14 +351,18 @@ calling the Schema on the input value.
 When called, the Schema will return sanitized value, or raise
 exceptions.
 
-Arguments: \* ``value``: Input value to validate
+Arguments:
+
+-  ``value``: Input value to validate
 
 Returns: ``None`` Sanitized value
 
-Throws: \* ``good.MultipleInvalid``: Validation error on multiple
-values. See ```MultipleInvalid`` <#multipleinvalid>`__. \*
-``good.Invalid``: Validation error on a single value. See
-```Invalid`` <#invalid>`__.
+Throws:
+
+-  ``good.MultipleInvalid``: Validation error on multiple values. See
+   ```MultipleInvalid`` <#multipleinvalid>`__.
+-  ``good.Invalid``: Validation error on a single value. See
+   ```Invalid`` <#invalid>`__.
 
 Errors
 ======
@@ -393,13 +399,14 @@ Validation error for a single value.
 This exception is guaranteed to contain text values which are meaningful
 for the user.
 
-Arguments: \* ``message``: Validation error message. \* ``expected``:
-Expected value: info about the value the validator was expecting.
+Arguments:
 
-::
+-  ``message``: Validation error message.
+-  ``expected``: Expected value: info about the value the validator was
+   expecting.
 
-    If validator does not specify it -- the name of the validator is used.
-
+   If validator does not specify it -- the name of the validator is
+   used.
 -  ``provided``: Provided value: info about the value that was actually
    supplied by the user
 
@@ -453,9 +460,12 @@ whole input with multiple different schemas:
 
 This is used when validating a value within a container.
 
-Arguments: \* ``expected``: Invalid.expected default \* ``provided``:
-Invalid.provided default \* ``path``: Prefix to prepend to Invalid.path
-\* ``validator``: Invalid.validator default
+Arguments:
+
+-  ``expected``: Invalid.expected default
+-  ``provided``: Invalid.provided default
+-  ``path``: Prefix to prepend to Invalid.path
+-  ``validator``: Invalid.validator default
 
 Returns: ``Invalid|MultipleInvalid``
 
@@ -497,12 +507,13 @@ allows to process them in singularity:
 In this example, we create a dictionary of paths (as strings) mapped to
 error strings for the user.
 
-Arguments: \* ``errors``: The reported errors.
+Arguments:
 
-::
+-  ``errors``: The reported errors.
 
-    If it contains `MultipleInvalid` errors -- the list is recursively flattened
-    so all of them are guaranteed to be instances of [`Invalid`](#invalid).
+   If it contains ``MultipleInvalid`` errors -- the list is recursively
+   flattened so all of them are guaranteed to be instances of
+   ```Invalid`` <#invalid>`__.
 
 Markers
 =======
@@ -827,8 +838,11 @@ This inherits the default required/extra keys behavior of the Schema. To
 override, use ```Optional()`` <#optional>`__ and ```Extra`` <#extra>`__
 markers.
 
-Arguments: \* ``schema``: Object schema, given as a mapping \* ``cls``:
-Require instances of a specific class. If ``None``, allows all classes.
+Arguments:
+
+-  ``schema``: Object schema, given as a mapping
+-  ``cls``: Require instances of a specific class. If ``None``, allows
+   all classes.
 
 Returns: ``callable`` Validator
 
@@ -860,9 +874,11 @@ Some other error types are converted to ``Invalid``: see notes on
     schema('a')
     #-> Invalid: Need a number: expected Number, got a
 
-Arguments: \* ``schema``: The wrapped schema to modify the error for \*
-``message``: Error message to use instead of the one that's reported by
-the underlying schema
+Arguments:
+
+-  ``schema``: The wrapped schema to modify the error for
+-  ``message``: Error message to use instead of the one that's reported
+   by the underlying schema
 
 Returns: ``callable`` Wrapped schema callable
 
@@ -883,8 +899,10 @@ Convenience decorator that applies ```Msg()`` <#msg>`__ to a callable.
     def intify(v):
         return int(v)
 
-Arguments: \* ``message``: Error message to use instead \* ``name``:
-Override schema name as well. See ```name`` <#name>`__.
+Arguments:
+
+-  ``message``: Error message to use instead
+-  ``name``: Override schema name as well. See ```name`` <#name>`__.
 
 Returns: ``callable`` Validator callable
 
@@ -912,17 +930,17 @@ Useful for user-friendly reporting when using lambdas to populate the
 Note that it is only useful with lambdas, since function name is used if
 available: see notes on `Schema Callables <#callables>`__.
 
-Arguments: \* ``name``: Name to assign on the validator callable \*
-``validator``: Validator callable. If not provided -- a decorator is
-returned instead:
+Arguments:
 
-::
+-  ``name``: Name to assign on the validator callable
+-  ``validator``: Validator callable. If not provided -- a decorator is
+   returned instead:
 
-    ```python
-    @name(u'int()')
-    def int(v):
-        return int(v)
-    ```
+   .. code:: python
+
+       @name(u'int()')
+       def int(v):
+           return int(v)
 
 Returns: ``callable`` The same validator callable
 
@@ -949,9 +967,11 @@ Convenience decorator that converts a boolean function into a validator.
     schema('/404')
     #-> Invalid: Must be an existing directory: expected isDir(), got /404
 
-Arguments: \* ``message``: Validation error message \* ``expected``:
-Expected value string representation, or ``None`` to get it from the
-wrapped callable
+Arguments:
+
+-  ``message``: Validation error message
+-  ``expected``: Expected value string representation, or ``None`` to
+   get it from the wrapped callable
 
 Returns: ``callable`` Validator callable
 
@@ -982,7 +1002,9 @@ This is the *OR* condition predicate: any of the schemas should match.
     schema('true')  #-> 'true'
     schema(0)  #-> 'false'
 
-Arguments: \* ``*schemas``: List of schemas to try
+Arguments:
+
+-  ``*schemas``: List of schemas to try.
 
 ``All``
 ~~~~~~~
@@ -1012,7 +1034,40 @@ in order, which is in fact a composition of validators:
     schema(99)
     #-> Invalid: Not in range: expected 0..10, got 99
 
-Arguments: \* ``*schemas``: List of schemas to apply.
+Arguments:
+
+-  ``*schemas``: List of schemas to apply.
+
+``Neither``
+~~~~~~~~~~~
+
+.. code:: python
+
+    Neither(*schemas)
+
+Value must not match any of the schemas.
+
+This is the *NOT* condition predicate: a value is considered valid if
+each schema has raised an error.
+
+.. code:: python
+
+    from good import Schema, Neither
+
+    schema = Schema(All(
+        # Integer
+        int,
+        # But not zero
+        Neither(0)
+    ))
+
+    schema(1)  #-> 1
+    schema(0)
+    #-> Invalid:
+
+Arguments:
+
+-  ``*schemas``: List of schemas to check against.
 
 Types
 -----

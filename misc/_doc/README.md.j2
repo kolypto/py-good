@@ -14,10 +14,10 @@
 
 {{ func.doc }}
 
-{%if func.args %}Arguments: {{ '\n' }}{{ argspec(func.args) }}{% endif %}
+{%if func.args %}Arguments: {{ '\n\n' }}{{ argspec(func.args) }}{% endif %}
 {%if func.ret %}Returns: `{{ func.ret.type }}` {{ func.ret.doc }}{% endif %}
 
-{%if func.exc %}Throws:{{ '\n' }}{% for e in func.exc %}* `{{ e.name }}`: {{ e.doc|indent(4) }}{{ '\n' }}{% endfor %}{% endif %}
+{%if func.exc %}Throws:{{ '\n\n' }}{% for e in func.exc %}* `{{ e.name }}`: {{ e.doc|indent(4) }}{{ '\n' }}{% endfor %}{% endif %}
 {%- endmacro %}
 
 Good

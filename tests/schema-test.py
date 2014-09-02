@@ -724,6 +724,18 @@ class PredicatesTest(GoodTestBase):
         self.assertInvalid(schema, 190,
                            Invalid(u'Must be in range 0..100', u'Range(0..100)', u'190', [], percent))
 
+    def test_Neither(self):
+        """ Test Neither() """
+
+        schema = Schema(All(
+            int,
+            Neither(-1, 0, 1)
+        ))
+
+        self.assertValid(schema, 10)
+        self.assertInvalid(schema, 0,
+                           Invalid(u'Value not allowed', u'Not(0)', u'0', [], 0))
+
 
 class TypesTest(GoodTestBase):
     """ Test: Validators.Types """

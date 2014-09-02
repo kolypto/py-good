@@ -240,17 +240,17 @@ class Schema(object):
         :type extra_keys: *
         :raises SchemaError: Schema compilation error
         """
-        self._schema = self.compiled_schema_cls(
+        self.compiled = self.compiled_schema_cls(
             schema, [],
             default_keys or markers.Required,
             extra_keys or markers.Reject)
-        self.name = self._schema.name
+        self.name = self.compiled.name
 
     def __repr__(self):
-        return repr(self._schema)
+        return repr(self.compiled)
 
     def __unicode__(self):
-        return six.text_type(self._schema)
+        return six.text_type(self.compiled)
 
     if six.PY3:
         __str__ = __unicode__
@@ -265,4 +265,4 @@ class Schema(object):
         :raises good.Invalid: Validation error on a single value. See [`Invalid`](#invalid).
         :raises good.MultipleInvalid: Validation error on multiple values. See [`MultipleInvalid`](#multipleinvalid).
         """
-        return self._schema(value)
+        return self.compiled(value)

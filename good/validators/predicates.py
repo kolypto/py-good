@@ -20,9 +20,7 @@ class Any(ValidatorBase):
     schema(0)  #-> 'false'
     ```
 
-    :param schemas: List of schemas to try
-    :return: Validator callable
-    :rtype: callable
+    :param schemas: List of schemas to try.
     """
 
     def __init__(self, *schemas):
@@ -66,8 +64,6 @@ class All(ValidatorBase):
     ```
 
     :param schemas: List of schemas to apply.
-    :return: Validator callable
-    :rtype: callable
     """
 
     def __init__(self, *schemas):
@@ -86,7 +82,48 @@ class All(ValidatorBase):
         return v
 
 
-# TODO: Exclusive
-# TODO: Inclusive
+class Neither(ValidatorBase):
+    """ Value must not match any of the schemas.
 
-__all__ = ('Any', 'All')
+    This is the *NOT* condition predicate: a value is considered valid if each schema has raised an error.
+
+    ```python
+    from good import Schema, Neither
+
+    schema = Schema(All(
+        # Integer
+        int,
+        # But not zero
+        Neither(0)
+    ))
+
+    schema(1)  #-> 1
+    schema(0)
+    #-> Invalid:
+    ```
+
+    :param schemas: List of schemas to check against.
+    """
+
+    def __init__(self, *schemas):
+        # Compile
+        self.compiled = tuple(Schema(schema) for schema in schemas)
+
+        # Name
+        self.name = _(u'Neither({})').format(_(u','.join(x.name for x in self.compiled)))
+
+    def __call__(self, v):
+        # Try schemas in order
+        for schema in self.compiled:
+            try:
+                schema(v)
+            except Invalid:
+                pass  # error is okay
+            else:
+                raise Invalid(_(u'Value not allowed'), _(u'Not({})').format(schema.name), validator=schema.compiled.schema)
+
+        # All ok
+        return v
+
+
+__all__ = ('Any', 'All', 'Neither')
