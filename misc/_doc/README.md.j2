@@ -75,13 +75,21 @@ Errors
 ## {{ MultipleInvalid.cls.name }}
 {{ fdoc(MultipleInvalid.cls) }}
 
+
+{% macro libdoc(lib) -%}
+{{ lib.module.doc }}
+
+{% for m in lib.members %}
+## `{{ m.qualname }}`
+{{ fdoc(m) }}
+{% endfor %}
+{%- endmacro %}
+
+
 Markers
 =======
+{{ libdoc(markers) }}
 
-{{ markers.module.doc }}
-
-{% for marker in markers.members %}
-## `{{ marker.qualname }}`
-{{ fdoc(marker) }}
-{% endfor %}
-
+Helpers
+=======
+{{ libdoc(helpers) }}

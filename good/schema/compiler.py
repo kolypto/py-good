@@ -16,7 +16,6 @@ def Identity(v):
 Identity.name = _(u'*')  # Set a name on it (for repr())
 
 
-
 class CompiledSchema(object):
     """ Schema compiler.
 
@@ -342,7 +341,7 @@ class CompiledSchema(object):
                 # Enrich & re-raise
                 enrich_exception(e, v)
                 raise
-            except Exception as e:
+            except const.transformed_exceptions as e:
                 e = Invalid(
                     _(u'{Exception}: {message}').format(
                         Exception=type(e).__name__,
@@ -528,7 +527,7 @@ class CompiledSchema(object):
                     # This is to short-circuit catch-all markers like `Extra`, which, being executed last,
                     # just gets all remaining keys.
                     matches.extend((k, k, d[k]) for k in d_keys)
-                    d_keys = None  # empty it since we've emptied everything
+                    d_keys = None  # empty it since we've processed everything
                 elif d_keys:
                     # For non-literal schemas we have to walk all input keys
                     # and detect those that match the current `key_schema`.
@@ -585,10 +584,10 @@ class CompiledSchema(object):
 
                         # Remove the original key in case `key_schema` has transformed it.
                         if k != sanitized_k:
-                            d.pop(k)
+                            del d[k]
                     except signals.RemoveValue:
                         # `value_schema` commanded to drop this value
-                        d.pop(k)
+                        del d[k]
                     except Invalid as e:
                         # Any value validation errors are appended to the list of Invalid reports for the schema
                         # enrich() adds more info on the collected errors.

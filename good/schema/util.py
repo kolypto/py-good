@@ -55,6 +55,9 @@ class const:
     #: Types that are treated as literals
     literal_types = six.integer_types + (six.text_type, six.binary_type) + (bool, float, complex, object, type(None))
 
+    #: Exception classes that are transformed into Invalid when thrown by a callable
+    transformed_exceptions = (AssertionError, TypeError, ValueError,)
+
 
     class COMPILED_TYPE:
         """ Compiled schema types """

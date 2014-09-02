@@ -15,11 +15,10 @@ Inspired by the amazing [alecthomas/voluptuous](https://github.com/alecthomas/vo
 The whole internals have been reworked towards readability and robustness. And yeah, the docs are now exhaustive :)
 """
 
-# Init gettext translations
-import gettext
-import six
+# Init gettext translations, and do not litter the root scope
+import gettext as _gettext, six as _six
+_gettext.install('good', **({'unicode': True} if _six.PY2 else {}))
 
-gettext.install('good', **({'unicode': True} if six.PY2 else {}))
 
 # Core
 

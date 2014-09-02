@@ -1,11 +1,11 @@
 from __future__ import print_function
 import six
 import unittest
-from collections import OrderedDict
+import collections
 from random import shuffle
 from copy import deepcopy
 
-from good import Schema, Invalid, MultipleInvalid, Required, Optional, Extra, Remove, Reject, Allow
+from good import *
 from good.schema.util import get_type_name
 
 
@@ -553,7 +553,7 @@ class SchemaCoreTest(GoodTestBase):
             schema_items = list(schema.items())
             for i in range(0, 10):
                 shuffle(schema_items)
-                sch = Schema(OrderedDict(schema), default_keys=Optional)
+                sch = Schema(collections.OrderedDict(schema), default_keys=Optional)
                 if expected_error:
                     self.assertInvalid(sch, deepcopy(value), expected_error)
                 else:
@@ -589,7 +589,66 @@ class SchemaCoreTest(GoodTestBase):
 
 class HelpersTest(GoodTestBase):
     """ Test: Helpers """
-    pass
+
+    def test_object(self):
+        """ Test Object() """
+
+        def intify(v):
+            try:
+                return int(v)
+            except (TypeError, ValueError):
+                raise Invalid(s.es_value, u'Number')
+
+        # Class
+        class OPerson(object):
+            category = u'Something'  # Not validated
+
+            def __init__(self, name, age):
+                self.name = name
+                self.age = age
+
+            def __eq__(self, other):
+                return isinstance(other, type(self)) and self.name == other.name and self.age == other.age
+
+        # NamedTuple class
+        TPerson = collections.namedtuple('TPerson', ('name', 'age'))
+
+        # Slots class
+        class SPerson(OPerson):
+            __slots__ = ('name', 'age')
+
+        # Test on every class
+        for Person in (OPerson, TPerson, SPerson):
+            # Object()
+            object_validator = Object({
+                u'name': six.text_type,
+                u'age': intify,
+            })
+            schema = Schema(object_validator)
+
+            self.assertValid(schema, Person(u'Alex', 18), Person(u'Alex', 18))
+            self.assertInvalid(schema, type('A', (object,), {})(), MultipleInvalid([
+                Invalid(s.es_required, u'name', s.v_no, [u'name'], Required(u'name')),
+                Invalid(s.es_required, u'age',  s.v_no, [u'age'],  Required(u'age')),
+            ]))
+            self.assertInvalid(schema, Person(u'Alex', u'abc'),
+                               Invalid(s.es_value, u'Number', u'abc', [u'age'], intify))
+
+            # Test attribute mutation
+            if Person is not TPerson:  # `TPerson` is immutable and cannot be tested
+                self.assertValid(schema, Person(u'Alex', u'18'), Person(u'Alex', 18))
+
+            # Object() with typecheck
+            object_validator = Object({
+                u'name': six.text_type,
+                u'age': intify,
+            }, Person)
+            schema = Schema(object_validator)
+
+            self.assertValid(schema, Person(u'Alex', 18), Person(u'Alex', 18))
+            self.assertInvalid(schema, type('A', (object,), {})(),
+                               Invalid(s.es_value_type, u'Object({})'.format(Person.__name__), u'Object(A)', [], Object))
+
 
 
 class PredicatesTest(GoodTestBase):

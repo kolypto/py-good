@@ -21,7 +21,8 @@ data = {
     'errors': doc(good.schema.errors),
     'Invalid': doccls(good.Invalid),
     'MultipleInvalid': doccls(good.MultipleInvalid),
-    'markers': docmodule(good.markers)
+    'markers': docmodule(good.markers),
+    'helpers': docmodule(good.helpers),
 }
 
 # Patches

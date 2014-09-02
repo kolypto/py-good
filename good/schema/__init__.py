@@ -41,7 +41,8 @@ class Schema(object):
         ```
 
     3. **Callable**: is applied to the value and the result is used as the final value.
-       Any errors raised by the callable are treated as validation errors.
+       Any errors raised by the callable are treated as validation errors
+       (only for the following exception classes: `AssertionError`, `TypeError`, `ValueError`).
 
        In addition, validators are allowed to transform a value to the required form.
        For instance, [`Coerce(int)`](#coerce) returns a callable which will convert input values into `int` or fail.
@@ -212,7 +213,7 @@ class Schema(object):
 
     compiled_schema_cls = CompiledSchema
 
-    def __init__(self, schema, default_keys=markers.Required, extra_keys=markers.Reject):
+    def __init__(self, schema, default_keys=None, extra_keys=None):
         """ Creates a compiled `Schema` object from the given schema definition.
 
         Under the hood, it uses `SchemaCompiler`: see the [source](good/schema/compiler.py) if interested.
@@ -220,13 +221,22 @@ class Schema(object):
         :param schema: Schema definition
         :type schema: *
         :param default_keys: Default mapping keys behavior:
-            a [`Marker`](#markers) class used as a default on mapping keys which are not Marker()ed with anything
+            a [`Marker`](#markers) class used as a default on mapping keys which are not Marker()ed with anything.
+
+            Defaults to `markers.Required`.
+
         :type default_keys: type
-        :param extra_keys: Default extra keys behavior: sub-schema, or a [`Marker`](#markers) class
+        :param extra_keys: Default extra keys behavior: sub-schema, or a [`Marker`](#markers) class.
+
+            Defaults to `markers.Reject`
+
         :type extra_keys: *
         :raises SchemaError: Schema compilation error
         """
-        self._schema = self.compiled_schema_cls(schema, [], default_keys, extra_keys)
+        self._schema = self.compiled_schema_cls(
+            schema, [],
+            default_keys or markers.Required,
+            extra_keys or markers.Reject)
 
     def __repr__(self):
         return repr(self._schema)

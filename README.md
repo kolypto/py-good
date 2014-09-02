@@ -19,6 +19,7 @@ Core features:
 * Error paths (which field contains the error)
 * User-friendly error messages
 * Internationalization!
+* [Robust](misc/performance/performance.md): 10 000 validations per second
 * Python 2.7, 3.3+ compatible
 
 Inspired by the amazing [alecthomas/voluptuous](https://github.com/alecthomas/voluptuous) and 100% compatible with it.
@@ -85,7 +86,8 @@ The following rules exist:
     ```
 
 3. **Callable**: is applied to the value and the result is used as the final value.
-   Any errors raised by the callable are treated as validation errors.
+   Any errors raised by the callable are treated as validation errors
+   (only for the following exception classes: `AssertionError`, `TypeError`, `ValueError`).
 
    In addition, validators are allowed to transform a value to the required form.
    For instance, [`Coerce(int)`](#coerce) returns a callable which will convert input values into `int` or fail.
@@ -256,7 +258,7 @@ which can be higher that literals ([`Remove()`](#remove) marker) or lower than c
 Creating a Schema
 -----------------
 ```python
-Schema(schema, default_keys=Required, extra_keys=Reject)
+Schema(schema, default_keys=None, extra_keys=None)
 ```
 
 Creates a compiled `Schema` object from the given schema definition.
@@ -265,8 +267,12 @@ Under the hood, it uses `SchemaCompiler`: see the [source](good/schema/compiler.
 
 * `schema`: Schema definition
 * `default_keys`: Default mapping keys behavior:
-    a [`Marker`](#markers) class used as a default on mapping keys which are not Marker()ed with anything
-* `extra_keys`: Default extra keys behavior: sub-schema, or a [`Marker`](#markers) class
+    a [`Marker`](#markers) class used as a default on mapping keys which are not Marker()ed with anything.
+
+    Defaults to `markers.Required`.
+* `extra_keys`: Default extra keys behavior: sub-schema, or a [`Marker`](#markers) class.
+
+    Defaults to `markers.Reject`
 
 
 
@@ -420,9 +426,12 @@ In this example, we create a dictionary of paths (as strings) mapped to error st
 
 
 
+
+
+
+
 Markers
 =======
-
 A *Marker* is a proxy class which wraps some schema.
 
 Immediately, the example is:
@@ -686,5 +695,56 @@ schema({'name': 'Alex', 'age': 'X'})  #-> {'name': 'Alex', 'age': 'X'}
 
 
 
+
+
+
+Helpers
+=======
+Collection of miscellaneous helpers to alter the validation process.
+
+
+## `Object`
+```python
+Object(schema, cls=None)
+```
+
+Specify that the provided mapping should validate an object.
+
+This uses the same mapping validation rules, but works with attributes instead:
+
+```python,
+from good import Schema, Object
+
+intify = lambda v: int(v)  # Naive Coerce(int) implementation
+
+# Define a class to play with
+class Person(object):
+    category = u'Something'  # Not validated
+
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+# Schema
+schema = Schema(Object({
+    'name': str,
+    'age': intify,
+}))
+
+# Validate
+schema(Person(name=u'Alex', age='18'))  #-> Girl(name=u'Alex', age=18)
+```
+
+Internally, it validates the object's `__dict__`: hence, class attributes are excluded from validation.
+Validation is performed with the help of a wrapper class which proxies object attributes as mapping keys,
+and then Schema validates it as a mapping.
+
+This inherits the default required/extra keys behavior of the Schema.
+To override, use [`Optional()`](#optional) and [`Extra`](#extra) markers.
+
+* `schema`: Object schema, given as a mapping
+* `cls`: Require instances of a specific class. If `None`, allows all classes.
+
+Returns: `callable` Validator
 
 
