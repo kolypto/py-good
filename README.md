@@ -830,6 +830,34 @@ Returns: `callable` Wrapped schema callable
 
 
 
+### `Check`
+```python
+Check(bvalidator, message, expected=None)
+```
+
+Use the provided boolean function as a validator and raise errors when it's `False`.
+
+```python
+import os.path
+from good import Schema, Check
+
+schema = Schema(
+    Check(os.path.isdir, u'Must be an existing directory'))
+schema('/')  #-> '/'
+schema('/404')
+#-> Invalid: Must be an existing directory: expected isDir(), got /404
+```
+
+Arguments: 
+
+* `bvalidator`: Boolean validator function
+* `message`: Error message to report when `False`
+* `expected`: Expected value string representation, or `None` to get it from the wrapped callable
+
+Returns: `callable` Validator callable
+
+
+
 ### `message`
 ```python
 message(message, name=None)
@@ -850,7 +878,7 @@ Arguments:
 * `message`: Error message to use instead
 * `name`: Override schema name as well. See [`name`](#name).
 
-Returns: `callable` Validator callable
+Returns: `callable` decorator
 
 
 
@@ -881,6 +909,8 @@ Arguments:
 * `validator`: Validator callable. If not provided -- a decorator is returned instead:
 
     ```python
+    from good import name
+
     @name(u'int()')
     def int(v):
         return int(v)
@@ -895,20 +925,14 @@ Returns: `callable` The same validator callable
 truth(message, expected=None)
 ```
 
-Convenience decorator that converts a boolean function into a validator.
+Convenience decorator that applies [`Check`](#check) to a callable.
 
 ```python
-import os.path
-from good import Schema, truth
+from good import truth
 
 @truth(u'Must be an existing directory')
 def isDir(v):
     return os.path.isdir(v)
-
-schema = Schema(isDir)
-schema('/')  #-> '/'
-schema('/404')
-#-> Invalid: Must be an existing directory: expected isDir(), got /404
 ```
 
 Arguments: 
@@ -916,7 +940,7 @@ Arguments:
 * `message`: Validation error message
 * `expected`: Expected value string representation, or `None` to get it from the wrapped callable
 
-Returns: `callable` Validator callable
+Returns: `callable` decorator
 
 
 

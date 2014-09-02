@@ -6,6 +6,7 @@ from functools import wraps, update_wrapper
 
 from .schema.util import const, get_callable_name
 from . import Schema, SchemaError, Invalid
+from .validators._base import ValidatorBase
 
 
 class ObjectProxy(collections.Mapping, dict):
@@ -189,6 +190,48 @@ def Msg(schema, message):
     return message_override
 
 
+def Check(bvalidator, message, expected=None):
+    """ Use the provided boolean function as a validator and raise errors when it's `False`.
+
+    ```python
+    import os.path
+    from good import Schema, Check
+
+    schema = Schema(
+        Check(os.path.isdir, u'Must be an existing directory'))
+    schema('/')  #-> '/'
+    schema('/404')
+    #-> Invalid: Must be an existing directory: expected isDir(), got /404
+    ```
+
+    :param bvalidator: Boolean validator function
+    :type bvalidator: callable
+    :param message: Error message to report when `False`
+    :type message: unicode
+    :param expected: Expected value string representation, or `None` to get it from the wrapped callable
+    :type expected: None|str|unicode
+    :return: Validator callable
+    :rtype: callable
+    """
+    assert isinstance(message, six.text_type), 'Check() message must be a unicode string'
+    assert isinstance(expected, six.text_type) or expected is None, 'Check() expected must be a unicode string'
+
+    # Wrapper
+    def check(v):
+        #  Test with the boolean function
+        if bvalidator(v):
+            # Return value as is
+            return v
+        else:
+            # If the boolean function reported False -- raise Invalid
+            raise Invalid(message, expected)
+
+    # Name after the wrapped function
+    check.name = get_callable_name(bvalidator)
+
+    return check
+
+
 def message(message, name=None):
     """ Convenience decorator that applies [`Msg()`](#msg) to a callable.
 
@@ -204,7 +247,7 @@ def message(message, name=None):
     :type message: unicode
     :param name: Override schema name as well. See [`name`](#name).
     :type name: None|unicode
-    :return: Validator callable
+    :return: decorator
     :rtype: callable
     """
     def decorator(func):
@@ -237,6 +280,8 @@ def name(name, validator=None):
     :param validator: Validator callable. If not provided -- a decorator is returned instead:
 
         ```python
+        from good import name
+
         @name(u'int()')
         def int(v):
             return int(v)
@@ -246,49 +291,38 @@ def name(name, validator=None):
     :return: The same validator callable
     :rtype: callable
     """
+    # Decorator mode
+    if validator is None:
+        def decorator(f):
+            f.name = name
+            return f
+        return decorator
+
+    # Direct mode
     validator.name = name
     return validator
 
 
 def truth(message, expected=None):
-    """ Convenience decorator that converts a boolean function into a validator.
+    """ Convenience decorator that applies [`Check`](#check) to a callable.
 
     ```python
-    import os.path
-    from good import Schema, truth
+    from good import truth
 
     @truth(u'Must be an existing directory')
     def isDir(v):
         return os.path.isdir(v)
-
-    schema = Schema(isDir)
-    schema('/')  #-> '/'
-    schema('/404')
-    #-> Invalid: Must be an existing directory: expected isDir(), got /404
     ```
 
     :param message: Validation error message
     :type message: unicode
     :param expected: Expected value string representation, or `None` to get it from the wrapped callable
     :type expected: None|str|unicode
-    :return: Validator callable
+    :return: decorator
     :rtype: callable
     """
-    assert isinstance(message, six.text_type), '@truth() message must be a unicode string'
-    assert isinstance(expected, six.text_type) or expected is None, '@truth() expected must be a unicode string'
-
     def decorator(func):
-        @wraps(func)
-        def wrapper(v):
-            # Test with the boolean function
-            if func(v):
-                # Return the value as is
-                return v
-            else:
-                # If the boolean function reported False -- raise Invalid
-                raise Invalid(message, expected)
-        wrapper.name = get_callable_name(func)  # set a meaningful `name`, which is then used by CompiledSchema
-        return wrapper
+        return update_wrapper(Check(func, message, expected), func)
     return decorator
 
-__all__ = ('Object', 'Msg', 'message', 'name', 'truth')
+__all__ = ('Object', 'Msg', 'Check', 'message', 'name', 'truth')
