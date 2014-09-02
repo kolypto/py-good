@@ -49,6 +49,13 @@ Table of Contents
    -  Allow
    -  Extra
 
+-  Helpers
+
+   -  Object
+   -  Msg
+   -  message
+   -  truth
+
 Schema
 ======
 
@@ -882,7 +889,7 @@ Convenience decorator that converts a boolean function into a validator.
     schema = Schema(isDir)
     schema('/')  #-> '/'
     schema('/404')
-    #-> Invalid: Must be an existing directory: expected isdir(), got /404
+    #-> Invalid: Must be an existing directory: expected isDir(), got /404
 
 Arguments: \* ``message``: Validation error message \* ``expected``:
 Expected value string representation, or ``None`` to get it from the

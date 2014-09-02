@@ -45,6 +45,11 @@ Table of Contents
     * <a href="#reject">Reject</a>
     * <a href="#allow">Allow</a>
     * <a href="#extra">Extra</a>
+* <a href="#helpers">Helpers</a>
+    * <a href="#object">Object</a>
+    * <a href="#msg">Msg</a>
+    * <a href="#message">message</a>
+    * <a href="#truth">truth</a> 
 
 
 Schema
@@ -836,7 +841,7 @@ def isDir(v):
 schema = Schema(isDir)
 schema('/')  #-> '/'
 schema('/404')
-#-> Invalid: Must be an existing directory: expected isdir(), got /404
+#-> Invalid: Must be an existing directory: expected isDir(), got /404
 ```
 
 Arguments: 
