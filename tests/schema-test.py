@@ -590,7 +590,7 @@ class SchemaCoreTest(GoodTestBase):
 class HelpersTest(GoodTestBase):
     """ Test: Helpers """
 
-    def test_object(self):
+    def test_Object(self):
         """ Test Object() """
 
         def intify(v):
@@ -648,6 +648,39 @@ class HelpersTest(GoodTestBase):
             self.assertValid(schema, Person(u'Alex', 18), Person(u'Alex', 18))
             self.assertInvalid(schema, type('A', (object,), {})(),
                                Invalid(s.es_value_type, u'Object({})'.format(Person.__name__), u'Object(A)', [], Object))
+
+    def test_Msg(self):
+        """ Test Msg() """
+
+        # Test Msg() with Invalid
+        schema = Schema(Msg(int, u'Need a number'))
+
+        self.assertValid(schema, 1)
+        self.assertInvalid(schema, u'a',
+                           Invalid(u'Need a number', s.t_int, s.t_unicode, [], int))
+
+        # Test Msg() with ValueError
+        intify = lambda v: int(v)
+        intify.name = u'intify()'
+
+        schema = Schema(Msg(intify, u'Need a number'))
+
+        self.assertValid(schema, 1)
+        self.assertInvalid(schema, u'a',
+                           Invalid(u'Need a number', u'intify()', u'a', [], intify))
+
+    def test_message(self):
+        """ Test @message() """
+
+        def intify(v):
+            return int(v)
+        wintify = message(u'Need a number')(intify)
+
+        schema = Schema(wintify)
+
+        self.assertValid(schema, 1)
+        self.assertInvalid(schema, u'a',
+                           Invalid(u'Need a number', u'intify()', u'a', [], intify))
 
 
 

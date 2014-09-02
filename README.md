@@ -86,8 +86,9 @@ The following rules exist:
     ```
 
 3. **Callable**: is applied to the value and the result is used as the final value.
-   Any errors raised by the callable are treated as validation errors
-   (only for the following exception classes: `AssertionError`, `TypeError`, `ValueError`).
+
+   Callables should raise [`Invalid`](#invalid) errors in case of a failure, however some generic error types are
+   converted automatically: see [Callables](#callables).
 
    In addition, validators are allowed to transform a value to the required form.
    For instance, [`Coerce(int)`](#coerce) returns a callable which will convert input values into `int` or fail.
@@ -215,9 +216,12 @@ Finally, here are the things to consider when using custom callables for validat
     Schema is smart enough to fill into most of the arguments (see [`Invalid.enrich`](#invalidenrich)),
     so it's enough to use a custom message, and probably, set a human-friendly `expected` field.
 
-    If the callable throws anything else (e.g. `ValueError`), these are wrapped into `Invalid`.
+    In addition, specific error types are wrapped into `Invalid` automatically: these are
+    `AssertionError`, `TypeError`, `ValueError`.
     Schema tries to do its best, but such messages will probably be cryptic for the user.
     Hence, always raise meaningful errors when creating custom validators.
+    Still, this opens the possibility to use Python typecasting with validators like `lambda v: int(v)`,
+    since most of them are throwing `TypeError` or `ValueError`.
 
 * Naming.
 
@@ -723,7 +727,7 @@ Specify that the provided mapping should validate an object.
 
 This uses the same mapping validation rules, but works with attributes instead:
 
-```python,
+```python
 from good import Schema, Object
 
 intify = lambda v: int(v)  # Naive Coerce(int) implementation
@@ -758,5 +762,58 @@ Arguments:
 * `cls`: Require instances of a specific class. If `None`, allows all classes.
 
 Returns: `callable` Validator
+
+
+
+## `Msg`
+```python
+Msg(schema, msg)
+```
+
+Override the error message reported by the wrapped schema in case of validation errors.
+
+On validation, if the schema throws [`Invalid`](#invalid) -- the message is overridden with `msg`.
+
+Some other error types are converted to `Invalid`: see notes on [Schema Callables](#callables).
+
+```python
+from good import Schema, Msg
+
+intify = lambda v: int(v)  # Naive Coerce(int) implementation
+intify.name = u'Number'
+
+schema = Schema(Msg(intify, u'Need a number'))
+schema(1)  #-> 1
+schema('a')
+#-> Invalid: Need a number: expected Number, got a
+```
+
+Arguments: 
+* `schema`: The wrapped schema to modify the error for
+* `msg`: Error message to use instead of the one that's reported by the underlying schema
+
+Returns: `callable` Wrapped schema callable
+
+
+
+## `message`
+```python
+message(msg)
+```
+
+Convenience decorator that applies [`Msg()`](#msg) to a callable.
+
+```python
+from good import Schema, message
+
+@message(u'Need a number')
+def intify(v):
+    return int(v)
+```
+
+Arguments: 
+* `msg`: Error message to use
+
+Returns: `callable` Validator callable
 
 

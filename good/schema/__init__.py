@@ -41,8 +41,9 @@ class Schema(object):
         ```
 
     3. **Callable**: is applied to the value and the result is used as the final value.
-       Any errors raised by the callable are treated as validation errors
-       (only for the following exception classes: `AssertionError`, `TypeError`, `ValueError`).
+
+       Callables should raise [`Invalid`](#invalid) errors in case of a failure, however some generic error types are
+       converted automatically: see [Callables](#callables).
 
        In addition, validators are allowed to transform a value to the required form.
        For instance, [`Coerce(int)`](#coerce) returns a callable which will convert input values into `int` or fail.
@@ -170,9 +171,12 @@ class Schema(object):
         Schema is smart enough to fill into most of the arguments (see [`Invalid.enrich`](#invalidenrich)),
         so it's enough to use a custom message, and probably, set a human-friendly `expected` field.
 
-        If the callable throws anything else (e.g. `ValueError`), these are wrapped into `Invalid`.
+        In addition, specific error types are wrapped into `Invalid` automatically: these are
+        `AssertionError`, `TypeError`, `ValueError`.
         Schema tries to do its best, but such messages will probably be cryptic for the user.
         Hence, always raise meaningful errors when creating custom validators.
+        Still, this opens the possibility to use Python typecasting with validators like `lambda v: int(v)`,
+        since most of them are throwing `TypeError` or `ValueError`.
 
     * Naming.
 
@@ -237,6 +241,7 @@ class Schema(object):
             schema, [],
             default_keys or markers.Required,
             extra_keys or markers.Reject)
+        self.name = self._schema.name
 
     def __repr__(self):
         return repr(self._schema)
