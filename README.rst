@@ -410,6 +410,8 @@ Expected value: info about the value the validator was expecting.
    E.g. if an invalid value was encountered at ['a'].b[1], then
    path=['a', 'b', 1].
 -  ``validator``: The validator that has failed: a schema item
+-  ``**info``: Custom values that might be provided by the validator. No
+   built-in validator uses this.
 
 ``Invalid.enrich()``
 ~~~~~~~~~~~~~~~~~~~~
@@ -980,7 +982,7 @@ This is the *OR* condition predicate: any of the schemas should match.
     schema('true')  #-> 'true'
     schema(0)  #-> 'false'
 
-Arguments:
+Arguments: \* ``*schemas``: List of schemas to try
 
 ``All``
 ~~~~~~~
@@ -1010,7 +1012,7 @@ in order, which is in fact a composition of validators:
     schema(99)
     #-> Invalid: Not in range: expected 0..10, got 99
 
-Arguments:
+Arguments: \* ``*schemas``: List of schemas to apply.
 
 Types
 -----

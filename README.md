@@ -357,7 +357,7 @@ Arguments:
 
     E.g. if an invalid value was encountered at ['a'].b[1], then path=['a', 'b', 1].
 * `validator`: The validator that has failed: a schema item
-
+* `**info`: Custom values that might be provided by the validator. No built-in validator uses this.
 
 
 
@@ -931,7 +931,7 @@ schema(0)  #-> 'false'
 ```
 
 Arguments: 
-
+* `*schemas`: List of schemas to try
 
 
 
@@ -963,7 +963,7 @@ schema(99)
 ```
 
 Arguments: 
-
+* `*schemas`: List of schemas to apply.
 
 
 

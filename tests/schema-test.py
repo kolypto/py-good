@@ -709,7 +709,7 @@ class PredicatesTest(GoodTestBase):
         self.assertValid(schema, u'1', u'(1)')
 
         self.assertInvalid(schema, None,
-                           Invalid(s.es_value, u'Any(Integer number | str)', s.t_none, [], any))
+                           Invalid(s.es_value, u'Any(Integer number|str)', s.t_none, [], any))
 
     def test_All(self):
         """ Test All() """
