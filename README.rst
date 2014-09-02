@@ -903,9 +903,9 @@ Useful for user-friendly reporting when using lambdas to populate the
     from good import Schema, name
 
     Schema(lambda x: int(x))('a')
-    #-> Invalid: ValueError: invalid literal for int() with base 10: 'a': expected <lambda>(), got
+    #-> Invalid: ValueError: invalid literal for int(): expected <lambda>(), got
     Schema(name('int()', lambda x: int(x))('a')
-    #-> Invalid: ValueError: invalid literal for int() with base 10: 'a': expected int(), got a
+    #-> Invalid: ValueError: invalid literal for int(): expected int(), got a
 
 Note that it is only useful with lambdas, since function name is used if
 available: see notes on `Schema Callables <#callables>`__.
