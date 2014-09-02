@@ -335,11 +335,10 @@ class CompiledSchema(object):
                 enrich_exception(e, v)
                 raise
             except const.transformed_exceptions as e:
-                e = Invalid(
-                    _(u'{Exception}: {message}').format(
-                        Exception=type(e).__name__,
-                        message=six.text_type(e))
-                )
+                message = _(u'{message}').format(
+                    Exception=type(e).__name__,
+                    message=six.text_type(e))
+                e = Invalid(message)
                 raise enrich_exception(e, v)
 
         # Matcher

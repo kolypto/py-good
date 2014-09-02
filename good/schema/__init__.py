@@ -55,7 +55,7 @@ class Schema(object):
        Schema(CoerceInt)(1)    #-> 1
        Schema(CoerceInt)('1')  #-> 1
        Schema(CoerceInt)('a')
-       #-> Invalid: ValueError: invalid literal for int(): expected CoerceInt(), got a
+       #-> Invalid: invalid literal for int(): expected CoerceInt(), got a
        ```
 
     4. **`Schema`**: a schema may contain sub-schemas:

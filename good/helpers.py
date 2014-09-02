@@ -267,9 +267,9 @@ def name(name, validator=None):
     from good import Schema, name
 
     Schema(lambda x: int(x))('a')
-    #-> Invalid: ValueError: invalid literal for int(): expected <lambda>(), got
+    #-> Invalid: invalid literal for int(): expected <lambda>(), got
     Schema(name('int()', lambda x: int(x))('a')
-    #-> Invalid: ValueError: invalid literal for int(): expected int(), got a
+    #-> Invalid: invalid literal for int(): expected int(), got a
     ```
 
     Note that it is only useful with lambdas, since function name is used if available:

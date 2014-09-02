@@ -282,8 +282,8 @@ class SchemaCoreTest(GoodTestBase):
         self.assertValid(schema, True, 1)
         self.assertValid(schema, b'1', 1)
 
-        self.assertInvalid(schema, None, Invalid(u'TypeError: int() argument must be a string or a number, not \'NoneType\'',   u'intify()', s.t_none,  [], intify))
-        self.assertInvalid(schema, u'a', Invalid(u'ValueError: invalid literal for int() with base 10: \'a\'',                  u'intify()', u'a',      [], intify))
+        self.assertInvalid(schema, None, Invalid(u'int() argument must be a string or a number, not \'NoneType\'',  u'intify()', s.t_none,  [], intify))
+        self.assertInvalid(schema, u'a', Invalid(u'invalid literal for int() with base 10: \'a\'',                  u'intify()', u'a',      [], intify))
 
         # Simple callable that throws Invalid
         schema = Schema(intify_ex)
@@ -520,6 +520,23 @@ class SchemaCoreTest(GoodTestBase):
         self.assertValid(schema, {u'a': 1})
         self.assertInvalid(schema, {u'a': 1, u'b': 1},
                            Invalid(s.es_rejected, s.v_no, u'1', [u'b'], Reject))
+
+        # Entire
+        def max3keys(d):
+            if len(d) > 3:
+                raise Invalid(u'Too many keys', u'<=3 keys', u'{} keys'.format(len(d)))
+            return d
+
+        schema = Schema({
+            six.text_type: int,
+            Entire: max3keys
+        })
+
+        self.assertValid(schema,   {u'a': 1})
+        self.assertValid(schema,   {u'a': 1, u'b': 2})
+        self.assertValid(schema,   {u'a': 1, u'b': 2, u'c': 3})
+        self.assertInvalid(schema, {u'a': 1, u'b': 2, u'c': 3, u'd': 4},
+                           Invalid(u'Too many keys', u'<=3 keys', u'4 keys', [], max3keys))
 
     def test_mapping_priority(self):
         """ Test Schema(<mapping>), priority test """

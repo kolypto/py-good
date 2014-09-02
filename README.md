@@ -106,7 +106,7 @@ The following rules exist:
    Schema(CoerceInt)(1)    #-> 1
    Schema(CoerceInt)('1')  #-> 1
    Schema(CoerceInt)('a')
-   #-> Invalid: ValueError: invalid literal for int(): expected CoerceInt(), got a
+   #-> Invalid: invalid literal for int(): expected CoerceInt(), got a
    ```
 
 4. **`Schema`**: a schema may contain sub-schemas:
@@ -741,6 +741,54 @@ Arguments:
 
 
 
+## `Entire`
+```python
+Entire(key)
+```
+
+`Entire` is a convenience marker that validates the entire mapping using validators provided as a value.
+
+It has absolutely lowest priority, lower than `Extra`, hence it never matches any keys, but is still executed to
+validate the mapping itself.
+
+This opens the possibilities to define rules on multiple fields.
+This feature is leveraged by the [`Inclusive`](#inclusive) and [`Exclusive`](#exclusive) group validators.
+
+For example, let's require the mapping to have no more than 3 keys:
+
+```python
+from good import Schema, Entire
+
+def maxkeys(n):
+    # Return a validator function
+    def validator(d):
+        # `d` is the dictionary.
+        # Validate it
+        assert len(d) <= 3, 'Dict size should be <= 3'
+        # Return the value since all callable schemas should do that
+        return d
+    return validator
+
+schema = Schema({
+    str: int,
+    Entire: maxkeys(3)
+})
+```
+
+In this example, `Entire` is executed for every input dictionary, and magically calls the schema it's mapped to.
+The `maxkeys(n)` schema is a validator that complains on the dictionary size if it's too huge.
+`Schema` catches the `AssertionError` thrown by it and converts it to [`Invalid`](#invalid).
+
+Note that the schema this marker is mapped to can't replace the mapping object, but it can mutate the given mapping.
+
+Arguments: 
+
+
+
+
+
+
+
 
 Validation Tools
 ================
@@ -895,9 +943,9 @@ Useful for user-friendly reporting when using lambdas to populate the [`Invalid.
 from good import Schema, name
 
 Schema(lambda x: int(x))('a')
-#-> Invalid: ValueError: invalid literal for int(): expected <lambda>(), got
+#-> Invalid: invalid literal for int(): expected <lambda>(), got
 Schema(name('int()', lambda x: int(x))('a')
-#-> Invalid: ValueError: invalid literal for int(): expected int(), got a
+#-> Invalid: invalid literal for int(): expected int(), got a
 ```
 
 Note that it is only useful with lambdas, since function name is used if available:
