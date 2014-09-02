@@ -50,6 +50,21 @@ def get_type_name(t):
         return six.text_type(t.__name__).capitalize()
 
 
+def get_callable_name(c):
+    """ Get a human-friendly name for the given callable.
+
+    :param c: The callable to get the name for
+    :type c: callable
+    :rtype: unicode
+    """
+    if hasattr(c, 'name'):
+        return six.text_type(c.name)
+    elif hasattr(c, '__name__'):
+        return six.text_type(c.__name__) + u'()'
+    else:
+        return six.text_type(c)
+
+
 class const:
     """ Misc constants """
     #: Types that are treated as literals
@@ -84,4 +99,3 @@ class const:
         COMPILED_TYPE.MAPPING:    0,
         COMPILED_TYPE.MARKER:   None,  # Markers have their own priorities
     }
-

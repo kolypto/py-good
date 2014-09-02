@@ -769,31 +769,28 @@ Specify that the provided mapping should validate an object.
 This uses the same mapping validation rules, but works with attributes
 instead:
 
-\`\`\`python, from good import Schema, Object
+.. code:: python
 
-intify = lambda v: int(v) # Naive Coerce(int) implementation
+    from good import Schema, Object
 
-Define a class to play with
-===========================
+    intify = lambda v: int(v)  # Naive Coerce(int) implementation
 
-class Person(object): category = u'Something' # Not validated
+    # Define a class to play with
+    class Person(object):
+        category = u'Something'  # Not validated
 
-::
+        def __init__(self, name, age):
+            self.name = name
+            self.age = age
 
-    def __init__(self, name, age):
-        self.name = name
-        self.age = age
+    # Schema
+    schema = Schema(Object({
+        'name': str,
+        'age': intify,
+    }))
 
-Schema
-======
-
-schema = Schema(Object({ 'name': str, 'age': intify, }))
-
-Validate
-========
-
-schema(Person(name=u'Alex', age='18')) #-> Girl(name=u'Alex', age=18)
-\`\`\`
+    # Validate
+    schema(Person(name=u'Alex', age='18'))  #-> Girl(name=u'Alex', age=18)
 
 Internally, it validates the object's ``__dict__``: hence, class
 attributes are excluded from validation. Validation is performed with
@@ -808,6 +805,90 @@ Arguments: \* ``schema``: Object schema, given as a mapping \* ``cls``:
 Require instances of a specific class. If ``None``, allows all classes.
 
 Returns: ``callable`` Validator
+
+``Msg``
+-------
+
+.. code:: python
+
+    Msg(schema, message)
+
+Override the error message reported by the wrapped schema in case of
+validation errors.
+
+On validation, if the schema throws ```Invalid`` <#invalid>`__ -- the
+message is overridden with ``msg``.
+
+Some other error types are converted to ``Invalid``: see notes on
+`Schema Callables <#callables>`__.
+
+.. code:: python
+
+    from good import Schema, Msg
+
+    intify = lambda v: int(v)  # Naive Coerce(int) implementation
+    intify.name = u'Number'
+
+    schema = Schema(Msg(intify, u'Need a number'))
+    schema(1)  #-> 1
+    schema('a')
+    #-> Invalid: Need a number: expected Number, got a
+
+Arguments: \* ``schema``: The wrapped schema to modify the error for \*
+``message``: Error message to use instead of the one that's reported by
+the underlying schema
+
+Returns: ``callable`` Wrapped schema callable
+
+``message``
+-----------
+
+.. code:: python
+
+    message(message)
+
+Convenience decorator that applies ```Msg()`` <#msg>`__ to a callable.
+
+.. code:: python
+
+    from good import Schema, message
+
+    @message(u'Need a number')
+    def intify(v):
+        return int(v)
+
+Arguments: \* ``message``: Error message to use instead
+
+Returns: ``callable`` Validator callable
+
+``truth``
+---------
+
+.. code:: python
+
+    truth(message, expected=None)
+
+Convenience decorator that converts a boolean function into a validator.
+
+.. code:: python
+
+    import os.path
+    from good import Schema, truth
+
+    @truth(u'Must be an existing directory')
+    def isDir(v):
+        return os.path.isdir(v)
+
+    schema = Schema(isDir)
+    schema('/')  #-> '/'
+    schema('/404')
+    #-> Invalid: Must be an existing directory: expected isdir(), got /404
+
+Arguments: \* ``message``: Validation error message \* ``expected``:
+Expected value string representation, or ``None`` to get it from the
+wrapped callable
+
+Returns: ``callable`` Validator callable
 
 .. |Build Status| image:: https://api.travis-ci.org/kolypto/py-good.png?branch=master
    :target: https://travis-ci.org/kolypto/py-good

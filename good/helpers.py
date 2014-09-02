@@ -5,7 +5,7 @@ import collections
 from functools import wraps, update_wrapper
 
 from .schema.errors import SchemaError, Invalid
-from .schema.util import const
+from .schema.util import const, get_callable_name
 from . import Schema
 
 
@@ -133,7 +133,7 @@ def Object(schema, cls=None):
     def object_validator(v):
         # Check type
         if not isinstance(v, cls):
-            raise Invalid(_(u'Wrong value type'), cls_name, format_value_type(v), validator=Object)
+            raise Invalid(_(u'Wrong value type'), cls_name, format_value_type(v))
 
         # Validate using ObjectProxy and unwrap
         return compiled(ObjectProxy(v)).obj
@@ -142,7 +142,7 @@ def Object(schema, cls=None):
     return object_validator
 
 
-def Msg(schema, msg):
+def Msg(schema, message):
     """ Override the error message reported by the wrapped schema in case of validation errors.
 
     On validation, if the schema throws [`Invalid`](#invalid) -- the message is overridden with `msg`.
@@ -162,12 +162,12 @@ def Msg(schema, msg):
     ```
 
     :param schema: The wrapped schema to modify the error for
-    :param msg: Error message to use instead of the one that's reported by the underlying schema
-    :type msg: unicode
+    :param message: Error message to use instead of the one that's reported by the underlying schema
+    :type message: unicode
     :return: Wrapped schema callable
     :rtype: callable
     """
-    assert isinstance(msg, six.text_type), 'Msg() message must be a unicode string'
+    assert isinstance(message, six.text_type), 'Msg() message must be a unicode string'
 
     # Compile schema
     compiled = Schema(schema)
@@ -178,16 +178,16 @@ def Msg(schema, msg):
             return compiled(v)
         except Invalid as e:
             # Override message
-            e.message = msg
+            e.message = message
             # Raise again
             raise
         except const.transformed_exceptions:
-            raise Invalid(msg or _(u'Invalid value'))
+            raise Invalid(message or _(u'Invalid value'))
     message_override.name = compiled.name
     return message_override
 
 
-def message(msg):
+def message(message):
     """ Convenience decorator that applies [`Msg()`](#msg) to a callable.
 
     ```python
@@ -198,16 +198,52 @@ def message(msg):
         return int(v)
     ```
 
-    :param msg: Error message to use
-    :type msg: unicode
+    :param message: Error message to use instead
+    :type message: unicode
     :return: Validator callable
     :rtype: callable
     """
     def decorator(func):
-        return update_wrapper(Msg(func, msg), func)
+        return update_wrapper(Msg(func, message), func)
     return decorator
 
-# TODO: message
-# TODO: truth
 
-__all__ = ('Object', 'Msg', 'message')
+def truth(message, expected=None):
+    """ Convenience decorator that converts a boolean function into a validator.
+
+    ```python
+    import os.path
+    from good import Schema, truth
+
+    @truth(u'Must be an existing directory')
+    def isDir(v):
+        return os.path.isdir(v)
+
+    schema = Schema(isDir)
+    schema('/')  #-> '/'
+    schema('/404')
+    #-> Invalid: Must be an existing directory: expected isdir(), got /404
+    ```
+
+    :param message: Validation error message
+    :type message: unicode
+    :param expected: Expected value string representation, or `None` to get it from the wrapped callable
+    :type expected: None|str|unicode
+    :return: Validator callable
+    :rtype: callable
+    """
+    assert isinstance(message, six.text_type), '@truth() message must be a unicode string'
+    assert isinstance(expected, six.text_type) or expected is None, '@truth() expected must be a unicode string'
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(v):
+            if func(v):
+                return v
+            else:
+                raise Invalid(message, expected)
+        wrapper.name = get_callable_name(func)
+        return wrapper
+    return decorator
+
+__all__ = ('Object', 'Msg', 'message', 'truth')

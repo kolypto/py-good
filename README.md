@@ -767,7 +767,7 @@ Returns: `callable` Validator
 
 ## `Msg`
 ```python
-Msg(schema, msg)
+Msg(schema, message)
 ```
 
 Override the error message reported by the wrapped schema in case of validation errors.
@@ -790,7 +790,7 @@ schema('a')
 
 Arguments: 
 * `schema`: The wrapped schema to modify the error for
-* `msg`: Error message to use instead of the one that's reported by the underlying schema
+* `message`: Error message to use instead of the one that's reported by the underlying schema
 
 Returns: `callable` Wrapped schema callable
 
@@ -798,7 +798,7 @@ Returns: `callable` Wrapped schema callable
 
 ## `message`
 ```python
-message(msg)
+message(message)
 ```
 
 Convenience decorator that applies [`Msg()`](#msg) to a callable.
@@ -812,7 +812,36 @@ def intify(v):
 ```
 
 Arguments: 
-* `msg`: Error message to use
+* `message`: Error message to use instead
+
+Returns: `callable` Validator callable
+
+
+
+## `truth`
+```python
+truth(message, expected=None)
+```
+
+Convenience decorator that converts a boolean function into a validator.
+
+```python
+import os.path
+from good import Schema, truth
+
+@truth(u'Must be an existing directory')
+def isDir(v):
+    return os.path.isdir(v)
+
+schema = Schema(isDir)
+schema('/')  #-> '/'
+schema('/404')
+#-> Invalid: Must be an existing directory: expected isdir(), got /404
+```
+
+Arguments: 
+* `message`: Validation error message
+* `expected`: Expected value string representation, or `None` to get it from the wrapped callable
 
 Returns: `callable` Validator callable
 

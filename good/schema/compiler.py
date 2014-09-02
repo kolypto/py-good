@@ -84,7 +84,8 @@ class CompiledSchema(object):
 
     #region Compilation Utils
 
-    def get_schema_type(self, schema):
+    @classmethod
+    def get_schema_type(cls, schema):
         """ Get schema type for the argument
 
         :param schema: Schema to analyze
@@ -114,9 +115,6 @@ class CompiledSchema(object):
         # CompiledSchema
         elif isinstance(schema, CompiledSchema):
             return const.COMPILED_TYPE.SCHEMA
-        # Schema
-        # elif isinstance(schema, Schema):
-        #    return const.COMPILED_TYPE.SCHEMA  # TODO: schema
         #Callable
         elif callable(schema):
             return const.COMPILED_TYPE.CALLABLE

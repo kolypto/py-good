@@ -647,7 +647,7 @@ class HelpersTest(GoodTestBase):
 
             self.assertValid(schema, Person(u'Alex', 18), Person(u'Alex', 18))
             self.assertInvalid(schema, type('A', (object,), {})(),
-                               Invalid(s.es_value_type, u'Object({})'.format(Person.__name__), u'Object(A)', [], Object))
+                               Invalid(s.es_value_type, u'Object({})'.format(Person.__name__), u'Object(A)', [], object_validator))
 
     def test_Msg(self):
         """ Test Msg() """
@@ -681,6 +681,20 @@ class HelpersTest(GoodTestBase):
         self.assertValid(schema, 1)
         self.assertInvalid(schema, u'a',
                            Invalid(u'Need a number', u'intify()', u'a', [], intify))
+
+    def test_truth(self):
+        """ Test @truth() """
+
+        @truth(u'Must be 1')
+        def isOne(v):
+            return v == 1
+
+        schema = Schema(isOne)
+
+        self.assertValid(schema, 1)
+        self.assertInvalid(schema, u'1',
+                           Invalid(u'Must be 1', u'isOne()', u'1', [], isOne))
+
 
 
 
