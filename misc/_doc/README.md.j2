@@ -45,11 +45,12 @@ Table of Contents
     * <a href="#reject">Reject</a>
     * <a href="#allow">Allow</a>
     * <a href="#extra">Extra</a>
-* <a href="#helpers">Helpers</a>
-    * <a href="#object">Object</a>
-    * <a href="#msg">Msg</a>
-    * <a href="#message">message</a>
-    * <a href="#truth">truth</a> 
+* <a href="#validation-tools">Validation Tools</a>
+    * <a href="#helpers">Helpers</a>
+        * <a href="#object">Object</a>
+        * <a href="#msg">Msg</a>
+        * <a href="#message">message</a>
+        * <a href="#truth">truth</a>
 
 
 Schema
@@ -81,20 +82,26 @@ Errors
 {{ fdoc(MultipleInvalid.cls) }}
 
 
-{% macro libdoc(lib) -%}
+
+
+
+
+{% macro libdoc(lib, level=3) -%}
 {{ lib.module.doc }}
 
 {% for m in lib.members %}
-## `{{ m.qualname }}`
+{{ '#'*level }} `{{ m.qualname }}`
 {{ fdoc(m) }}
 {% endfor %}
 {%- endmacro %}
 
-
 Markers
 =======
-{{ libdoc(markers) }}
+{{ libdoc(markers, 2) }}
+
+Validation Tools
+================
 
 Helpers
-=======
+-------
 {{ libdoc(helpers) }}

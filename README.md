@@ -45,11 +45,12 @@ Table of Contents
     * <a href="#reject">Reject</a>
     * <a href="#allow">Allow</a>
     * <a href="#extra">Extra</a>
-* <a href="#helpers">Helpers</a>
-    * <a href="#object">Object</a>
-    * <a href="#msg">Msg</a>
-    * <a href="#message">message</a>
-    * <a href="#truth">truth</a> 
+* <a href="#validation-tools">Validation Tools</a>
+    * <a href="#helpers">Helpers</a>
+        * <a href="#object">Object</a>
+        * <a href="#msg">Msg</a>
+        * <a href="#message">message</a>
+        * <a href="#truth">truth</a>
 
 
 Schema
@@ -444,6 +445,9 @@ Arguments:
 
 
 
+
+
+
 Markers
 =======
 A *Marker* is a proxy class which wraps some schema.
@@ -718,12 +722,15 @@ Arguments:
 
 
 
+Validation Tools
+================
+
 Helpers
-=======
+-------
 Collection of miscellaneous helpers to alter the validation process.
 
 
-## `Object`
+### `Object`
 ```python
 Object(schema, cls=None)
 ```
@@ -770,7 +777,7 @@ Returns: `callable` Validator
 
 
 
-## `Msg`
+### `Msg`
 ```python
 Msg(schema, message)
 ```
@@ -801,7 +808,7 @@ Returns: `callable` Wrapped schema callable
 
 
 
-## `message`
+### `message`
 ```python
 message(message)
 ```
@@ -823,7 +830,7 @@ Returns: `callable` Validator callable
 
 
 
-## `truth`
+### `truth`
 ```python
 truth(message, expected=None)
 ```

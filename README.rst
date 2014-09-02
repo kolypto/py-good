@@ -49,12 +49,14 @@ Table of Contents
    -  Allow
    -  Extra
 
--  Helpers
+-  Validation Tools
 
-   -  Object
-   -  Msg
-   -  message
-   -  truth
+   -  Helpers
+
+      -  Object
+      -  Msg
+      -  message
+      -  truth
 
 Schema
 ======
@@ -759,13 +761,16 @@ Example with ``Extra: Allow``: allow any extra values:
 
 Arguments:
 
+Validation Tools
+================
+
 Helpers
-=======
+-------
 
 Collection of miscellaneous helpers to alter the validation process.
 
 ``Object``
-----------
+~~~~~~~~~~
 
 .. code:: python
 
@@ -814,7 +819,7 @@ Require instances of a specific class. If ``None``, allows all classes.
 Returns: ``callable`` Validator
 
 ``Msg``
--------
+~~~~~~~
 
 .. code:: python
 
@@ -848,7 +853,7 @@ the underlying schema
 Returns: ``callable`` Wrapped schema callable
 
 ``message``
------------
+~~~~~~~~~~~
 
 .. code:: python
 
@@ -869,7 +874,7 @@ Arguments: \* ``message``: Error message to use instead
 Returns: ``callable`` Validator callable
 
 ``truth``
----------
+~~~~~~~~~
 
 .. code:: python
 
