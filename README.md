@@ -858,3 +858,45 @@ Arguments:
 Returns: `callable` Validator callable
 
 
+
+
+Predicates
+----------
+
+
+
+
+Types
+-----
+
+
+
+
+Values
+------
+
+
+
+
+Boolean
+-------
+
+
+
+
+Numbers
+-------
+
+
+
+
+Strings
+-------
+
+
+
+
+Files
+-----
+
+

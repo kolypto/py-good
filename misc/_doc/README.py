@@ -22,7 +22,16 @@ data = {
     'Invalid': doccls(good.Invalid),
     'MultipleInvalid': doccls(good.MultipleInvalid),
     'markers': docmodule(good.markers),
+
     'helpers': docmodule(good.helpers),
+
+    'predicates': docmodule(good.validators.predicates),
+    'types': docmodule(good.validators.types),
+    'values': docmodule(good.validators.values),
+    'boolean': docmodule(good.validators.boolean),
+    'numbers': docmodule(good.validators.numbers),
+    'strings': docmodule(good.validators.strings),
+    'files': docmodule(good.validators.files),
 }
 
 # Patches
