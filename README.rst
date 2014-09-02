@@ -271,6 +271,11 @@ validation:
    attribute on the callable object. This works best with classes,
    however a function can accept ``name`` attribute as well.
 
+   For convenience, ```@message`` <#message>`__ and
+   ```@name`` <#name>`__ decorators can be used on callables to specify
+   the name and override the error message used when the validator
+   fails.
+
 -  Signals.
 
    A callable may decide that the value is soooo invalid that it should
@@ -388,15 +393,22 @@ Validation error for a single value.
 This exception is guaranteed to contain text values which are meaningful
 for the user.
 
-Arguments: \* ``message``: Validation error message \* ``expected``:
-Expected value: info about the value the validator was expecting \*
-``provided``: Provided value: info about the value that was actually
-supplied by the user \* ``path``: Path to the error value.
+Arguments: \* ``message``: Validation error message. \* ``expected``:
+Expected value: info about the value the validator was expecting.
 
 ::
 
-    E.g. if an invalid value was encountered at ['a'].b[1], then path=['a', 'b', 1].
+    If validator does not specify it -- the name of the validator is used.
 
+-  ``provided``: Provided value: info about the value that was actually
+   supplied by the user
+
+   If validator does not specify it -- the input value is typecasted to
+   string and stored here.
+-  ``path``: Path to the error value.
+
+   E.g. if an invalid value was encountered at ['a'].b[1], then
+   path=['a', 'b', 1].
 -  ``validator``: The validator that has failed: a schema item
 
 ``Invalid.enrich()``
@@ -857,7 +869,7 @@ Returns: ``callable`` Wrapped schema callable
 
 .. code:: python
 
-    message(message)
+    message(message, name=None)
 
 Convenience decorator that applies ```Msg()`` <#msg>`__ to a callable.
 
@@ -869,9 +881,48 @@ Convenience decorator that applies ```Msg()`` <#msg>`__ to a callable.
     def intify(v):
         return int(v)
 
-Arguments: \* ``message``: Error message to use instead
+Arguments: \* ``message``: Error message to use instead \* ``name``:
+Override schema name as well. See ```name`` <#name>`__.
 
 Returns: ``callable`` Validator callable
+
+``name``
+~~~~~~~~
+
+.. code:: python
+
+    name(name, validator=None)
+
+Set a name on a validator callable.
+
+Useful for user-friendly reporting when using lambdas to populate the
+```Invalid.expected`` <#invalid>`__ field:
+
+.. code:: python
+
+    from good import Schema, name
+
+    Schema(lambda x: int(x))('a')
+    #-> Invalid: ValueError: invalid literal for int() with base 10: 'a': expected <lambda>(), got
+    Schema(name('int()', lambda x: int(x))('a')
+    #-> Invalid: ValueError: invalid literal for int() with base 10: 'a': expected int(), got a
+
+Note that it is only useful with lambdas, since function name is used if
+available: see notes on `Schema Callables <#callables>`__.
+
+Arguments: \* ``name``: Name to assign on the validator callable \*
+``validator``: Validator callable. If not provided -- a decorator is
+returned instead:
+
+::
+
+    ```python
+    @name(u'int()')
+    def int(v):
+        return int(v)
+    ```
+
+Returns: ``callable`` The same validator callable
 
 ``truth``
 ~~~~~~~~~
@@ -901,6 +952,83 @@ Expected value string representation, or ``None`` to get it from the
 wrapped callable
 
 Returns: ``callable`` Validator callable
+
+Predicates
+----------
+
+``Any``
+~~~~~~~
+
+.. code:: python
+
+    Any(*schemas)
+
+Try the provided schemas in order and use the first one that succeeds.
+
+This is the *OR* condition predicate: any of the schemas should match.
+
+.. code:: python
+
+    from good import Schema, Any
+
+    schema = Schema(Any(
+        # allowed string constants
+        'true', 'false',
+        # otherwise coerce as a bool
+        lambda v: 'true' if v else 'false'
+    ))
+    schema('true')  #-> 'true'
+    schema(0)  #-> 'false'
+
+Arguments:
+
+``All``
+~~~~~~~
+
+.. code:: python
+
+    All(*schemas)
+
+Value must pass all validators wrapped with ``All()`` predicate.
+
+This is the *AND* condition predicate: all of the schemas should match
+in order, which is in fact a composition of validators:
+``All(f,g)(value) = g(f(value))``.
+
+.. code:: python
+
+    from good import Schema, All, Range
+
+    schema = Schema(All(
+        # Must be an integer ..
+        int,
+        # .. and in the allowed range
+        Range(0, 10)
+    ))
+
+    schema(1)  #-> 1
+    schema(99)
+    #-> Invalid: Not in range: expected 0..10, got 99
+
+Arguments:
+
+Types
+-----
+
+Values
+------
+
+Boolean
+-------
+
+Numbers
+-------
+
+Strings
+-------
+
+Files
+-----
 
 .. |Build Status| image:: https://api.travis-ci.org/kolypto/py-good.png?branch=master
    :target: https://travis-ci.org/kolypto/py-good
