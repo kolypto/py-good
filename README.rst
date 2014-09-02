@@ -301,12 +301,14 @@ Creates a compiled ``Schema`` object from the given schema definition.
 Under the hood, it uses ``SchemaCompiler``: see the
 `source <good/schema/compiler.py>`__ if interested.
 
--  ``schema``: Schema definition
--  ``default_keys``: Default mapping keys behavior: a
-   ```Marker`` <#markers>`__ class used as a default on mapping keys
-   which are not Marker()ed with anything.
+Arguments: \* ``schema``: Schema definition \* ``default_keys``: Default
+mapping keys behavior: a ```Marker`` <#markers>`__ class used as a
+default on mapping keys which are not Marker()ed with anything.
 
-   Defaults to ``markers.Required``.
+::
+
+    Defaults to `markers.Required`.
+
 -  ``extra_keys``: Default extra keys behavior: sub-schema, or a
    ```Marker`` <#markers>`__ class.
 
@@ -327,7 +329,7 @@ calling the Schema on the input value.
 When called, the Schema will return sanitized value, or raise
 exceptions.
 
--  ``value``: Input value to validate
+Arguments: \* ``value``: Input value to validate
 
 Returns: ``None`` Sanitized value
 
@@ -371,15 +373,15 @@ Validation error for a single value.
 This exception is guaranteed to contain text values which are meaningful
 for the user.
 
--  ``message``: Validation error message
--  ``expected``: Expected value: info about the value the validator was
-   expecting
--  ``provided``: Provided value: info about the value that was actually
-   supplied by the user
--  ``path``: Path to the error value.
+Arguments: \* ``message``: Validation error message \* ``expected``:
+Expected value: info about the value the validator was expecting \*
+``provided``: Provided value: info about the value that was actually
+supplied by the user \* ``path``: Path to the error value.
 
-   E.g. if an invalid value was encountered at ['a'].b[1], then
-   path=['a', 'b', 1].
+::
+
+    E.g. if an invalid value was encountered at ['a'].b[1], then path=['a', 'b', 1].
+
 -  ``validator``: The validator that has failed: a schema item
 
 ``Invalid.enrich()``
@@ -422,10 +424,9 @@ whole input with multiple different schemas:
 
 This is used when validating a value within a container.
 
--  ``expected``: Invalid.expected default
--  ``provided``: Invalid.provided default
--  ``path``: Prefix to prepend to Invalid.path
--  ``validator``: Invalid.validator default
+Arguments: \* ``expected``: Invalid.expected default \* ``provided``:
+Invalid.provided default \* ``path``: Prefix to prepend to Invalid.path
+\* ``validator``: Invalid.validator default
 
 Returns: ``Invalid|MultipleInvalid``
 
@@ -467,11 +468,12 @@ allows to process them in singularity:
 In this example, we create a dictionary of paths (as strings) mapped to
 error strings for the user.
 
--  ``errors``: The reported errors.
+Arguments: \* ``errors``: The reported errors.
 
-   If it contains ``MultipleInvalid`` errors -- the list is recursively
-   flattened so all of them are guaranteed to be instances of
-   ```Invalid`` <#invalid>`__.
+::
+
+    If it contains `MultipleInvalid` errors -- the list is recursively flattened
+    so all of them are guaranteed to be instances of [`Invalid`](#invalid).
 
 Markers
 =======
@@ -544,6 +546,8 @@ expect to always have a match:
     schema({})  # no `str` keys provided
     #-> Invalid: Required key not provided: expected String, got -none-
 
+Arguments:
+
 ``Optional``
 ------------
 
@@ -593,6 +597,8 @@ Example: use to mark specific keys are not required:
     schema({'name': 'Mark', 'age': 'X'})
     #-> Invalid: Wrong type @ ['age']: expected Integer number, got Binary String
 
+Arguments:
+
 ``Remove``
 ----------
 
@@ -636,6 +642,8 @@ not decorated with ```Optional()`` <#optional>`__:
     schema = Schema([str, Remove(int)])
     schema(['a', 'b', 1, 2])  #-> ['a', 'b']
 
+Arguments:
+
 ``Reject``
 ----------
 
@@ -661,6 +669,8 @@ Example:
     schema({'name': 111})
     #-> Invalid: Field is not supported anymore @ ['name']: expected -none-, got name
 
+Arguments:
+
 ``Allow``
 ---------
 
@@ -671,6 +681,8 @@ Example:
 ``Allow(key)`` is a no-op marker that never complains on anything.
 
 Designed to be used with ```Extra`` <#extra>`__.
+
+Arguments:
 
 ``Extra``
 ---------
@@ -732,6 +744,8 @@ Example with ``Extra: Allow``: allow any extra values:
     schema = Schema({'name': str}, extra_keys=Allow)
     schema({'name': 'Alex', 'age': 'X'})  #-> {'name': 'Alex', 'age': 'X'}
 
+Arguments:
+
 Helpers
 =======
 
@@ -784,9 +798,8 @@ This inherits the default required/extra keys behavior of the Schema. To
 override, use ```Optional()`` <#optional>`__ and ```Extra`` <#extra>`__
 markers.
 
--  ``schema``: Object schema, given as a mapping
--  ``cls``: Require instances of a specific class. If ``None``, allows
-   all classes.
+Arguments: \* ``schema``: Object schema, given as a mapping \* ``cls``:
+Require instances of a specific class. If ``None``, allows all classes.
 
 Returns: ``callable`` Validator
 

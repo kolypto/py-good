@@ -265,6 +265,7 @@ Creates a compiled `Schema` object from the given schema definition.
 
 Under the hood, it uses `SchemaCompiler`: see the [source](good/schema/compiler.py) if interested.
 
+Arguments: 
 * `schema`: Schema definition
 * `default_keys`: Default mapping keys behavior:
     a [`Marker`](#markers) class used as a default on mapping keys which are not Marker()ed with anything.
@@ -291,6 +292,7 @@ Having a [`Schema`](#schema), user input can be validated by calling the Schema 
 
 When called, the Schema will return sanitized value, or raise exceptions.
 
+Arguments: 
 * `value`: Input value to validate
 
 Returns: `None` Sanitized value
@@ -330,6 +332,7 @@ Validation error for a single value.
 
 This exception is guaranteed to contain text values which are meaningful for the user.
 
+Arguments: 
 * `message`: Validation error message
 * `expected`: Expected value: info about the value the validator was expecting
 * `provided`: Provided value: info about the value that was actually supplied by the user
@@ -378,6 +381,7 @@ except Invalid as e:
 
 This is used when validating a value within a container.
 
+Arguments: 
 * `expected`: Invalid.expected default
 * `provided`: Invalid.provided default
 * `path`: Prefix to prepend to Invalid.path
@@ -417,6 +421,7 @@ except Invalid as ee:
 
 In this example, we create a dictionary of paths (as strings) mapped to error strings for the user.
 
+Arguments: 
 * `errors`: The reported errors.
 
     If it contains `MultipleInvalid` errors -- the list is recursively flattened
@@ -494,6 +499,7 @@ schema({})  # no `str` keys provided
 #-> Invalid: Required key not provided: expected String, got -none-
 ```
 
+Arguments: 
 
 
 
@@ -543,6 +549,7 @@ schema({'name': 'Mark', 'age': 'X'})
 #-> Invalid: Wrong type @ ['age']: expected Integer number, got Binary String
 ```
 
+Arguments: 
 
 
 
@@ -589,6 +596,7 @@ schema = Schema([str, Remove(int)])
 schema(['a', 'b', 1, 2])  #-> ['a', 'b']
 ```
 
+Arguments: 
 
 
 
@@ -617,6 +625,7 @@ schema({'name': 111})
 #-> Invalid: Field is not supported anymore @ ['name']: expected -none-, got name
 ```
 
+Arguments: 
 
 
 
@@ -632,6 +641,7 @@ Allow(key)
 
 Designed to be used with [`Extra`](#extra).
 
+Arguments: 
 
 
 
@@ -691,6 +701,7 @@ schema = Schema({'name': str}, extra_keys=Allow)
 schema({'name': 'Alex', 'age': 'X'})  #-> {'name': 'Alex', 'age': 'X'}
 ```
 
+Arguments: 
 
 
 
@@ -742,6 +753,7 @@ and then Schema validates it as a mapping.
 This inherits the default required/extra keys behavior of the Schema.
 To override, use [`Optional()`](#optional) and [`Extra`](#extra) markers.
 
+Arguments: 
 * `schema`: Object schema, given as a mapping
 * `cls`: Require instances of a specific class. If `None`, allows all classes.
 
