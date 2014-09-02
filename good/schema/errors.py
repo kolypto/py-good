@@ -33,11 +33,17 @@ class Invalid(BaseError):
 
     This exception is guaranteed to contain text values which are meaningful for the user.
 
-    :param message: Validation error message
+    :param message: Validation error message.
     :type message: unicode
-    :param expected: Expected value: info about the value the validator was expecting
+    :param expected: Expected value: info about the value the validator was expecting.
+
+        If validator does not specify it -- the name of the validator is used.
+
     :type expected: unicode
     :param provided: Provided value: info about the value that was actually supplied by the user
+
+        If validator does not specify it -- the input value is typecasted to string and stored here.
+
     :param provided: unicode
     :param path: Path to the error value.
 

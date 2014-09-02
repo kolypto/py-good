@@ -3,7 +3,7 @@ import six
 
 from . import markers, signals
 from .errors import SchemaError, Invalid, MultipleInvalid
-from .util import get_type_name, const
+from .util import get_type_name, const, get_callable_name
 
 
 def Identity(v):
@@ -316,12 +316,7 @@ class CompiledSchema(object):
         """ Compile callable: wrap exceptions with correct paths """
         # Prepare self
         self.compiled_type = const.COMPILED_TYPE.CALLABLE
-        if hasattr(schema, 'name'):
-            self.name = six.text_type(schema.name)
-        elif hasattr(schema, '__name__'):
-            self.name = six.text_type(schema.__name__) + u'()'
-        else:
-            self.name = six.text_type(schema)
+        self.name = get_callable_name(schema)
 
         # Error utils
         enrich_exception = lambda e, value: e.enrich(

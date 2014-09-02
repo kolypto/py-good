@@ -4,9 +4,8 @@ import six
 import collections
 from functools import wraps, update_wrapper
 
-from .schema.errors import SchemaError, Invalid
 from .schema.util import const, get_callable_name
-from . import Schema
+from . import Schema, SchemaError, Invalid
 
 
 class ObjectProxy(collections.Mapping, dict):
@@ -183,11 +182,14 @@ def Msg(schema, message):
             raise
         except const.transformed_exceptions:
             raise Invalid(message or _(u'Invalid value'))
-    message_override.name = compiled.name  # inherit name from the wrapped schema
+
+    # inherit name from the wrapped schema
+    message_override.name = compiled.name
+
     return message_override
 
 
-def message(message):
+def message(message, name=None):
     """ Convenience decorator that applies [`Msg()`](#msg) to a callable.
 
     ```python
@@ -200,12 +202,52 @@ def message(message):
 
     :param message: Error message to use instead
     :type message: unicode
+    :param name: Override schema name as well. See [`name`](#name).
+    :type name: None|unicode
     :return: Validator callable
     :rtype: callable
     """
     def decorator(func):
-        return update_wrapper(Msg(func, message), func)
+        wf = update_wrapper(Msg(func, message), func)
+        if name:
+            wf.name = name
+        return wf
     return decorator
+
+
+def name(name, validator=None):
+    """ Set a name on a validator callable.
+
+    Useful for user-friendly reporting when using lambdas to populate the [`Invalid.expected`](#invalid) field:
+
+    ```python
+    from good import Schema, name
+
+    Schema(lambda x: int(x))('a')
+    #-> Invalid: ValueError: invalid literal for int() with base 10: 'a': expected <lambda>(), got
+    Schema(name('int()', lambda x: int(x))('a')
+    #-> Invalid: ValueError: invalid literal for int() with base 10: 'a': expected int(), got a
+    ```
+
+    Note that it is only useful with lambdas, since function name is used if available:
+    see notes on [Schema Callables](#callables).
+
+    :param name: Name to assign on the validator callable
+    :type name: unicode
+    :param validator: Validator callable. If not provided -- a decorator is returned instead:
+
+        ```python
+        @name(u'int()')
+        def int(v):
+            return int(v)
+        ```
+
+    :type validator: callable
+    :return: The same validator callable
+    :rtype: callable
+    """
+    validator.name = name
+    return validator
 
 
 def truth(message, expected=None):
@@ -249,4 +291,4 @@ def truth(message, expected=None):
         return wrapper
     return decorator
 
-__all__ = ('Object', 'Msg', 'message', 'truth')
+__all__ = ('Object', 'Msg', 'message', 'name', 'truth')

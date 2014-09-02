@@ -187,6 +187,9 @@ class Schema(object):
         If a custom name is desired on the callable -- set the `name` attribute on the callable object.
         This works best with classes, however a function can accept `name` attribute as well.
 
+        For convenience, [`@message`](#message) and [`@name`](#name) decorators can be used on callables
+        to specify the name and override the error message used when the validator fails.
+
     * Signals.
 
         A callable may decide that the value is soooo invalid that it should be dropped from the sanitized output.

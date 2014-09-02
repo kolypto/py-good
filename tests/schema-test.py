@@ -661,20 +661,20 @@ class HelpersTest(GoodTestBase):
 
         # Test Msg() with ValueError
         intify = lambda v: int(v)
-        intify.name = u'intify()'
+        intify.name = u'Int'
 
         schema = Schema(Msg(intify, u'Need a number'))
 
         self.assertValid(schema, 1)
         self.assertInvalid(schema, u'a',
-                           Invalid(u'Need a number', u'intify()', u'a', [], intify))
+                           Invalid(u'Need a number', u'Int', u'a', [], intify))
 
     def test_message(self):
         """ Test @message() """
 
         def intify(v):
             return int(v)
-        wintify = message(u'Need a number')(intify)
+        wintify = message(u'Need a number')(intify)  # using function name
 
         schema = Schema(wintify)
 
@@ -696,10 +696,33 @@ class HelpersTest(GoodTestBase):
                            Invalid(u'Must be 1', u'isOne()', u'1', [], isOne))
 
 
-
-
 class PredicatesTest(GoodTestBase):
     """ Test: Validators.Predicates """
+
+    def test_Any(self):
+        """ Test Any() """
+
+        any = Any(int, name(u'str', lambda v: u'('+v+u')'))
+        schema = Schema(any)
+
+        self.assertValid(schema, 1)
+        self.assertValid(schema, u'1', u'(1)')
+
+        self.assertInvalid(schema, None,
+                           Invalid(s.es_value, u'Any(Integer number | str)', s.t_none, [], any))
+
+    def test_All(self):
+        """ Test All() """
+
+        @truth(u'Must be in range 0..100', u'Range(0..100)')
+        def percent(v):
+            return 0 <= v <= 100
+
+        schema = Schema(All(int, percent))
+
+        self.assertValid(schema, 90)
+        self.assertInvalid(schema, 190,
+                           Invalid(u'Must be in range 0..100', u'Range(0..100)', u'190', [], percent))
 
 
 class TypesTest(GoodTestBase):
