@@ -183,7 +183,7 @@ def Msg(schema, message):
             raise
         except const.transformed_exceptions:
             raise Invalid(message or _(u'Invalid value'))
-    message_override.name = compiled.name
+    message_override.name = compiled.name  # inherit name from the wrapped schema
     return message_override
 
 
@@ -222,7 +222,7 @@ def truth(message, expected=None):
     schema = Schema(isDir)
     schema('/')  #-> '/'
     schema('/404')
-    #-> Invalid: Must be an existing directory: expected isdir(), got /404
+    #-> Invalid: Must be an existing directory: expected isDir(), got /404
     ```
 
     :param message: Validation error message
@@ -238,11 +238,14 @@ def truth(message, expected=None):
     def decorator(func):
         @wraps(func)
         def wrapper(v):
+            # Test with the boolean function
             if func(v):
+                # Return the value as is
                 return v
             else:
+                # If the boolean function reported False -- raise Invalid
                 raise Invalid(message, expected)
-        wrapper.name = get_callable_name(func)
+        wrapper.name = get_callable_name(func)  # set a meaningful `name`, which is then used by CompiledSchema
         return wrapper
     return decorator
 
