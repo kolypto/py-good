@@ -753,6 +753,54 @@ class PredicatesTest(GoodTestBase):
         self.assertInvalid(schema, 0,
                            Invalid(u'Value not allowed', u'Not(0)', u'0', [], 0))
 
+    def test_Inclusive(self):
+        """ Test Inclusive() """
+        inclusive_group = Inclusive('width', 'height')
+        schema = Schema({
+            # Fields for all files
+            'name': str,
+            # Fields for images only
+            Optional('width'): int,
+            Optional('height'): int,
+            # Now put a validator on the entire mapping
+            Entire: inclusive_group
+        })
+
+        self.assertValid(schema,   {'name': 'monica.jpg'})
+        self.assertValid(schema,   {'name': 'monica.jpg', 'width': 800, 'height': 600})
+
+        self.assertInvalid(schema, {'name': 'monica.jpg', 'width': 800},
+                           Invalid(s.es_required, u'height', s.v_no, ['height'], inclusive_group))
+
+    def test_Exclusive(self):
+        """ Test Exclusive() """
+
+        for mode in (None, Required, Optional):
+            if mode is None:
+                exclusive_group = Exclusive('login', 'email')
+            else:
+                exclusive_group = Exclusive(mode, 'login', 'email')
+
+            schema = Schema({
+                Optional('login'): six.text_type,
+                Optional('email'): six.text_type,
+                'password': six.text_type,
+                Entire: exclusive_group
+            })
+
+            self.assertValid(schema,   {'login': u'a', 'password': u'b'})
+            self.assertValid(schema,   {'email': u'a', 'password': u'b'})
+
+            self.assertInvalid(schema, {'login': u'a', 'email': u'b', 'password': u'c'},
+                               Invalid(u'Choose one of the options, not multiple', u'Exclusive(email,login)', u'email,login', [], exclusive_group))
+
+            if mode is Optional:
+                self.assertValid(schema,   {'password': u'c'})
+            else:
+                self.assertInvalid(schema, {'password': u'c'},
+                               Invalid(u'Choose one of the options', u'Exclusive(email,login)', s.v_no, [], exclusive_group))
+
+
 
 class TypesTest(GoodTestBase):
     """ Test: Validators.Types """

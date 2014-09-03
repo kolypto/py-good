@@ -1071,7 +1071,7 @@ Value must not match any of the schemas.
 This is the *NOT* condition predicate: a value is considered valid if each schema has raised an error.
 
 ```python
-from good import Schema, Neither
+from good import Schema, All, Neither
 
 schema = Schema(All(
     # Integer
@@ -1082,12 +1082,118 @@ schema = Schema(All(
 
 schema(1)  #-> 1
 schema(0)
-#-> Invalid:
+#-> Invalid: Value not allowed: expected Not(0), got 0
 ```
 
 Arguments: 
 
 * `*schemas`: List of schemas to check against.
+
+
+
+
+
+### `Inclusive`
+```python
+Inclusive(*keys)
+```
+
+`Inclusive` validates the defined inclusive group of mapping keys:
+if any of them was provided -- then all of them become required.
+
+This exists to support "sub-structures" within the mapping which only make sense if specified together.
+Since this validator works on the entire mapping, the best way is to use it together with the [`Entire`](#entire)
+marker:
+
+```python
+from good import Schema, Entire, Inclusive
+
+schema = Schema({
+    # Fields for all files
+    'name': str,
+    # Fields for images only
+    Optional('width'): int,
+    Optional('height'): int,
+    # Now put a validator on the entire mapping
+    Entire: Inclusive('width', 'height')
+})
+
+schema({'name': 'monica.jpg'})  #-> ok
+schema({'name': 'monica.jpg', 'width': 800, 'height': 600})  #-> ok
+schema({'name': 'monica.jpg', 'width': 800})
+#-> Invalid: Required key not provided: expected height, got -none-
+```
+
+Note that `Inclusive` only supports literals.
+
+Arguments: 
+
+* `*keys`: List of mutually inclusive keys.
+
+
+
+
+
+### `Exclusive`
+```python
+Exclusive(*keys)
+```
+
+`Exclusive` validates the defined exclusive group of mapping keys:
+if any of them was provided -- then none of the remaining keys can be used.
+
+This supports "sub-structures" with choice: if the user chooses a field from one of them --
+then he cannot use others.
+It works on the entire mapping and hence best to use with the [`Entire`](#entire) marker.
+
+By default, `Exlusive` requires the user to choose one of the options,
+but this can be overridden with [`Optional`](#optional) marker class given as an argument:
+
+```python
+from good import Exclusive, Required, Optional
+
+# Requires either of them
+Exclusive('login', 'password')
+Exclusive(Required, 'login', 'password')  # the default
+
+# Requires either of them, or none
+Exclusive(Optional, 'login', 'password')
+```
+
+Let's demonstrate with the API that supports multiple types of authentication,
+but requires the user to choose just one:
+
+```python
+from good import Schema, Entire, Exclusive
+
+schema = Schema({
+    # Authentication types: login+password | email+password
+    Optional('login'): str,
+    Optional('email'): str,
+    'password': str,
+    # Now put a validator on the entire mapping
+    # that forces the user to choose
+    Entire: Msg(  # also override the message
+        Exclusive('login', 'email'),
+        u'Choose one'
+    )
+})
+
+schema({'login': 'kolypto', 'password': 'qwerty'})  #-> ok
+schema({'email': 'kolypto', 'password': 'qwerty'})  #-> ok
+schema({'login': 'a', 'email': 'b', 'password': 'c'})
+#-> MultipleInvalid:
+#->     Invalid: Choose one @ [login]: expected login|email, got login
+#->     Invalid: Choose one @ [email]: expected login|email, got email
+
+Arguments: 
+
+* `*keys`: List of mutually exclusive keys.
+    Can contain [`Required`](#required) or [`Optional`](#optional) marker classes,
+    which defines the behavior when no keys are provided. Default is `Required`.
+```
+
+Note that `Exclusive` only supports literals.
 
 
 
