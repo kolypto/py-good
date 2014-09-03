@@ -509,7 +509,7 @@ class CompiledSchema(object):
                     # Since mapping keys are mostly literals --
                     # save some iterations & function calls in favor of direct matching,
                     # which introduces a HUGE performance improvement
-                    k = key_schema.schema
+                    k = key_schema.schema.key  # get the literal from the marker
                     if k in d:
                         # (See comments below)
                         matches.append(( k, k, d[k] ))

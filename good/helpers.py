@@ -176,9 +176,10 @@ def Msg(schema, message):
     def message_override(v):
         try:
             return compiled(v)
-        except Invalid as e:
+        except Invalid as ee:
             # Override message
-            e.message = message
+            for e in ee:
+                e.message = message
             # Raise again
             raise
         except const.transformed_exceptions:

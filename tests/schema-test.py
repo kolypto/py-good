@@ -2,10 +2,12 @@ from __future__ import print_function
 import six
 import unittest
 import collections
+import json
 from random import shuffle
 from copy import deepcopy
 
 from good import *
+from good.schema.markers import Marker
 from good.schema.util import get_type_name
 
 
@@ -64,6 +66,13 @@ class GoodTestBase(unittest.TestCase):
         self.assertTrue(isinstance(actual.provided, six.text_type))  # Unicode
         self.assertTrue(isinstance(actual.expected, six.text_type))  # Unicode
         self.assertTrue(isinstance(actual.info,     dict))           # Dict
+        # Check path: all components should always be literals.
+        for p in actual.path:
+            # This makes sure that no Marker(value) ever makes it to the path, since it's not JSON-serializable.
+            self.assertNotIsInstance(p, Marker)
+            # Make sure path is a list of literals.
+            # (They're not limited to the listed types, but our tests only use these.)
+            self.assertIsInstance(p, (six.string_types, six.integer_types))
 
     def assertMultipleInvalidError(self, actual, expected):
         """ Assert that the two MultipleInvalid exceptions are the same
@@ -604,6 +613,37 @@ class SchemaCoreTest(GoodTestBase):
         schema.pop(Extra)
 
 
+class InvalidJsonTest(unittest.TestCase):
+
+    def test_json(self):
+        """ Test how Invalid works with JSON """
+
+        # Schema
+        schema = Schema({
+            'a': 1,
+            'b': 2
+        })
+
+        # Validate, get error
+        with self.assertRaises(MultipleInvalid) as ecm:
+            schema({'a': 2, 'b': 1})
+        ee = ecm.exception
+
+        # Format & Load
+        errors = [{'msg': e.message, 'path': e.path} for e in ee]
+        errors_json = json.dumps(errors)  # without errors
+        errors = json.loads(errors_json)  # without errors
+
+        # Predictable order
+        errors = sorted(errors, key=lambda x: x['path'])
+
+        # Check
+        self.assertEqual(errors, [
+            {'msg': s.es_value, 'path': ['a']},
+            {'msg': s.es_value, 'path': ['b']},
+        ])
+
+
 class HelpersTest(GoodTestBase):
     """ Test: Helpers """
 
@@ -685,6 +725,18 @@ class HelpersTest(GoodTestBase):
         self.assertValid(schema, 1)
         self.assertInvalid(schema, u'a',
                            Invalid(u'Need a number', u'Int', u'a', [], intify))
+
+        # Test Msg() with MultipleInvalid
+        schema = Schema(Msg({
+            'a': 1,
+            'b': 2,
+        }, u'Wrong!'))
+
+        self.assertValid(schema,   {'a': 1, 'b': 2})
+        self.assertInvalid(schema, {'a': 2, 'b': 1}, MultipleInvalid([
+            Invalid(u'Wrong!', u'1', u'2', ['a'], 1),
+            Invalid(u'Wrong!', u'2', u'1', ['b'], 2),
+        ]))
 
     def test_message(self):
         """ Test @message() """

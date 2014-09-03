@@ -157,7 +157,7 @@ class Inclusive(ValidatorBase):
 
     Note that `Inclusive` only supports literals.
 
-    :param keys: List of mutually inclusive keys.
+    :param keys: List of mutually inclusive keys (literals).
     """
 
     def __init__(self, *keys):
@@ -231,7 +231,8 @@ class Exclusive(ValidatorBase):
     #->     Invalid: Choose one @ [login]: expected login|email, got login
     #->     Invalid: Choose one @ [email]: expected login|email, got email
 
-    :param keys: List of mutually exclusive keys.
+    :param keys: List of mutually exclusive keys (literals).
+
         Can contain [`Required`](#required) or [`Optional`](#optional) marker classes,
         which defines the behavior when no keys are provided. Default is `Required`.
     ```

@@ -35,7 +35,7 @@ def register_type_name(t, name):
 def get_type_name(t):
     """ Get a human-friendly name for the given type.
 
-    :type t: type
+    :type t: type|None
     :rtype: unicode
     """
     # Lookup in the mapping
