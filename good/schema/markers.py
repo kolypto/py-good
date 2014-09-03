@@ -31,7 +31,7 @@ Keep on reading to learn how markers perform.
 import six
 from .signals import RemoveValue
 from .errors import Invalid, MultipleInvalid
-from .util import const, get_type_name
+from .util import const, get_type_name, get_literal_name
 
 
 class Marker(object):
@@ -137,7 +137,7 @@ class Marker(object):
         return six.binary_type(self.key)
 
     def __unicode__(self):
-        return six.text_type(self.key)
+        return get_literal_name(self.key)
 
     if six.PY3:
         __bytes__, __str__ = __str__, __unicode__
@@ -328,7 +328,7 @@ class Reject(Marker):
     def __call__(self, v):
         if not self.as_mapping_key:
             # When used on a value -- complain
-            raise Invalid(self.error_message, _(u'-none-'), six.text_type(v), validator=self)
+            raise Invalid(self.error_message, _(u'-none-'), get_literal_name(v), validator=self)
         return super(Reject, self).__call__(v)
 
     def execute(self, d, matches):
@@ -336,7 +336,7 @@ class Reject(Marker):
         if matches:
             errors = []
             for k, sanitized_k, v in matches:
-                errors.append(Invalid(self.error_message, _(u'-none-'), six.text_type(k), [k]))
+                errors.append(Invalid(self.error_message, _(u'-none-'), get_literal_name(k), [k]))
             raise MultipleInvalid.if_multiple(errors)
         return matches
 

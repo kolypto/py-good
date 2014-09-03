@@ -3,7 +3,7 @@ import six
 
 from . import markers, signals
 from .errors import SchemaError, Invalid, MultipleInvalid
-from .util import get_type_name, const, get_callable_name
+from .util import get_type_name, get_literal_name, get_callable_name,  const, primitive_type
 
 
 def Identity(v):
@@ -100,25 +100,11 @@ class CompiledSchema(object):
         # Marker Type
         elif issubclass(schema_type, six.class_types) and issubclass(schema, markers.Marker):
             return const.COMPILED_TYPE.MARKER
-        # Literal
-        elif schema_type in const.literal_types:
-            return const.COMPILED_TYPE.LITERAL
-        # Type
-        elif issubclass(schema_type, six.class_types):
-            return const.COMPILED_TYPE.TYPE
-        # Mapping
-        elif isinstance(schema, collections.Mapping):
-            return const.COMPILED_TYPE.MAPPING
-        # Iterable
-        elif isinstance(schema, collections.Iterable):
-            return const.COMPILED_TYPE.ITERABLE
         # CompiledSchema
         elif isinstance(schema, CompiledSchema):
             return const.COMPILED_TYPE.SCHEMA
-        #Callable
-        elif callable(schema):
-            return const.COMPILED_TYPE.CALLABLE
-        return None
+        else:
+            return primitive_type(schema)
 
     @property
     def priority(self):
@@ -250,7 +236,7 @@ class CompiledSchema(object):
         """ Compile literal schema: type and value matching """
         # Prepare self
         self.compiled_type = const.COMPILED_TYPE.LITERAL
-        self.name = six.text_type(schema)
+        self.name = get_literal_name(schema)
 
         # Error partials
         schema_type = type(schema)
@@ -321,7 +307,7 @@ class CompiledSchema(object):
         # Error utils
         enrich_exception = lambda e, value: e.enrich(
             expected=self.name,
-            provided=six.text_type(value),
+            provided=get_literal_name(value),
             path=self.path,
             validator=schema)
 
@@ -585,7 +571,7 @@ class CompiledSchema(object):
                         # enrich() adds more info on the collected errors.
                         errors.append(e.enrich(
                             expected=value_schema.name,
-                            provided=six.text_type(v),
+                            provided=get_literal_name(v),
                             path=self.path + [k],
                             validator=value_schema
                         ))

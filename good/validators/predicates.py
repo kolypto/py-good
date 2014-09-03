@@ -1,7 +1,6 @@
-import six
-
 from .. import Schema, Invalid, MultipleInvalid, Required, Optional
 from ._base import ValidatorBase
+from ..schema.util import get_literal_name
 
 
 class Any(ValidatorBase):
@@ -178,7 +177,7 @@ class Inclusive(ValidatorBase):
 
         # Otherwise, we complain on every single key
         raise MultipleInvalid.if_multiple([
-            Invalid(_(u'Required key not provided'), six.text_type(key), _(u'-none-'), [key], self)
+            Invalid(_(u'Required key not provided'), get_literal_name(key), _(u'-none-'), [key], self)
             for key in missing_keys
         ])
 
