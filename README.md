@@ -45,12 +45,27 @@ Table of Contents
     * <a href="#reject">Reject</a>
     * <a href="#allow">Allow</a>
     * <a href="#extra">Extra</a>
+    * <a href="#entire">Entire</a>
 * <a href="#validation-tools">Validation Tools</a>
     * <a href="#helpers">Helpers</a>
         * <a href="#object">Object</a>
         * <a href="#msg">Msg</a>
+        * <a href="#check">Check</a>
         * <a href="#message">message</a>
+        * <a href="#name">name</a>
         * <a href="#truth">truth</a>
+    * <a href="#predicates">Predicates</a>
+        * <a href="#any">Any</a>
+        * <a href="#all">All</a>
+        * <a href="#neither">Neither</a>
+        * <a href="#inclusive">Inclusive</a>
+        * <a href="#exclusive">Exclusive</a>
+    * <a href="#types">Types</a>
+    * <a href="#values">Values</a>
+    * <a href="#boolean">Boolean</a>
+    * <a href="#numbers">Numbers</a>
+    * <a href="#strings">Strings</a>
+    * <a href="#files">Files</a> 
 
 
 Schema
@@ -1128,7 +1143,7 @@ Note that `Inclusive` only supports literals.
 
 Arguments: 
 
-* `*keys`: List of mutually inclusive keys.
+* `*keys`: List of mutually inclusive keys (literals).
 
 
 
@@ -1188,7 +1203,8 @@ schema({'login': 'a', 'email': 'b', 'password': 'c'})
 
 Arguments: 
 
-* `*keys`: List of mutually exclusive keys.
+* `*keys`: List of mutually exclusive keys (literals).
+
     Can contain [`Required`](#required) or [`Optional`](#optional) marker classes,
     which defines the behavior when no keys are provided. Default is `Required`.
 ```

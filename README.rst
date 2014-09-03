@@ -48,6 +48,7 @@ Table of Contents
    -  Reject
    -  Allow
    -  Extra
+   -  Entire
 
 -  Validation Tools
 
@@ -55,8 +56,25 @@ Table of Contents
 
       -  Object
       -  Msg
+      -  Check
       -  message
+      -  name
       -  truth
+
+   -  Predicates
+
+      -  Any
+      -  All
+      -  Neither
+      -  Inclusive
+      -  Exclusive
+
+   -  Types
+   -  Values
+   -  Boolean
+   -  Numbers
+   -  Strings
+   -  Files
 
 Schema
 ======
@@ -1182,7 +1200,7 @@ Note that ``Inclusive`` only supports literals.
 
 Arguments:
 
--  ``*keys``: List of mutually inclusive keys.
+-  ``*keys``: List of mutually inclusive keys (literals).
 
 ``Exclusive``
 ~~~~~~~~~~~~~
@@ -1242,7 +1260,8 @@ authentication, but requires the user to choose just one:
 
     Arguments: 
 
-    * `*keys`: List of mutually exclusive keys.
+    * `*keys`: List of mutually exclusive keys (literals).
+
         Can contain [`Required`](#required) or [`Optional`](#optional) marker classes,
         which defines the behavior when no keys are provided. Default is `Required`.
 
