@@ -104,6 +104,10 @@ Table of Contents
 
    -  Files
 
+      -  IsFile
+      -  IsDir
+      -  PathExists
+
 Schema
 ======
 
@@ -1826,6 +1830,43 @@ characters.
 
 Files
 -----
+
+``IsFile``
+~~~~~~~~~~
+
+.. code:: python
+
+    IsFile()
+
+Verify that the file exists.
+
+.. code:: python
+
+    from good import Schema, IsFile
+
+    schema = Schema(IsFile())
+
+    schema('/etc/hosts')  #-> '/etc/hosts'
+    schema('/etc')
+    #-> Invalid: is not a file: expected Existing file path, got /etc
+
+``IsDir``
+~~~~~~~~~
+
+.. code:: python
+
+    IsDir()
+
+Verify that the directory exists.
+
+``PathExists``
+~~~~~~~~~~~~~~
+
+.. code:: python
+
+    PathExists()
+
+Verify that the path eixsts.
 
 .. |Build Status| image:: https://api.travis-ci.org/kolypto/py-good.png?branch=master
    :target: https://travis-ci.org/kolypto/py-good

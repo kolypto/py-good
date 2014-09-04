@@ -181,6 +181,8 @@ class Url(ValidatorBase):
                r'(?:' r'(?P<path>/.*)' r')?' \
                r'$'
 
+    name = u'URL'
+
     def __init__(self, protocols=('http', 'https')):
         self.protocols = tuple(x.lower()
                                for x in ((protocols,)
@@ -188,7 +190,6 @@ class Url(ValidatorBase):
                                          tuple(protocols)))
 
         self.rex = re.compile(self._url_rex)
-        self.name = u'URL'
 
     def __call__(self, v):
         # Match

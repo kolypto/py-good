@@ -6,7 +6,6 @@ from functools import update_wrapper
 
 from .schema.util import const
 from . import Schema, SchemaError, Invalid
-from .validators._base import ValidatorBase
 from .validators.boolean import Check
 
 

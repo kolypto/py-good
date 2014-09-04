@@ -1218,3 +1218,34 @@ class StringsTest(GoodTestBase):
 
 class FilesTest(GoodTestBase):
     """ Test: Validators.Files """
+
+    def test_IsFile(self):
+        """ Test IsFile() """
+        isfile = IsFile()
+        schema = Schema(isfile)
+
+        self.assertValid(schema, '/etc/hosts')
+        self.assertInvalid(schema, '/etc',
+                           Invalid(u'Is not a file', u'File path', u'Not a file', [], isfile))
+        self.assertInvalid(schema, '/etc/does-not-exist',
+                           Invalid(u'Path does not exist', u'File path', u'Missing path', [], isfile))
+
+    def test_IsDir(self):
+        """ Test IsDir() """
+        isfile = IsDir()
+        schema = Schema(isfile)
+
+        self.assertValid(schema, '/etc')
+        self.assertInvalid(schema, '/etc/hosts',
+                           Invalid(u'Is not a directory', u'Directory path', u'Not a directory', [], isfile))
+        self.assertInvalid(schema, '/etc/does-not-exist',
+                           Invalid(u'Path does not exist', u'Directory path', u'Missing path', [], isfile))
+
+    def test_PathExists(self):
+        """ Test PathExists() """
+        isfile = PathExists()
+        schema = Schema(isfile)
+
+        self.assertValid(schema, '/etc/hosts')
+        self.assertInvalid(schema, '/etc/does-not-exist',
+                           Invalid(u'Path does not exist', u'Existing path', u'Missing path', [], isfile))

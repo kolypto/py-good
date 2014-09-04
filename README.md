@@ -83,7 +83,10 @@ Table of Contents
         * <a href="#replace">Replace</a>
         * <a href="#url">Url</a>
         * <a href="#email">Email</a>
-    * <a href="#files">Files</a> 
+    * <a href="#files">Files</a>
+        * <a href="#isfile">IsFile</a>
+        * <a href="#isdir">IsDir</a>
+        * <a href="#pathexists">PathExists</a>
 
 
 Schema
@@ -1797,5 +1800,51 @@ schema('user')
 
 Files
 -----
+
+
+
+### `IsFile`
+```python
+IsFile()
+```
+
+Verify that the file exists.
+
+```python
+from good import Schema, IsFile
+
+schema = Schema(IsFile())
+
+schema('/etc/hosts')  #-> '/etc/hosts'
+schema('/etc')
+#-> Invalid: is not a file: expected Existing file path, got /etc
+```
+
+
+
+
+
+
+### `IsDir`
+```python
+IsDir()
+```
+
+Verify that the directory exists.
+
+
+
+
+
+
+### `PathExists`
+```python
+PathExists()
+```
+
+Verify that the path eixsts.
+
+
+
 
 
