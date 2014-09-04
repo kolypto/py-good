@@ -7,6 +7,7 @@ class Any(ValidatorBase):
     """ Try the provided schemas in order and use the first one that succeeds.
 
     This is the *OR* condition predicate: any of the schemas should match.
+    [`Invalid`](#invalid) error is reported if neither of the schemas has matched.
 
     ```python
     from good import Schema, Any

@@ -898,6 +898,67 @@ class TypesTest(GoodTestBase):
 class ValuesTest(GoodTestBase):
     """ Test: Validators.Values """
 
+    def test_In(self):
+        """ Test In() """
+        allowed = In({1,2,3})
+        schema = Schema(allowed)
+
+        self.assertValid(schema, 1)
+        self.assertValid(schema, 2)
+
+        self.assertInvalid(schema, u'1',
+                           Invalid(u'Value not allowed', u'In(1,2,3)', u'1', [], allowed))
+        self.assertInvalid(schema, 99,
+                           Invalid(u'Value not allowed', u'In(1,2,3)', u'99', [], allowed))
+
+    def test_Length(self):
+        """ Test Length() """
+
+        for lencheck in (Length(1, 3), Length(1), Length(max=3)):
+            schema = Schema(All(
+                list,
+                lencheck
+            ))
+
+            self.assertValid(schema, [1])
+            self.assertValid(schema, [1,2])
+            self.assertValid(schema, [1,2,3])
+
+            if lencheck.min is None:
+                self.assertValid(schema, [])
+            else:
+                self.assertInvalid(schema, [],
+                                   Invalid(u'Too few values (1 is the least)', u'1', u'0', [], lencheck))
+
+            if lencheck.max is None:
+                self.assertValid(schema, [1,2,3,4])
+            else:
+                self.assertInvalid(schema, [1,2,3,4],
+                                   Invalid(u'Too many values (3 is the most)', u'3', u'4', [], lencheck))
+
+        # Test with a non-Sized input
+        schema = Schema(lencheck)
+
+        self.assertInvalid(schema, 1,
+                           Invalid(u'Input is not a collection', u'Collection', s.t_int, [], lencheck))
+
+        # Mapping: 2..3
+        lencheck = Length(1, 3)
+        schema = Schema({
+            six.text_type: int,
+            Entire: lencheck
+        })
+
+        self.assertValid(schema, {u'a': 1})
+        self.assertValid(schema, {u'a': 1, u'b': 2})
+        self.assertValid(schema, {u'a': 1, u'b': 2, u'c': 3})
+
+        self.assertInvalid(schema, {}, MultipleInvalid([
+            Invalid(s.es_required, s.t_unicode, s.v_no, [], Required(six.text_type)),
+            Invalid(u'Too few values (1 is the least)', u'1', u'0', [], lencheck)
+        ]))
+
+
 
 class BooleansTest(GoodTestBase):
     """ Test: Validators.Booleans """

@@ -36,6 +36,4 @@ class Coerce(ValidatorBase):
         except (TypeError, ValueError):
             raise Invalid(_(u'Invalid value'), self.name, get_literal_name(v))
 
-# TODO: ExactSequence
-
 __all__ = ('Coerce',)

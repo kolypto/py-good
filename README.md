@@ -1021,6 +1021,7 @@ Any(*schemas)
 Try the provided schemas in order and use the first one that succeeds.
 
 This is the *OR* condition predicate: any of the schemas should match.
+[`Invalid`](#invalid) error is reported if neither of the schemas has matched.
 
 ```python
 from good import Schema, Any
@@ -1255,6 +1256,79 @@ Arguments:
 
 Values
 ------
+
+
+
+### `In`
+```python
+In(container)
+```
+
+Validate that a value is in a collection.
+
+This is a plain simple `value in container` check, where `container` is a collection of literals.
+In constast to [`Any`](#any), it does not compile its arguments into schemas!
+
+```python
+from good import Schema, In
+
+schema = Schema(In({1, 2, 3}))
+
+schema(1)  #-> 1
+schema(99)
+#-> Invalid: Value not allowed: expected In(1,2,3), got 99
+```
+
+Arguments:
+
+* `container`: Collection of allowed values.
+
+    In addition to naive tuple/list/set/dict, this can be any object that supports `in` operation.
+
+
+
+
+
+### `Length`
+```python
+Length(min=None, max=None)
+```
+
+Validate that the provided collection has length in a certain range.
+
+```python
+from good import Schema, Length
+
+schema = Schema(All(
+    # Ensure it's a list (and not any other iterable type)
+    list,
+    # Validate length
+    Length(max=3),
+))
+```
+
+Since mappings also have length, they can be validated as well:
+
+```python
+schema = Schema({
+    # Strings mapped to integers
+    str: int,
+    # Size = 1..3
+    # Empty dicts are not allowed since `str` is implicitly [`Required(str)`](#required).
+    Entire: Length(max=3)
+})
+
+schema([1])  #-> ok
+schemma([1,2,3,4])
+#-> Invalid: Too many values (3 is the most): expected Length(..3), got 4
+```
+
+Arguments:
+
+* `min`: Minimal allowed length, or `None` to impose no limits.
+* `max`: Maximal allowed length, or `None` to impose no limits.
+
+
 
 
 
