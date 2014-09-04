@@ -1632,6 +1632,55 @@ Arguments:
 Strings
 -------
 
+``Lower``
+~~~~~~~~~
+
+.. code:: python
+
+    Lower()
+
+Casts the provided string to lowercase, fails is the input value is not
+a string.
+
+Supports both binary and unicode strings.
+
+.. code:: python
+
+    from good import Schema, Lower
+
+    schema = Schema(Lower())
+
+    schema(u'ABC')  #-> u'abc'
+    schema(123)
+    #-> Invalid: Not a string: expected String, provided Integer number
+
+``Upper``
+~~~~~~~~~
+
+.. code:: python
+
+    Upper()
+
+Casts the input string to UPPERCASE.
+
+``Capitalize``
+~~~~~~~~~~~~~~
+
+.. code:: python
+
+    Capitalize()
+
+Capitalizes the input string.
+
+``Title``
+~~~~~~~~~
+
+.. code:: python
+
+    Title()
+
+Casts The Input String To Title Case
+
 Files
 -----
 

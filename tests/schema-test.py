@@ -1137,6 +1137,20 @@ class NumbersTest(GoodTestBase):
 class StringsTest(GoodTestBase):
     """ Test: Validators.Strings """
 
+    def test_Lower_and_co(self):
+        """ Test: Lower(), Upper(), Capitalize(), Title() """
+
+        schema = Schema(Lower())
+        self.assertValid(schema, u'ABC DEF', u'abc def')
+
+        schema = Schema(Upper())
+        self.assertValid(schema, u'abc def', u'ABC DEF')
+
+        schema = Schema(Capitalize())
+        self.assertValid(schema, u'abc def', u'Abc def')
+
+        schema = Schema(Title())
+        self.assertValid(schema, u'abc def', u'Abc Def')
 
 class FilesTest(GoodTestBase):
     """ Test: Validators.Files """
