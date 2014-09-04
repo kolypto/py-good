@@ -1293,7 +1293,7 @@ schema = Schema({
     # Strings mapped to integers
     str: int,
     # Size = 1..3
-    # Empty dicts are not allowed since `str` is implicitly [`Required(str)`](#required).
+    # Empty dicts are not allowed since `str` is implicitly `Required(str)`
     Entire: Length(max=3)
 })
 
