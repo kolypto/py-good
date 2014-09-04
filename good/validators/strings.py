@@ -76,13 +76,16 @@ class Match(ValidatorBase):
 
     :param pattern: RegExp pattern to match with: a string, or a compiled pattern
     :type pattern: str|_SRE_Pattern
+    :param message: Error message override
+    :type message: str|None
     :param expected: Textual representation of what's expected from the user
     :type expected: unicode
     """
 
-    def __init__(self, pattern, expected=None):
+    def __init__(self, pattern, message=None, expected=None):
         self.rex = re.compile(pattern)  # accepts compiled patterns as well
         self.name = expected or _(u'(special format)')
+        self.message = message or _(u'Wrong format')
 
     def __call__(self, v):
         try:
@@ -94,7 +97,7 @@ class Match(ValidatorBase):
 
         # Matched?
         if not match:
-            raise Invalid(_(u'Wrong format'), self.name)
+            raise Invalid(self.message, self.name)
         else:
             return v
 
@@ -126,12 +129,14 @@ class Replace(Match):
         Backreferences are supported, just like in the [`re`](https://docs.python.org/2/library/re.html) module.
 
     :type repl: unicode
+    :param message: Error message override
+    :type message: str|None
     :param expected: Textual representation of what's expected from the user
     :type expected: unicode
     """
 
-    def __init__(self, pattern, repl, expected=None):
-        super(Replace, self).__init__(pattern, expected)
+    def __init__(self, pattern, repl, message=None, expected=None):
+        super(Replace, self).__init__(pattern, message, expected)
         self.repl = repl
 
     def __call__(self, v):
@@ -144,12 +149,109 @@ class Replace(Match):
 
         # Matched?
         if not n_subs:
-            raise Invalid(_(u'Wrong format'), self.name)
+            raise Invalid(self.message, self.name)
         else:
             return v
 
 
-# TODO: Url
-# TODO: EMail
+class Url(ValidatorBase):
+    """ Validate a URL, make sure it's in the absolute format, including the protocol.
 
-__all__ = ('Lower', 'Upper', 'Capitalize', 'Title', 'Match', 'Replace')
+    ```python
+    from good import Schema, Url
+
+    schema = Schema(Url('https'))
+
+    schema('example.com')  #-> 'https://example.com'
+    schema('http://example.com')  #-> 'http://example.com'
+    ```
+
+    :param protocols: List of allowed protocols.
+
+        If no protocol is provided by the user -- the first protocol is used by default.
+
+    :type protocols: str|list[str]
+    """
+
+    _url_rex = r'^' \
+               r'(?:' r'(?P<scheme>[^:]+)' r'://?)?' \
+               r'(?:' r'(?P<auth>[^@/]+(?::[^@/]*)?)' r'@)?' \
+               r'(?P<host>[^/@:]+)' \
+               r'(?:' r':(?P<port>\d+)' r')?' \
+               r'(?:' r'(?P<path>/.*)' r')?' \
+               r'$'
+
+    def __init__(self, protocols=('http', 'https')):
+        self.protocols = tuple(x.lower()
+                               for x in ((protocols,)
+                                         if isinstance(protocols, six.string_types) else
+                                         tuple(protocols)))
+
+        self.rex = re.compile(self._url_rex)
+        self.name = u'URL'
+
+    def __call__(self, v):
+        # Match
+        try:
+            match = self.rex.match(v)
+        except TypeError:
+            raise Invalid(_(u'Wrong URL value type'), u'String', get_type_name(type(v)))
+
+        # Matched?
+        if not match:
+            raise Invalid(_(u'Wrong URL format'), self.name)
+
+        try:
+            # Prepare
+            parts = match.groupdict()
+            if not parts['scheme']:
+                parts['scheme'] = self.protocols[0]
+
+            # Validate
+            if parts['scheme'].lower() not in self.protocols:
+                raise Invalid(u'Protocol not allowed', _(u',').join(self.protocols), six.text_type(parts['scheme']))
+            if '.' not in parts['host']:
+                raise Invalid(u'Incorrect domain name', self.name)
+
+            # Combine back again
+            return six.moves.urllib.parse.urlunsplit((
+                parts['scheme'],
+                  ('{auth}@'.format(**parts) if parts['auth'] else '')
+                + parts['host']
+                + (':{port}'.format(**parts) if parts['port'] else ''),
+                parts['path'] or '/',
+                None,
+                None
+            ))
+        except Exception as e:
+            if isinstance(e, Invalid):
+                raise
+            else:
+                # Other error types are not expected, so reraise them
+                raise RuntimeError('{}: {}'.format(type(e).__name__, e))
+
+
+class Email(Match):
+    """ Validate that a value is an e-mail address.
+
+    This simply tests for the presence of the '@' sign, surrounded by some characters.
+
+    ```python
+    from good import Email
+
+    schema = Schema(Email())
+
+    schema('user@example.com')  #-> 'user@example.com'
+    schema('user@localhost')  #-> 'user@localhost'
+    schema('user')
+    #-> Invalid: Wrong e-mail: expected E-Mail, got user
+    ```
+    """
+
+    _rex = re.compile(r'.+@.+')
+
+    def __init__(self):
+        super(Email, self).__init__(self._rex, u'Wrong E-Mail', u'E-Mail')
+
+
+__all__ = ('Lower', 'Upper', 'Capitalize', 'Title', 'Match', 'Replace', 'Url', 'Email')

@@ -1155,7 +1155,7 @@ class StringsTest(GoodTestBase):
     def test_Match(self):
         """ Test Match() """
 
-        match = Match(r'^0x[A-F0-9]+$', u'hex number')
+        match = Match(r'^0x[A-F0-9]+$', expected=u'hex number')
         schema = Schema(match)
 
         self.assertValid(schema, u'0xDEADBEEF')
@@ -1168,7 +1168,7 @@ class StringsTest(GoodTestBase):
     def test_Replace(self):
         """ Test Replace() """
 
-        replace = Replace(r'^https?://([^/]+)/.*', r'\1', u'URL')
+        replace = Replace(r'^https?://([^/]+)/.*', r'\1', expected=u'URL')
         schema = Schema(replace)
 
         self.assertValid(schema, u'http://example.com/a/b/c', u'example.com')
@@ -1177,6 +1177,43 @@ class StringsTest(GoodTestBase):
                            Invalid(u'Wrong format', u'URL', u'user@example.com', [], replace))
         self.assertInvalid(schema, 123,
                            Invalid(s.es_value_type, u'String', s.t_int, [], replace))
+
+    def test_Url(self):
+        """ Test Url() """
+
+        url = Url()
+        schema = Schema(url)
+
+        self.assertValid(schema, 'example.com', 'http://example.com/')
+        self.assertValid(schema, 'https://example.com', 'https://example.com/')
+        self.assertValid(schema, 'example.com:80', 'http://example.com:80/')
+        self.assertValid(schema, 'example.com:80/a/b/c', 'http://example.com:80/a/b/c')
+        self.assertValid(schema, 'user@example.com', 'http://user@example.com/')
+        self.assertValid(schema, 'user:pass@example.com', 'http://user:pass@example.com/')
+        self.assertValid(schema, 'http://user:pass@example.com:80/a/b/c', 'http://user:pass@example.com:80/a/b/c')
+
+        self.assertInvalid(schema, 123,
+                           Invalid(u'Wrong URL value type', u'String', s.t_int, [], url))
+        self.assertInvalid(schema, 'example.com:lol',
+                           Invalid(u'Wrong URL format', u'URL', u'example.com:lol', [], url))
+        self.assertInvalid(schema, 'abc',
+                           Invalid(u'Incorrect domain name', u'URL', u'abc', [], url))
+        self.assertInvalid(schema, 'ftp://example.com',
+                           Invalid(u'Protocol not allowed', u'http,https', u'ftp', [], url))
+
+    def test_Email(self):
+        """ Test Email() """
+
+        email = Email()
+        schema = Schema(email)
+
+        self.assertValid(schema, 'user@example.com')
+        self.assertValid(schema, 'user@localhost')
+
+        self.assertInvalid(schema, 1234,
+                           Invalid(s.es_value_type, u'String', s.t_int, [], email))
+        self.assertInvalid(schema, 'user@',
+                           Invalid(u'Wrong E-Mail', u'E-Mail', u'user@', [], email))
 
 
 class FilesTest(GoodTestBase):

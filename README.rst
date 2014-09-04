@@ -1686,7 +1686,7 @@ Casts The Input String To Title Case
 
 .. code:: python
 
-    Match(pattern, expected=None)
+    Match(pattern, message=None, expected=None)
 
 Validate the input string against a regular expression.
 
@@ -1707,6 +1707,7 @@ Arguments:
 
 -  ``pattern``: RegExp pattern to match with: a string, or a compiled
    pattern
+-  ``message``: Error message override
 -  ``expected``: Textual representation of what's expected from the user
 
 ``Replace``
@@ -1714,7 +1715,7 @@ Arguments:
 
 .. code:: python
 
-    Replace(pattern, repl, expected=None)
+    Replace(pattern, repl, message=None, expected=None)
 
 RegExp substitution.
 
@@ -1743,7 +1744,57 @@ Arguments:
 
    Backreferences are supported, just like in the
    ```re`` <https://docs.python.org/2/library/re.html>`__ module.
+-  ``message``: Error message override
 -  ``expected``: Textual representation of what's expected from the user
+
+``Url``
+~~~~~~~
+
+.. code:: python
+
+    Url(protocols=('http', 'https'))
+
+Validate a URL, make sure it's in the absolute format, including the
+protocol.
+
+.. code:: python
+
+    from good import Schema, Url
+
+    schema = Schema(Url('https'))
+
+    schema('example.com')  #-> 'https://example.com'
+    schema('http://example.com')  #-> 'http://example.com'
+
+Arguments:
+
+-  ``protocols``: List of allowed protocols.
+
+   If no protocol is provided by the user -- the first protocol is used
+   by default.
+
+``Email``
+~~~~~~~~~
+
+.. code:: python
+
+    Email()
+
+Validate that a value is an e-mail address.
+
+This simply tests for the presence of the '@' sign, surrounded by some
+characters.
+
+.. code:: python
+
+    from good import Email
+
+    schema = Schema(Email())
+
+    schema('user@example.com')  #-> 'user@example.com'
+    schema('user@localhost')  #-> 'user@localhost'
+    schema('user')
+    #-> Invalid: Wrong e-mail: expected E-Mail, got user
 
 Files
 -----
