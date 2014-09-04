@@ -1681,6 +1681,70 @@ Capitalizes the input string.
 
 Casts The Input String To Title Case
 
+``Match``
+~~~~~~~~~
+
+.. code:: python
+
+    Match(pattern, expected=None)
+
+Validate the input string against a regular expression.
+
+.. code:: python
+
+    from good import Schema, Match
+
+    schema = Schema(All(
+        unicode,
+        Match(r'^0x[A-F0-9]+$', 'hex number')
+    ))
+
+    schema('0xDEADBEEF')  #-> '0xDEADBEEF'
+    schema('0x')
+    #-> Invalid: Wrong format: expected hex number, got 0xDEADBEEF
+
+Arguments:
+
+-  ``pattern``: RegExp pattern to match with: a string, or a compiled
+   pattern
+-  ``expected``: Textual representation of what's expected from the user
+
+``Replace``
+~~~~~~~~~~~
+
+.. code:: python
+
+    Replace(pattern, repl, expected=None)
+
+RegExp substitution.
+
+.. code:: python
+
+    from good import Schema, Replace
+
+    schema = Schema(Replace(
+        # Grab domain name
+        r'^https?://([^/]+)/.*'
+        # Replace
+        r'',
+        # Tell the user that we're expecting a URL
+        u'URL'
+    ))
+
+    schema('http://example.com/a/b/c')  #-> 'example.com'
+    schema('user@example.com')
+    #-> Invalid: Wrong format: expected URL, got user@example.com
+
+Arguments:
+
+-  ``pattern``: RegExp pattern to match with: a string, or a compiled
+   pattern
+-  ``repl``: Replacement pattern.
+
+   Backreferences are supported, just like in the
+   ```re`` <https://docs.python.org/2/library/re.html>`__ module.
+-  ``expected``: Textual representation of what's expected from the user
+
 Files
 -----
 

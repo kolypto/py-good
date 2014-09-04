@@ -17,6 +17,9 @@ class ValidatorBase(object):
         """
         raise NotImplementedError
 
+    def __repr__(self):
+        return self.name
+
     def __str__(self):
         return six.text_type(self).encode('utf8')
 

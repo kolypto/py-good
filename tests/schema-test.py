@@ -1152,5 +1152,32 @@ class StringsTest(GoodTestBase):
         schema = Schema(Title())
         self.assertValid(schema, u'abc def', u'Abc Def')
 
+    def test_Match(self):
+        """ Test Match() """
+
+        match = Match(r'^0x[A-F0-9]+$', u'hex number')
+        schema = Schema(match)
+
+        self.assertValid(schema, u'0xDEADBEEF')
+
+        self.assertInvalid(schema, u'0x',
+                           Invalid(u'Wrong format', u'hex number', u'0x', [], match))
+        self.assertInvalid(schema, 123,
+                           Invalid(s.es_value_type, u'String', s.t_int, [], match))
+
+    def test_Replace(self):
+        """ Test Replace() """
+
+        replace = Replace(r'^https?://([^/]+)/.*', r'\1', u'URL')
+        schema = Schema(replace)
+
+        self.assertValid(schema, u'http://example.com/a/b/c', u'example.com')
+
+        self.assertInvalid(schema, u'user@example.com',
+                           Invalid(u'Wrong format', u'URL', u'user@example.com', [], replace))
+        self.assertInvalid(schema, 123,
+                           Invalid(s.es_value_type, u'String', s.t_int, [], replace))
+
+
 class FilesTest(GoodTestBase):
     """ Test: Validators.Files """

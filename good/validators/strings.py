@@ -1,5 +1,6 @@
 import six
 from functools import wraps
+import re
 
 from ._base import ValidatorBase
 from .. import Invalid
@@ -57,8 +58,98 @@ def Title():
     return 'title'
 
 
-# TODO: Match
-# TODO: Replace
-# TODO: Url
+class Match(ValidatorBase):
+    """ Validate the input string against a regular expression.
 
-__all__ = ('Lower', 'Upper', 'Capitalize', 'Title')
+    ```python
+    from good import Schema, Match
+
+    schema = Schema(All(
+        unicode,
+        Match(r'^0x[A-F0-9]+$', 'hex number')
+    ))
+
+    schema('0xDEADBEEF')  #-> '0xDEADBEEF'
+    schema('0x')
+    #-> Invalid: Wrong format: expected hex number, got 0xDEADBEEF
+    ```
+
+    :param pattern: RegExp pattern to match with: a string, or a compiled pattern
+    :type pattern: str|_SRE_Pattern
+    :param expected: Textual representation of what's expected from the user
+    :type expected: unicode
+    """
+
+    def __init__(self, pattern, expected=None):
+        self.rex = re.compile(pattern)  # accepts compiled patterns as well
+        self.name = expected or _(u'(special format)')
+
+    def __call__(self, v):
+        try:
+            # Try to match
+            match = self.rex.match(v)
+        except TypeError:
+            # Wrong type
+            raise Invalid(_(u'Wrong value type'), u'String', get_type_name(type(v)))
+
+        # Matched?
+        if not match:
+            raise Invalid(_(u'Wrong format'), self.name)
+        else:
+            return v
+
+
+class Replace(Match):
+    """ RegExp substitution.
+
+    ```python
+    from good import Schema, Replace
+
+    schema = Schema(Replace(
+        # Grab domain name
+        r'^https?://([^/]+)/.*'
+        # Replace
+        r'\1',
+        # Tell the user that we're expecting a URL
+        u'URL'
+    ))
+
+    schema('http://example.com/a/b/c')  #-> 'example.com'
+    schema('user@example.com')
+    #-> Invalid: Wrong format: expected URL, got user@example.com
+    ```
+
+    :param pattern: RegExp pattern to match with: a string, or a compiled pattern
+    :type pattern: str|_SRE_Pattern
+    :param repl: Replacement pattern.
+
+        Backreferences are supported, just like in the [`re`](https://docs.python.org/2/library/re.html) module.
+
+    :type repl: unicode
+    :param expected: Textual representation of what's expected from the user
+    :type expected: unicode
+    """
+
+    def __init__(self, pattern, repl, expected=None):
+        super(Replace, self).__init__(pattern, expected)
+        self.repl = repl
+
+    def __call__(self, v):
+        try:
+            # Try to match
+            v, n_subs = self.rex.subn(self.repl, v)
+        except TypeError:
+            # Wrong type
+            raise Invalid(_(u'Wrong value type'), u'String', get_type_name(type(v)))
+
+        # Matched?
+        if not n_subs:
+            raise Invalid(_(u'Wrong format'), self.name)
+        else:
+            return v
+
+
+# TODO: Url
+# TODO: EMail
+
+__all__ = ('Lower', 'Upper', 'Capitalize', 'Title', 'Match', 'Replace')
