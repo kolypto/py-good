@@ -1084,6 +1084,14 @@ class BooleansTest(GoodTestBase):
 class NumbersTest(GoodTestBase):
     """ Test: Validators.Numbers """
 
+    class Incomparable(object):
+        """ A class that cannot be compared to an integer """
+        def _nope(self, other):
+            raise TypeError()  # mimic Py3 behavior
+        __gt__ = __ge__ = __lt__ = __le__ = __eq__ = __ne__ = __cmp__ = __coerce__ = _nope
+
+
+
     def test_Range(self):
         """ Test Range() """
 
@@ -1106,8 +1114,8 @@ class NumbersTest(GoodTestBase):
                 self.assertInvalid(schema, 15,
                                    Invalid(u'Value must be at most 10', u'10', u'15', [], rangecheck))
 
-        self.assertInvalid(schema, set(),
-                           Invalid(u'Value should be a number', u'Number', u'Set', [], rangecheck))
+        self.assertInvalid(schema, self.Incomparable(),
+                           Invalid(u'Value should be a number', u'Number', u'Incomparable', [], rangecheck))
 
     def test_Clamp(self):
         """ Test Clamp() """
@@ -1122,8 +1130,8 @@ class NumbersTest(GoodTestBase):
             self.assertValid(schema,  0,  0 if clampcheck.min is None else clampcheck.min)
             self.assertValid(schema, 15, 15 if clampcheck.max is None else clampcheck.max)
 
-        self.assertInvalid(schema, set(),
-                           Invalid(u'Value should be a number', u'Number', u'Set', [], clampcheck))
+        self.assertInvalid(schema, self.Incomparable(),
+                           Invalid(u'Value should be a number', u'Number', u'Incomparable', [], clampcheck))
 
 
 class StringsTest(GoodTestBase):
