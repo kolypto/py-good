@@ -2,11 +2,11 @@
 
 import six
 import collections
-from functools import wraps, update_wrapper
+from functools import update_wrapper
 
-from .schema.util import const, get_callable_name
+from .schema.util import const
 from . import Schema, SchemaError, Invalid
-from .validators._base import ValidatorBase
+from .validators.boolean import Check
 
 
 class ObjectProxy(collections.Mapping, dict):
@@ -191,48 +191,6 @@ def Msg(schema, message):
     return message_override
 
 
-def Check(bvalidator, message, expected=None):
-    """ Use the provided boolean function as a validator and raise errors when it's `False`.
-
-    ```python
-    import os.path
-    from good import Schema, Check
-
-    schema = Schema(
-        Check(os.path.isdir, u'Must be an existing directory'))
-    schema('/')  #-> '/'
-    schema('/404')
-    #-> Invalid: Must be an existing directory: expected isDir(), got /404
-    ```
-
-    :param bvalidator: Boolean validator function
-    :type bvalidator: callable
-    :param message: Error message to report when `False`
-    :type message: unicode
-    :param expected: Expected value string representation, or `None` to get it from the wrapped callable
-    :type expected: None|str|unicode
-    :return: Validator callable
-    :rtype: callable
-    """
-    assert isinstance(message, six.text_type), 'Check() message must be a unicode string'
-    assert isinstance(expected, six.text_type) or expected is None, 'Check() expected must be a unicode string'
-
-    # Wrapper
-    def check(v):
-        #  Test with the boolean function
-        if bvalidator(v):
-            # Return value as is
-            return v
-        else:
-            # If the boolean function reported False -- raise Invalid
-            raise Invalid(message, expected)
-
-    # Name after the wrapped function
-    check.name = get_callable_name(bvalidator)
-
-    return check
-
-
 def message(message, name=None):
     """ Convenience decorator that applies [`Msg()`](#msg) to a callable.
 
@@ -326,4 +284,4 @@ def truth(message, expected=None):
         return update_wrapper(Check(func, message, expected), func)
     return decorator
 
-__all__ = ('Object', 'Msg', 'Check', 'message', 'name', 'truth')
+__all__ = ('Object', 'Msg', 'message', 'name', 'truth')

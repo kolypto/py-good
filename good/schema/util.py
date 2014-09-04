@@ -113,8 +113,8 @@ def get_primitive_name(schema):
             const.COMPILED_TYPE.LITERAL: six.text_type,
             const.COMPILED_TYPE.TYPE: get_type_name,
             const.COMPILED_TYPE.CALLABLE: get_callable_name,
-            const.COMPILED_TYPE.ITERABLE: lambda x: _(u'{type}[...]').format(type=get_type_name(list)),
-            const.COMPILED_TYPE.MAPPING:  lambda x: _(u'{type}[...]').format(type=get_type_name(dict)),
+            const.COMPILED_TYPE.ITERABLE: lambda x: _(u'{type}[{content}]').format(type=get_type_name(list), content=_(u'...') if x else _(u'-')),
+            const.COMPILED_TYPE.MAPPING:  lambda x: _(u'{type}[{content}]').format(type=get_type_name(dict), content=_(u'...') if x else _(u'-')),
         }[primitive_type(schema)](schema)
     except KeyError:
         return six.text_type(repr(schema))

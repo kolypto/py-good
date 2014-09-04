@@ -1014,6 +1014,45 @@ class ValuesTest(GoodTestBase):
 class BooleansTest(GoodTestBase):
     """ Test: Validators.Booleans """
 
+    def test_Check(self):
+        """ Test Check() """
+
+        check = Check(
+            lambda v: v < 15,
+            u'Must be <15',
+            u'<15'
+        )
+        schema = Schema(check)
+
+        self.assertValid(schema, 1)
+
+        self.assertInvalid(schema, 15,
+                           Invalid(u'Must be <15', u'<15', u'15', [], check))
+
+    def test_Truthy(self):
+        """ Test Truthy() """
+
+        truthy = Truthy()
+        schema = Schema(truthy)
+
+        self.assertValid(schema, 1)
+        self.assertValid(schema, u'abc')
+
+        self.assertInvalid(schema, [],
+                           Invalid(u'Empty value', u'Truthy', u'List[-]', [], truthy))
+
+    def test_Falsy(self):
+        """ Test Falsy() """
+
+        falsy = Falsy()
+        schema = Schema(falsy)
+
+        self.assertValid(schema, 0)
+        self.assertValid(schema, [])
+
+        self.assertInvalid(schema, [1,2,3],
+                           Invalid(u'Non-empty value', u'Falsy', u'List[...]', [], falsy))
+
 
 class FilesTest(GoodTestBase):
     """ Test: Validators.Files """

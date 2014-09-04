@@ -954,36 +954,6 @@ Arguments:
 
 Returns: ``callable`` Wrapped schema callable
 
-``Check``
-~~~~~~~~~
-
-.. code:: python
-
-    Check(bvalidator, message, expected=None)
-
-Use the provided boolean function as a validator and raise errors when
-it's ``False``.
-
-.. code:: python
-
-    import os.path
-    from good import Schema, Check
-
-    schema = Schema(
-        Check(os.path.isdir, u'Must be an existing directory'))
-    schema('/')  #-> '/'
-    schema('/404')
-    #-> Invalid: Must be an existing directory: expected isDir(), got /404
-
-Arguments:
-
--  ``bvalidator``: Boolean validator function
--  ``message``: Error message to report when ``False``
--  ``expected``: Expected value string representation, or ``None`` to
-   get it from the wrapped callable
-
-Returns: ``callable`` Validator callable
-
 ``message``
 ~~~~~~~~~~~
 
@@ -1494,6 +1464,68 @@ Arguments:
 
 Boolean
 -------
+
+``Check``
+~~~~~~~~~
+
+.. code:: python
+
+    Check(bvalidator, message, expected)
+
+Use the provided boolean function as a validator and raise errors when
+it's ``False``.
+
+.. code:: python
+
+    import os.path
+    from good import Schema, Check
+
+    schema = Schema(
+        Check(os.path.isdir, u'Must be an existing directory'))
+    schema('/')  #-> '/'
+    schema('/404')
+    #-> Invalid: Must be an existing directory: expected isDir(), got /404
+
+Arguments:
+
+-  ``bvalidator``: Boolean validator function
+-  ``message``: Error message to report when ``False``
+-  ``expected``: Expected value string representation, or ``None`` to
+   get it from the wrapped callable
+
+``Truthy``
+~~~~~~~~~~
+
+.. code:: python
+
+    Truthy()
+
+Assert that the value is truthy, in the Python sense.
+
+This fails on all "falsy" values: ``False``, ``0``, empty collections,
+etc.
+
+.. code:: python
+
+    from good import Schema, Truthy
+
+    schema = Schema(Truthy())
+
+    schema(1)  #-> 1
+    schema([1,2,3])  #-> [1,2,3]
+    schema(None)
+    #-> Invalid: Empty value: expected truthy(), got None
+
+``Falsy``
+~~~~~~~~~
+
+.. code:: python
+
+    Falsy()
+
+Assert that the value is falsy, in the Python sense.
+
+Supplementary to ```Truthy`` <#truthy>`__.
 
 Numbers
 -------
