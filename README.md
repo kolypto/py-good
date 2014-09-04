@@ -50,7 +50,6 @@ Table of Contents
     * <a href="#helpers">Helpers</a>
         * <a href="#object">Object</a>
         * <a href="#msg">Msg</a>
-        * <a href="#check">Check</a>
         * <a href="#message">message</a>
         * <a href="#name">name</a>
         * <a href="#truth">truth</a>
@@ -61,10 +60,29 @@ Table of Contents
         * <a href="#inclusive">Inclusive</a>
         * <a href="#exclusive">Exclusive</a>
     * <a href="#types">Types</a>
+        * <a href="#coerce">Coerce</a>
     * <a href="#values">Values</a>
+        * <a href="#in">In</a>
+        * <a href="#length">Length</a>
+        * <a href="#default">Default</a>
+        * <a href="#fallback">Fallback</a>
     * <a href="#boolean">Boolean</a>
+        * <a href="#check">Check</a>
+        * <a href="#truthy">Truthy</a>
+        * <a href="#falsy">Falsy</a>
+        * <a href="#boolean-1">Boolean</a>
     * <a href="#numbers">Numbers</a>
+        * <a href="#range">Range</a>
+        * <a href="#clamp">Clamp</a>
     * <a href="#strings">Strings</a>
+        * <a href="#lower">Lower</a>
+        * <a href="#upper">Upper</a>
+        * <a href="#capitalize">Capitalize</a>
+        * <a href="#title">Title</a>
+        * <a href="#match">Match</a>
+        * <a href="#replace">Replace</a>
+        * <a href="#url">Url</a>
+        * <a href="#email">Email</a>
     * <a href="#files">Files</a> 
 
 
@@ -224,7 +242,7 @@ Moreover, instances of the following types are converted to callables on the com
     `extra_keys=Allow` to the `Schema` constructor.
 
 These are just the basic rules, and for sure `Schema` can do much more than that!
-Additional logic is implemented through [Markers](#markers) and [Validators](#validators),
+Additional logic is implemented through [Markers](#markers) and [Validators](#validation-tools),
 which are described in the following chapters.
 
 ## Callables

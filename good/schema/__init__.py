@@ -158,7 +158,7 @@ class Schema(object):
         `extra_keys=Allow` to the `Schema` constructor.
 
     These are just the basic rules, and for sure `Schema` can do much more than that!
-    Additional logic is implemented through [Markers](#markers) and [Validators](#validators),
+    Additional logic is implemented through [Markers](#markers) and [Validators](#validation-tools),
     which are described in the following chapters.
 
     ## Callables

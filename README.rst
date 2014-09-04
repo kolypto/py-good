@@ -56,7 +56,6 @@ Table of Contents
 
       -  Object
       -  Msg
-      -  Check
       -  message
       -  name
       -  truth
@@ -70,10 +69,39 @@ Table of Contents
       -  Exclusive
 
    -  Types
+
+      -  Coerce
+
    -  Values
+
+      -  In
+      -  Length
+      -  Default
+      -  Fallback
+
    -  Boolean
+
+      -  Check
+      -  Truthy
+      -  Falsy
+      -  Boolean
+
    -  Numbers
+
+      -  Range
+      -  Clamp
+
    -  Strings
+
+      -  Lower
+      -  Upper
+      -  Capitalize
+      -  Title
+      -  Match
+      -  Replace
+      -  Url
+      -  Email
+
    -  Files
 
 Schema
@@ -251,7 +279,7 @@ the compilation phase:
 
 These are just the basic rules, and for sure ``Schema`` can do much more
 than that! Additional logic is implemented through
-`Markers <#markers>`__ and `Validators <#validators>`__, which are
+`Markers <#markers>`__ and `Validators <#validation-tools>`__, which are
 described in the following chapters.
 
 Callables
