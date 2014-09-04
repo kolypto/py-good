@@ -1081,13 +1081,54 @@ class BooleansTest(GoodTestBase):
                            Invalid(u'Wrong boolean value', u'Boolean', u'okay', [], boolean_v))
 
 
-class FilesTest(GoodTestBase):
-    """ Test: Validators.Files """
-
-
 class NumbersTest(GoodTestBase):
     """ Test: Validators.Numbers """
+
+    def test_Range(self):
+        """ Test Range() """
+
+        for rangecheck in (Range(1, 10), Range(1), Range(max=10)):
+            schema = Schema(rangecheck)
+
+            self.assertValid(schema, 1)
+            self.assertValid(schema, 5)
+            self.assertValid(schema, 10)
+
+            if rangecheck.min is None:
+                self.assertValid(schema, 0)
+            else:
+                self.assertInvalid(schema, 0,
+                                   Invalid(u'Value must be at least 1', u'1', u'0', [], rangecheck))
+
+            if rangecheck.max is None:
+                self.assertValid(schema, 15)
+            else:
+                self.assertInvalid(schema, 15,
+                                   Invalid(u'Value must be at most 10', u'10', u'15', [], rangecheck))
+
+        self.assertInvalid(schema, set(),
+                           Invalid(u'Value should be a number', u'Number', u'Set', [], rangecheck))
+
+    def test_Clamp(self):
+        """ Test Clamp() """
+
+        for clampcheck in (Clamp(1, 10), Clamp(1), Clamp(max=10)):
+            schema = Schema(clampcheck)
+
+            self.assertValid(schema, 1)
+            self.assertValid(schema, 5)
+            self.assertValid(schema, 10)
+
+            self.assertValid(schema,  0,  0 if clampcheck.min is None else clampcheck.min)
+            self.assertValid(schema, 15, 15 if clampcheck.max is None else clampcheck.max)
+
+        self.assertInvalid(schema, set(),
+                           Invalid(u'Value should be a number', u'Number', u'Set', [], clampcheck))
 
 
 class StringsTest(GoodTestBase):
     """ Test: Validators.Strings """
+
+
+class FilesTest(GoodTestBase):
+    """ Test: Validators.Files """

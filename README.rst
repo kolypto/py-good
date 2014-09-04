@@ -1570,6 +1570,65 @@ Example:
 Numbers
 -------
 
+``Range``
+~~~~~~~~~
+
+.. code:: python
+
+    Range(min=None, max=None)
+
+Validate that the value is within the defined range, inclusive. Raise
+```Invalid`` <#invalid>`__ error if not.
+
+.. code:: python
+
+    from good import Schema, Range
+
+    schema = Schema(Range(1, 10))
+
+    schema(1)  #-> 1
+    schema(10)  #-> 10
+    schema(15)
+    #-> Invalid: Value must be at most 10: expected Range(1..10), got 15
+
+If the value cannot be compared to a number -- raises
+```Invalid`` <#invalid>`__. Note that in Python2 almost everything can
+be compared to a number, including strings, dicts and lists!
+
+Arguments:
+
+-  ``min``: Minimal allowed value, or ``None`` to impose no limits.
+-  ``max``: Maximal allowed value, or ``None`` to impose no limits.
+
+``Clamp``
+~~~~~~~~~
+
+.. code:: python
+
+    Clamp(min=None, max=None)
+
+Clamp a value to the defined range, inclusive.
+
+.. code:: python
+
+    from good import Schema, Clamp
+
+    schema = Schema(Clamp(1, 10))
+
+    schema(-1)  #-> 1
+    schema(1)  #-> 1
+    schema(10)  #-> 10
+    schema(15)  #-> 10
+
+If the value cannot be compared to a number -- raises
+```Invalid`` <#invalid>`__. Note that in Python2 almost everything can
+be compared to a number, including strings, dicts and lists!
+
+Arguments:
+
+-  ``min``: Minimal allowed value, or ``None`` to impose no limits.
+-  ``max``: Maximal allowed value, or ``None`` to impose no limits.
+
 Strings
 -------
 
