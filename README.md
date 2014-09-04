@@ -293,7 +293,7 @@ Creates a compiled `Schema` object from the given schema definition.
 
 Under the hood, it uses `SchemaCompiler`: see the [source](good/schema/compiler.py) if interested.
 
-Arguments: 
+Arguments:
 
 * `schema`: Schema definition
 * `default_keys`: Default mapping keys behavior:
@@ -322,7 +322,7 @@ Having a [`Schema`](#schema), user input can be validated by calling the Schema 
 
 When called, the Schema will return sanitized value, or raise exceptions.
 
-Arguments: 
+Arguments:
 
 * `value`: Input value to validate
 
@@ -364,7 +364,7 @@ Validation error for a single value.
 
 This exception is guaranteed to contain text values which are meaningful for the user.
 
-Arguments: 
+Arguments:
 
 * `message`: Validation error message.
 * `expected`: Expected value: info about the value the validator was expecting.
@@ -418,7 +418,7 @@ except Invalid as e:
 
 This is used when validating a value within a container.
 
-Arguments: 
+Arguments:
 
 * `expected`: Invalid.expected default
 * `provided`: Invalid.provided default
@@ -459,7 +459,7 @@ except Invalid as ee:
 
 In this example, we create a dictionary of paths (as strings) mapped to error strings for the user.
 
-Arguments: 
+Arguments:
 
 * `errors`: The reported errors.
 
@@ -541,7 +541,7 @@ schema({})  # no `str` keys provided
 #-> Invalid: Required key not provided: expected String, got -none-
 ```
 
-Arguments: 
+Arguments:
 
 
 
@@ -592,7 +592,7 @@ schema({'name': 'Mark', 'age': 'X'})
 #-> Invalid: Wrong type @ ['age']: expected Integer number, got Binary String
 ```
 
-Arguments: 
+Arguments:
 
 
 
@@ -640,7 +640,7 @@ schema = Schema([str, Remove(int)])
 schema(['a', 'b', 1, 2])  #-> ['a', 'b']
 ```
 
-Arguments: 
+Arguments:
 
 
 
@@ -670,7 +670,7 @@ schema({'name': 111})
 #-> Invalid: Field is not supported anymore @ ['name']: expected -none-, got name
 ```
 
-Arguments: 
+Arguments:
 
 
 
@@ -687,7 +687,7 @@ Allow(key)
 
 Designed to be used with [`Extra`](#extra).
 
-Arguments: 
+Arguments:
 
 
 
@@ -748,7 +748,7 @@ schema = Schema({'name': str}, extra_keys=Allow)
 schema({'name': 'Alex', 'age': 'X'})  #-> {'name': 'Alex', 'age': 'X'}
 ```
 
-Arguments: 
+Arguments:
 
 
 
@@ -796,7 +796,7 @@ The `maxkeys(n)` schema is a validator that complains on the dictionary size if 
 
 Note that the schema this marker is mapped to can't replace the mapping object, but it can mutate the given mapping.
 
-Arguments: 
+Arguments:
 
 
 
@@ -852,7 +852,7 @@ and then Schema validates it as a mapping.
 This inherits the default required/extra keys behavior of the Schema.
 To override, use [`Optional()`](#optional) and [`Extra`](#extra) markers.
 
-Arguments: 
+Arguments:
 
 * `schema`: Object schema, given as a mapping
 * `cls`: Require instances of a specific class. If `None`, allows all classes.
@@ -884,7 +884,7 @@ schema('a')
 #-> Invalid: Need a number: expected Number, got a
 ```
 
-Arguments: 
+Arguments:
 
 * `schema`: The wrapped schema to modify the error for
 * `message`: Error message to use instead of the one that's reported by the underlying schema
@@ -911,7 +911,7 @@ schema('/404')
 #-> Invalid: Must be an existing directory: expected isDir(), got /404
 ```
 
-Arguments: 
+Arguments:
 
 * `bvalidator`: Boolean validator function
 * `message`: Error message to report when `False`
@@ -936,7 +936,7 @@ def intify(v):
     return int(v)
 ```
 
-Arguments: 
+Arguments:
 
 * `message`: Error message to use instead
 * `name`: Override schema name as well. See [`name`](#name).
@@ -966,7 +966,7 @@ Schema(name('int()', lambda x: int(x))('a')
 Note that it is only useful with lambdas, since function name is used if available:
 see notes on [Schema Callables](#callables).
 
-Arguments: 
+Arguments:
 
 * `name`: Name to assign on the validator callable
 * `validator`: Validator callable. If not provided -- a decorator is returned instead:
@@ -998,7 +998,7 @@ def isDir(v):
     return os.path.isdir(v)
 ```
 
-Arguments: 
+Arguments:
 
 * `message`: Validation error message
 * `expected`: Expected value string representation, or `None` to get it from the wrapped callable
@@ -1035,7 +1035,7 @@ schema('true')  #-> 'true'
 schema(0)  #-> 'false'
 ```
 
-Arguments: 
+Arguments:
 
 * `*schemas`: List of schemas to try.
 
@@ -1068,7 +1068,7 @@ schema(99)
 #-> Invalid: Not in range: expected 0..10, got 99
 ```
 
-Arguments: 
+Arguments:
 
 * `*schemas`: List of schemas to apply.
 
@@ -1100,7 +1100,7 @@ schema(0)
 #-> Invalid: Value not allowed: expected Not(0), got 0
 ```
 
-Arguments: 
+Arguments:
 
 * `*schemas`: List of schemas to check against.
 
@@ -1141,7 +1141,7 @@ schema({'name': 'monica.jpg', 'width': 800})
 
 Note that `Inclusive` only supports literals.
 
-Arguments: 
+Arguments:
 
 * `*keys`: List of mutually inclusive keys (literals).
 
@@ -1201,7 +1201,7 @@ schema({'login': 'a', 'email': 'b', 'password': 'c'})
 #->     Invalid: Choose one @ [login]: expected login|email, got login
 #->     Invalid: Choose one @ [email]: expected login|email, got email
 
-Arguments: 
+Arguments:
 
 * `*keys`: List of mutually exclusive keys (literals).
 
@@ -1218,6 +1218,37 @@ Note that `Exclusive` only supports literals.
 
 Types
 -----
+
+
+
+### `Coerce`
+```python
+Coerce(constructor)
+```
+
+Coerce a value to a type with the provided callable.
+
+`Coerce` applies the *constructor* to the input value and returns a value cast to the provided type.
+
+If *constructor* fails with `TypeError` or `ValueError`, the value is considered invalid and `Coerce` complains
+on that with a custom message.
+
+However, if *constructor* raises [`Invalid`](#invalid) -- the error object is used as it.
+
+```python
+from good import Schema, Coerce
+
+schema = Schema(Coerce(int))
+schema(u'1')  #-> 1
+schema(u'a')
+#->
+```
+
+Arguments:
+
+* `constructor`: Callable that typecasts the input value
+
+
 
 
 

@@ -40,7 +40,7 @@ class Any(ValidatorBase):
                 pass
 
         # Nothing worked
-        raise Invalid(_(u'Invalid value'), self.name, validator=self)
+        raise Invalid(_(u'Invalid value'), self.name)
 
 
 class All(ValidatorBase):
@@ -177,7 +177,7 @@ class Inclusive(ValidatorBase):
 
         # Otherwise, we complain on every single key
         raise MultipleInvalid.if_multiple([
-            Invalid(_(u'Required key not provided'), get_literal_name(key), _(u'-none-'), [key], self)
+            Invalid(_(u'Required key not provided'), get_literal_name(key), _(u'-none-'), [key])
             for key in missing_keys
         ])
 
@@ -264,7 +264,7 @@ class Exclusive(ValidatorBase):
         if not provided_keys:
             if self.require_mode:
                 # Required mode: fail
-                raise Invalid(_(u'Choose one of the options'), self.name, _(u'-none-'), [], self)
+                raise Invalid(_(u'Choose one of the options'), self.name, _(u'-none-'))
             else:
                 # Optional mode: ok
                 return d
@@ -274,7 +274,7 @@ class Exclusive(ValidatorBase):
             return d
 
         # Multiple used
-        raise Invalid(_(u'Choose one of the options, not multiple'), self.name, _(u',').join(sorted(provided_keys)), [], self)
+        raise Invalid(_(u'Choose one of the options, not multiple'), self.name, _(u',').join(sorted(provided_keys)))
 
 
 

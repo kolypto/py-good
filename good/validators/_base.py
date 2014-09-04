@@ -1,3 +1,6 @@
+import six
+
+
 class ValidatorBase(object):
     """ Base for class-based validators """
 
@@ -13,3 +16,12 @@ class ValidatorBase(object):
         :raises Invalid: errors
         """
         raise NotImplementedError
+
+    def __str__(self):
+        return six.text_type(self).encode('utf8')
+
+    def __unicode__(self):
+        return self.name
+
+    if six.PY3:
+        __bytes__, __str__ = __str__, __unicode__

@@ -853,9 +853,46 @@ class PredicatesTest(GoodTestBase):
                                Invalid(u'Choose one of the options', u'Exclusive(email,login)', s.v_no, [], exclusive_group))
 
 
-
 class TypesTest(GoodTestBase):
     """ Test: Validators.Types """
+
+    def test_Coerce(self):
+        """ Test Coerce() """
+
+        # int
+        coerce_int = Coerce(int)
+        schema = Schema(coerce_int)
+
+        self.assertValid(schema, 1, 1)
+        self.assertValid(schema, True, 1)
+        self.assertValid(schema, u'1', 1)
+
+        self.assertInvalid(schema, u'a',
+                           Invalid(s.es_value, u'*' + s.t_int, u'a', [], coerce_int))
+
+        # Callable
+        intify = lambda x: int(x)
+        intify.name = u'intify()'
+        coerce_int = Coerce(intify)
+
+        schema = Schema(coerce_int)
+
+        self.assertValid(schema, u'1', 1)
+        self.assertInvalid(schema, u'a',
+                           Invalid(s.es_value, u'*intify()', u'a', [], coerce_int))
+
+        # Callable which throws Invalid
+        def intify(v):
+            try:
+                return int(v)
+            except (TypeError, ValueError):
+                raise Invalid(u'Not an integer')
+        coerce_int = Coerce(intify)
+        schema = Schema(coerce_int)
+
+        self.assertValid(schema, u'1', 1)
+        self.assertInvalid(schema, u'a',
+                           Invalid(u'Not an integer', u'*intify()', u'a', [], coerce_int))
 
 
 class ValuesTest(GoodTestBase):

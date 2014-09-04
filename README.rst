@@ -1258,7 +1258,7 @@ authentication, but requires the user to choose just one:
     #->     Invalid: Choose one @ [login]: expected login|email, got login
     #->     Invalid: Choose one @ [email]: expected login|email, got email
 
-    Arguments: 
+    Arguments:
 
     * `*keys`: List of mutually exclusive keys (literals).
 
@@ -1269,6 +1269,38 @@ Note that ``Exclusive`` only supports literals.
 
 Types
 -----
+
+``Coerce``
+~~~~~~~~~~
+
+.. code:: python
+
+    Coerce(constructor)
+
+Coerce a value to a type with the provided callable.
+
+``Coerce`` applies the *constructor* to the input value and returns a
+value cast to the provided type.
+
+If *constructor* fails with ``TypeError`` or ``ValueError``, the value
+is considered invalid and ``Coerce`` complains on that with a custom
+message.
+
+However, if *constructor* raises ```Invalid`` <#invalid>`__ -- the error
+object is used as it.
+
+.. code:: python
+
+    from good import Schema, Coerce
+
+    schema = Schema(Coerce(int))
+    schema(u'1')  #-> 1
+    schema(u'a')
+    #->
+
+Arguments:
+
+-  ``constructor``: Callable that typecasts the input value
 
 Values
 ------
