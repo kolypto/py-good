@@ -1,4 +1,4 @@
-import good, good.schema.errors
+import good, good.schema.errors, good.voluptuous
 from exdoc import doc, getmembers
 
 import json
@@ -17,6 +17,8 @@ docmodule = lambda mod: {
 
 data = {
     'good': doc(good),
+    'voluptuous': doc(good.voluptuous),
+
     'Schema': doccls(good.Schema, None, '__call__'),
     'errors': doc(good.schema.errors),
     'Invalid': doccls(good.Invalid),

@@ -33,6 +33,7 @@ ensure that all error messages are user-friendly out of the box, and tweak the p
 Table of Contents
 =================
 
+* <a href="#voluptuous-drop-in-replacement">Voluptuous Drop-In Replacement</a>
 * <a href="#schema">Schema</a>
     * <a href="#callables">Callables</a>
     * <a href="#priorities">Priorities</a>
@@ -92,6 +93,37 @@ Table of Contents
         * <a href="#isdir">IsDir</a>
         * <a href="#pathexists">PathExists</a>
 
+
+Voluptuous Drop-In Replacement
+==============================
+
+Despite Good is modelled after Voluptuous and is highly compatible,
+there still are differences that would definitely break your project.
+
+If you're not ready for such a change -- `good.voluptuous` is the solution:
+compatibility layer for switching from [voluptuous 0.8.5](https://github.com/alecthomas/voluptuous)
+with 100% compatibility.
+
+This is a drop-in replacement that passes all voluptuous unit-tests and hence should work perfectly.
+Here's hoow to use it
+
+```python
+#from voluptuous import *  # no more
+from good.voluptuous import *  # replacement
+
+# .. and use it like before
+```
+
+Includes all the features and is absolutely compatible, except for the error message texts,
+which became much more user-friendly :)
+
+Migration steps:
+
+1. Replace `voluptuous` imports with `good.voluptuous`
+2. Run your application tests and see how it behaves
+3. Module by module, replace `good.voluptuous` with just `good`, keeping the differences in mind.
+
+Good luck! :)
 
 Schema
 ======
