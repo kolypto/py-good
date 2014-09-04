@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-""" Slim validation yet handsome library (voluptuous 2) """
+""" Slim validation yet handsome validation library (voluptuous 2) """
 
 from setuptools import setup, find_packages
 
 setup(
     # http://pythonhosted.org/setuptools/setuptools.html
     name='good',
-    version='0.0.1-0',
+    version='0.0.1-1',
     author='Mark Vartanyan',
     author_email='kolypto@gmail.com',
 
