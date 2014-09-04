@@ -181,8 +181,8 @@ class CompiledSchema(object):
             """
             return Invalid(
                 message,
-                six.text_type(expected),
-                six.text_type(provided),
+                expected, #six.text_type(expected),  # -- must be unicode
+                provided, #six.text_type(provided),  # -- must be unicode
                 self.path + (path or []),
                 self.schema,
                 **info
@@ -258,7 +258,7 @@ class CompiledSchema(object):
             # Equality check
             if v != schema:
                 # expected=<value>, provided=<value>
-                raise err_value(v)
+                raise err_value(get_literal_name(v))
             # Fine
             return v
         return validate_literal
@@ -379,7 +379,7 @@ class CompiledSchema(object):
                         # Ignore errors and hope other members will succeed better
                         pass
                 else:
-                    errors.append(err_value(value, path=[value_index]))
+                    errors.append(err_value(get_literal_name(value), path=[value_index]))
 
             # Errors?
             if errors:
