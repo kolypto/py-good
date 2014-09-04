@@ -2,14 +2,16 @@ import collections
 
 from ._base import ValidatorBase
 from .. import Invalid
-from ..schema.util import get_literal_name, get_type_name, get_primitive_name
+from ..schema.util import get_literal_name, get_type_name, get_primitive_name, const
 
 
 class In(ValidatorBase):
     """ Validate that a value is in a collection.
 
     This is a plain simple `value in container` check, where `container` is a collection of literals.
-    In constast to [`Any`](#any), it does not compile its arguments into schemas!
+
+    In constast to [`Any`](#any), it does not compile its arguments into schemas,
+    and hence achieves better performance.
 
     ```python
     from good import Schema, In
@@ -20,6 +22,8 @@ class In(ValidatorBase):
     schema(99)
     #-> Invalid: Value not allowed: expected In(1,2,3), got 99
     ```
+
+    The same example will work with [`Any`](#any), but slower :-)
 
     :param container: Collection of allowed values.
 
@@ -116,8 +120,101 @@ class Length(ValidatorBase):
         return v
 
 
+class Default(ValidatorBase):
+    """ Initialize a value to a default if it's not provided.
 
-# TODO: DefaultTo
-# TODO: ExactSequence
+    "Not provided" means `None`, so basically it replaces `None`s with the default:
 
-__all__ = ('In', 'Length',)
+    ```python
+    from good import Schema, Any, Default
+
+    schema = Schema(Any(
+        # Accept ints
+        int,
+        # Replace `None` with 0
+        Default(0)
+    ))
+
+    schema(1)  #-> 1
+    schema(None)  #-> 0
+    ```
+
+    It raises [`Invalid`](#invalid) on all values except for `None` and `default`:
+
+    ```python
+    schema = Schema(Default(42))
+
+    schema(42)  #-> 42
+    schema(None)  #-> 42
+    schema(1)
+    #-> Invalid: Invalid value
+    ```
+
+    In addition, `Default` has special behavior with `Required` marker which is built into it:
+    if a required key was not provided -- it's created with the default value:
+
+    ```python
+    from good import Schema, Default
+
+    schema = Schema({
+        # remember that keys are implicitly required
+        'name': str,
+        'age': Any(int, Default(0))
+    })
+
+    schema({'name': 'Alex'})  #-> {'name': 'Alex', 'age': 0}
+    ```
+
+    :param default: The default value to use
+    """
+    def __init__(self, default):
+        self.default = default
+        self.name = _(u'Default={default}').format(default=default)
+
+    def __call__(self, v):
+        if v is None or v is const.UNDEFINED or v == self.default:
+            return self.default
+        raise Invalid(_(u'Invalid value'), self.name, get_literal_name(v))
+
+
+class Fallback(Default):
+    """ Always returns the default value.
+
+    Works like [`Default`](#default), but does not fail on any values.
+
+    Typical usage is to terminate [`Any`](#any) chain in case nothing worked:
+
+    ```python
+    from good import Schema, Any, Fallback
+
+    schema = Schema(Any(
+        int,
+        # All non-integer numbers are replaced with `None`
+        Fallback(None)
+    ))
+    ```
+
+    Like [`Default`](#default), it also works with mappings.
+
+    Internally, `Default` and `Fallback` work by feeding the schema with a special [`Undefined`](good/schema/util.py) value:
+    if the schema manages to return some value without errors -- then it has the named "default behavior",
+    and this validator just leverages the feature.
+
+    A "fallback value" may be provided manually, and will work absolutely the same
+    (since value schema manages to succeed even though `Undefined` was given):
+
+    ```python
+    schema = Schema({
+        'name': str,
+        'age': Any(int, lambda v: 42)
+    })
+    ```
+
+    :param default: The value that's always returned
+    """
+
+    def __call__(self, v):
+        return self.default
+
+
+__all__ = ('In', 'Length', 'Default', 'Fallback')

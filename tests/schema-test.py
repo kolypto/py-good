@@ -8,7 +8,7 @@ from copy import deepcopy
 
 from good import *
 from good.schema.markers import Marker
-from good.schema.util import get_type_name
+from good.schema.util import get_type_name, Undefined, const
 
 
 class s:
@@ -158,6 +158,21 @@ class GoodTestBase(unittest.TestCase):
 
 class SchemaCoreTest(GoodTestBase):
     """ Test Schema (core) """
+    
+    def test_undefined(self):
+        """ Test Undefined: it should never ever match any check """
+        self.assertFalse(const.UNDEFINED == 0)
+        self.assertFalse(const.UNDEFINED == 1)
+        self.assertFalse(const.UNDEFINED == True)
+        self.assertFalse(const.UNDEFINED == False)
+        self.assertFalse(const.UNDEFINED is None)
+        self.assertFalse(isinstance(const.UNDEFINED, type))
+
+        # The only way is to test `UNDEFINED is UNDEFINED`
+        self.assertTrue(const.UNDEFINED is const.UNDEFINED)
+
+        # Singleton
+        self.assertIs(Undefined(), Undefined())
 
     def test_literal(self):
         """ Test Schema(<literal>) """
@@ -958,6 +973,42 @@ class ValuesTest(GoodTestBase):
             Invalid(u'Too few values (1 is the least)', u'1', u'0', [], lencheck)
         ]))
 
+    def test_Default(self):
+        """ Test Default() and Fallback() """
+
+        for validator in (Default(0), Fallback(0), lambda v: 0,):
+            # Test as validator
+            any = Any(
+                int,
+                validator
+            )
+            schema = Schema(any)
+
+            self.assertValid(schema, 1)
+            self.assertValid(schema, 0)
+            self.assertValid(schema, None, 0)
+
+            if type(validator) is Default:
+                self.assertInvalid(schema, u'1',
+                                   Invalid(s.es_value, u'Any('+s.t_int+u'|Default=0)', u'1', [], any))
+            else:
+                self.assertValid(schema, u'1', 0)
+
+            # Test with mapping
+            schema = Schema({
+                u'name': six.text_type,
+                u'age': any  # Default() is detected deep inside (using Undefined)
+            })
+
+            self.assertValid(schema, {u'name': u'Alex', u'age': 18})
+            self.assertValid(schema, {u'name': u'Alex', u'age': None}, {u'name': u'Alex', u'age': 0})
+            self.assertValid(schema, {u'name': u'Alex'},               {u'name': u'Alex', u'age': 0})
+
+            if type(validator) is Default:
+                self.assertInvalid(schema, {u'name': u'Alex', u'age': u'a'},
+                                   Invalid(s.es_value, u'Any('+s.t_int+u'|Default=0)', u'a', [u'age'], any))
+            else:
+                self.assertValid(schema, {u'name': u'Alex', u'age': u'a'}, {u'name': u'Alex', u'age': 0})
 
 
 class BooleansTest(GoodTestBase):

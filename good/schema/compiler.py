@@ -82,6 +82,37 @@ class CompiledSchema(object):
     if six.PY3:
         __str__ = __unicode__
 
+    @property
+    def supports_undefined(self):
+        """ Test whether this schema supports Undefined.
+
+        A Schema that supports `Undefined`, when given `Undefined`, should return some value (other than `Undefined`)
+        without raising errors.
+
+        This is designed to support a very special case like that:
+
+        ```python
+        Schema(Default(0)).supports_undefined  #-> True
+        ```
+
+        This way a validator can declare that it has a default in case no value was provided,
+        and this case happens when:
+
+        1. A [`Required`](#required) mapping key was not provided, and it's mapped to `Default()`
+        2. .. no more supported cases. Yet.
+
+        :rtype: bool
+        """
+        # Test
+        try:
+            yes = self(const.UNDEFINED) is not const.UNDEFINED
+        except Invalid:
+            yes = False
+
+        # Remember (lame @cached_property)
+        self.__dict__['supports_undefined'] = yes
+        return yes
+
     #region Compilation Utils
 
     @classmethod

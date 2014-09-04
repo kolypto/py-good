@@ -4,6 +4,31 @@ import six
 import collections
 
 
+class Undefined(object):
+    """ Special singleton object to represent the case when no value was provided.
+
+    This value is never equal to anything and always returns False for any attempts to typecheck it:
+    this makes sure it will never match any condition.
+    """
+
+    _instance = None
+
+    def __new__(cls):
+        # Singleton
+        if cls._instance is None:
+            cls._instance = super(Undefined, cls).__new__(cls)
+        return cls._instance
+
+    def __coerce__(self, other):
+        return None
+
+    def __eq__(self, other):
+        return False
+
+    def __repr__(self):
+        return '<Undefined>'
+
+
 __type_names = direct = {
     None:             _(u'None'),
     type(None):       _(u'None'),
@@ -97,6 +122,10 @@ def get_primitive_name(schema):
 
 class const:
     """ Misc constants """
+
+    #: Undefined singleton
+    UNDEFINED = Undefined()
+
     #: Types that are treated as literals
     literal_types = six.integer_types + (six.text_type, six.binary_type) + (bool, float, complex, object, type(None))
 

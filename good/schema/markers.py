@@ -192,15 +192,28 @@ class Required(Marker):
     schema({})  # no `str` keys provided
     #-> Invalid: Required key not provided: expected String, got -none-
     ```
+
+    In addition, the `Required` marker has special behavior with [`Default`](#default) that allows to set the key
+    to a default value if the key was not provided. More details in the docs for [`Default`](#default).
     """
     priority = 0
     error_message = _(u'Required key not provided')
 
     def execute(self, d, matches):
         # If a Required() key is present -- it expects to ALWAYS have one or more matches
+
+        # When Required() has no matches...
         if not matches:
-            path = [self.key] if self.key_schema.compiled_type == const.COMPILED_TYPE.LITERAL else []
-            raise Invalid(self.error_message, self.name, _(u'-none-'), path)
+            # Last chance: value_schema supports Undefined, and the key is a literal
+            if self.value_schema.supports_undefined:
+                # Schema supports `Undefined`, then use it!
+                v = self.value_schema(const.UNDEFINED)
+                matches.append((self.key_schema.schema, self.key_schema.schema, v))
+                return matches
+            else:
+                # Invalid
+                path = [self.key] if self.key_schema.compiled_type == const.COMPILED_TYPE.LITERAL else []
+                raise Invalid(self.error_message, self.name, _(u'-none-'), path)
         return matches
 
 
