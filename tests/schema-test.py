@@ -1053,6 +1053,33 @@ class BooleansTest(GoodTestBase):
         self.assertInvalid(schema, [1,2,3],
                            Invalid(u'Non-empty value', u'Falsy', u'List[...]', [], falsy))
 
+    def test_Boolean(self):
+        """ Test Boolean() """
+
+        boolean_v = Boolean()
+        schema = Schema(boolean_v)
+
+        # Test valid
+        tests = {
+            True: (
+                True, 1, -1, 100,
+                u'y', u'Y', u'yes', u'Yes', u'YES', u'true', u'True', u'TRUE', u'on', u'On', u'ON'
+            ),
+            False: (
+                None,
+                False, 0,
+                u'n', u'N', u'no', u'No', u'NO', u'false', u'False', u'FALSE', u'off', u'Off', u'OFF'
+            )
+        }
+        for result, inputs in tests.items():
+            for input in inputs:
+                self.assertValid(schema, input, result)
+
+        self.assertInvalid(schema, 0.0,
+                           Invalid(u'Wrong boolean value type', u'Boolean', s.t_float, [], boolean_v))
+        self.assertInvalid(schema, u'okay',
+                           Invalid(u'Wrong boolean value', u'Boolean', u'okay', [], boolean_v))
+
 
 class FilesTest(GoodTestBase):
     """ Test: Validators.Files """

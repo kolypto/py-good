@@ -2,7 +2,7 @@ import six
 
 from ._base import ValidatorBase
 from .. import Invalid
-from ..schema.util import get_callable_name, get_primitive_name
+from ..schema.util import get_callable_name, get_primitive_name, get_literal_name, get_type_name
 
 
 class Check(ValidatorBase):
@@ -95,6 +95,64 @@ class Falsy(ValidatorBase):
         return v
 
 
-# TODO: Boolean
+class Boolean(ValidatorBase):
+    """ Convert human-readable boolean values to a `bool`.
 
-__all__ = ('Check', 'Truthy', 'Falsy')
+    The following values are supported:
+
+    * `None`: `False`
+    * `bool`: direct
+    * `int`: `0` = `False`, everything else is `True`
+    * `str`: Textual boolan values, compatible with [YAML 1.1 boolean literals](http://yaml.org/type/bool.html), namely:
+
+            y|Y|yes|Yes|YES|n|N|no|No|NO|
+            true|True|TRUE|false|False|FALSE|
+            on|On|ON|off|Off|OFF
+
+        [`Invalid`](#invalid) is thrown if an unknown string literal is provided.
+
+    Example:
+
+    ```python
+    from good import Schema, Boolean
+
+    schema = Schema(Boolean())
+
+    schema(None)  #-> False
+    schema(0)  #-> False
+    schema(1)  #-> True
+    schema(True)  #-> True
+    schema(u'yes')  #-> True
+    ```
+    """
+    #: Case-insensitive constants for boolean strings
+    _true_values_ci  = (u'y', u'Y', u'yes', u'Yes', u'YES', u'true',  u'True',  u'TRUE',  u'on',  u'On',  u'ON' )
+    _false_values_ci = (u'n', u'N', u'no',  u'No',  u'NO',  u'false', u'False', u'FALSE', u'off', u'Off', u'OFF')
+
+    def __init__(self):
+        self.name = _(u'Boolean')
+
+    def __call__(self, v):
+        # None
+        if v is None:
+            return False
+        # Bool, Int
+        elif isinstance(v, six.integer_types):
+            return v != 0
+        # Str
+        elif isinstance(v, six.string_types):
+            v = six.text_type(v)
+            # Match
+            if v in self._true_values_ci:
+                return True
+            elif v in self._false_values_ci:
+                return False
+            else:
+                raise Invalid(_(u'Wrong boolean value'), _(u'Boolean'))
+        # Other types
+        else:
+            raise Invalid(_(u'Wrong boolean value type'), _(u'Boolean'), get_type_name(type(v)))
+
+
+
+__all__ = ('Check', 'Truthy', 'Falsy', 'Boolean')

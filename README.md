@@ -1486,6 +1486,45 @@ Supplementary to [`Truthy`](#truthy).
 
 
 
+### `Boolean`
+```python
+Boolean()
+```
+
+Convert human-readable boolean values to a `bool`.
+
+The following values are supported:
+
+* `None`: `False`
+* `bool`: direct
+* `int`: `0` = `False`, everything else is `True`
+* `str`: Textual boolan values, compatible with [YAML 1.1 boolean literals](http://yaml.org/type/bool.html), namely:
+
+        y|Y|yes|Yes|YES|n|N|no|No|NO|
+        true|True|TRUE|false|False|FALSE|
+        on|On|ON|off|Off|OFF
+
+    [`Invalid`](#invalid) is thrown if an unknown string literal is provided.
+
+Example:
+
+```python
+from good import Schema, Boolean
+
+schema = Schema(Boolean())
+
+schema(None)  #-> False
+schema(0)  #-> False
+schema(1)  #-> True
+schema(True)  #-> True
+schema(u'yes')  #-> True
+```
+
+
+
+
+
+
 
 Numbers
 -------
