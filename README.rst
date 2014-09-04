@@ -16,11 +16,16 @@ Core features:
 -  `Robust <misc/performance/performance.md>`__: 10 000 validations per
    second
 -  Python 2.7, 3.3+ compatible
+-  100% documented and unit-tested
 
 Inspired by the amazing
 `alecthomas/voluptuous <https://github.com/alecthomas/voluptuous>`__ and
 100% compatible with it. The whole internals have been reworked towards
 readability and robustness. And yeah, the docs are now exhaustive :)
+
+The rationale for a remake was to make it modular with a tiny core and
+everything else built on top of that, ensure that all error messages are
+user-friendly out of the box, and tweak the performance.
 
 Table of Contents
 =================
@@ -948,8 +953,6 @@ Arguments:
 -  ``cls``: Require instances of a specific class. If ``None``, allows
    all classes.
 
-Returns: ``callable`` Validator
-
 ``Msg``
 ~~~~~~~
 
@@ -983,8 +986,6 @@ Arguments:
 -  ``schema``: The wrapped schema to modify the error for
 -  ``message``: Error message to use instead of the one that's reported
    by the underlying schema
-
-Returns: ``callable`` Wrapped schema callable
 
 ``message``
 ~~~~~~~~~~~

@@ -4,7 +4,7 @@ import six
 import collections
 from functools import update_wrapper
 
-from .schema.util import const
+from .schema.util import const, get_literal_name
 from . import Schema, SchemaError, Invalid
 from .validators.boolean import Check
 
@@ -72,7 +72,7 @@ class SlotsObjectProxy(ObjectProxy):
             raise
 
 
-def Object(schema, cls=None):
+class Object(object):
     """ Specify that the provided mapping should validate an object.
 
     This uses the same mapping validation rules, but works with attributes instead:
@@ -111,38 +111,36 @@ def Object(schema, cls=None):
     :type schema: Mapping
     :param cls: Require instances of a specific class. If `None`, allows all classes.
     :type cls: None|type|tuple[type]
-    :return: Validator
-    :rtype: callable
     """
-    # Input validation
-    if not isinstance(schema, collections.Mapping):
-        raise SchemaError('Object() argument must be a mapping, {} given'.format(type(schema)))
 
-    # Prepare
-    format_cls_name = lambda c: _(u'Object({cls})').format(cls=c.__name__ if c else u'*')
-    format_value_type = lambda v: format_cls_name(type(v)) if isinstance(v, object) else six.text_type(type(v).__name__)
+    def __init__(self, schema, cls=None):
+        # Input validation
+        if not isinstance(schema, collections.Mapping):
+            raise SchemaError('Object() argument must be a mapping, {} given'.format(type(schema)))
 
-    cls_name = format_cls_name(cls)
-    if cls is None:
-        cls = object
+        # Prepare
+        self.name = self._format_cls_name(cls)
+        self.cls = object if cls is None else cls
 
-    # Compile schema
-    compiled = Schema(schema)
+        # Compile schema
+        self.compiled = Schema(schema)
 
-    # Validator
-    def object_validator(v):
+    def _format_cls_name(self, c):
+        return _(u'Object({cls})').format(cls=c.__name__ if c else u'*')
+
+    def _format_value_type(self, v):
+        return self._format_cls_name(type(v)) if isinstance(v, object) else get_literal_name
+
+    def __call__(self, v):
         # Check type
-        if not isinstance(v, cls):
-            raise Invalid(_(u'Wrong value type'), cls_name, format_value_type(v))
+        if not isinstance(v, self.cls):
+            raise Invalid(_(u'Wrong value type'), self.name, self._format_value_type(v))
 
         # Validate using ObjectProxy and unwrap
-        return compiled(ObjectProxy(v)).obj
-    object_validator.name = cls_name
-
-    return object_validator
+        return self.compiled(ObjectProxy(v)).obj
 
 
-def Msg(schema, message):
+class Msg(object):
     """ Override the error message reported by the wrapped schema in case of validation errors.
 
     On validation, if the schema throws [`Invalid`](#invalid) -- the message is overridden with `msg`.
@@ -164,31 +162,30 @@ def Msg(schema, message):
     :param schema: The wrapped schema to modify the error for
     :param message: Error message to use instead of the one that's reported by the underlying schema
     :type message: unicode
-    :return: Wrapped schema callable
-    :rtype: callable
     """
-    assert isinstance(message, six.text_type), 'Msg() message must be a unicode string'
 
-    # Compile schema
-    compiled = Schema(schema)
+    def __init__(self, schema, message):
+        assert isinstance(message, six.text_type), 'Msg() message must be a unicode string'
+        self.message = message
+        self.compiled = Schema(schema).compiled
+        self.name = self.compiled.name
 
-    # Wrapper
-    def message_override(v):
+    def __getattr__(self, attr):
+        """ Inherit all attributes from the wrapped schema """
+        return getattr(self.compiled, attr)
+
+    def __call__(self, v):
         try:
-            return compiled(v)
+            return self.compiled(v)
         except Invalid as ee:
             # Override message
             for e in ee:
-                e.message = message
+                e.message = self.message
             # Raise again
             raise
         except const.transformed_exceptions:
-            raise Invalid(message or _(u'Invalid value'))
+            raise Invalid(self.message or _(u'Invalid value'))
 
-    # inherit name from the wrapped schema
-    message_override.name = compiled.name
-
-    return message_override
 
 
 def message(message, name=None):
