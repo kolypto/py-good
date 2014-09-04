@@ -19,7 +19,7 @@ class Coerce(ValidatorBase):
     schema = Schema(Coerce(int))
     schema(u'1')  #-> 1
     schema(u'a')
-    #->
+    #-> Invalid: Invalid value: expected *Integer number, got a
     ```
 
     :param constructor: Callable that typecasts the input value

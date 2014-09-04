@@ -1258,14 +1258,15 @@ authentication, but requires the user to choose just one:
     #->     Invalid: Choose one @ [login]: expected login|email, got login
     #->     Invalid: Choose one @ [email]: expected login|email, got email
 
-    Arguments:
-
-    * `*keys`: List of mutually exclusive keys (literals).
-
-        Can contain [`Required`](#required) or [`Optional`](#optional) marker classes,
-        which defines the behavior when no keys are provided. Default is `Required`.
-
 Note that ``Exclusive`` only supports literals.
+
+Arguments:
+
+-  ``*keys``: List of mutually exclusive keys (literals).
+
+   Can contain ```Required`` <#required>`__ or
+   ```Optional`` <#optional>`__ marker classes, which defines the
+   behavior when no keys are provided. Default is ``Required``.
 
 Types
 -----
@@ -1296,7 +1297,7 @@ object is used as it.
     schema = Schema(Coerce(int))
     schema(u'1')  #-> 1
     schema(u'a')
-    #->
+    #-> Invalid: Invalid value: expected *Integer number, got a
 
 Arguments:
 

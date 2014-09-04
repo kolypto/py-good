@@ -1200,6 +1200,9 @@ schema({'login': 'a', 'email': 'b', 'password': 'c'})
 #-> MultipleInvalid:
 #->     Invalid: Choose one @ [login]: expected login|email, got login
 #->     Invalid: Choose one @ [email]: expected login|email, got email
+```
+
+Note that `Exclusive` only supports literals.
 
 Arguments:
 
@@ -1207,9 +1210,6 @@ Arguments:
 
     Can contain [`Required`](#required) or [`Optional`](#optional) marker classes,
     which defines the behavior when no keys are provided. Default is `Required`.
-```
-
-Note that `Exclusive` only supports literals.
 
 
 
@@ -1241,7 +1241,7 @@ from good import Schema, Coerce
 schema = Schema(Coerce(int))
 schema(u'1')  #-> 1
 schema(u'a')
-#->
+#-> Invalid: Invalid value: expected *Integer number, got a
 ```
 
 Arguments:
