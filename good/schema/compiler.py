@@ -31,13 +31,13 @@ class CompiledSchema(object):
             Note that some values cannot be matchers: e.g. callables, which can typecast dictionary keys.
     """
 
-    def __init__(self, schema, path, default_keys, extra_keys, matcher=False):
-        assert issubclass(default_keys, markers.Marker), '`default_keys` value must be a Marker'
+    def __init__(self, schema, path, default_keys=None, extra_keys=None, matcher=False):
+        assert default_keys is None or issubclass(default_keys, markers.Marker), '`default_keys` value must be a Marker or None'
 
         self.path = path
         self.schema = schema
-        self.default_keys = default_keys
-        self.extra_keys = extra_keys
+        self.default_keys = default_keys or markers.Required
+        self.extra_keys = extra_keys or markers.Reject
         self.matcher = matcher
 
         # Compile
@@ -105,7 +105,7 @@ class CompiledSchema(object):
         # Test
         try:
             yes = self(const.UNDEFINED) is not const.UNDEFINED
-        except Invalid:
+        except (Invalid, SchemaError):
             yes = False
 
         # Remember (lame @cached_property)
@@ -184,8 +184,8 @@ class CompiledSchema(object):
         return type(self)(
             schema,
             self.path + (path or []),
-            self.default_keys,
-            self.extra_keys,
+            None,
+            None,
             matcher
         )
 

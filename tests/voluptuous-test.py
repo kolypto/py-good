@@ -37,9 +37,13 @@ class VoluptuousTest(unittest.TestCase):
     def test_module_docstring(self):
         """ Test from the doccomment """
         settings = {
-            'snmp_community': str,
-            'retries': int,
-            'snmp_version': All(Coerce(str), Any('3', '2c', '1')),
+            # TODO: propagate `Required()` by default. This can only be achieved if compiler propagates down the validator chain, e.g. with a special compile() method
+            #'snmp_community': str,
+            Optional('snmp_community'): str,
+            #'retries': int,
+            Optional('retries'): int,
+            #'snmp_version': All(Coerce(str), Any('3', '2c', '1')),
+            Optional('snmp_version'): All(Coerce(str), Any('3', '2c', '1')),
             }
         features = ['Ping', 'Uptime', 'Http']
 
@@ -49,7 +53,8 @@ class VoluptuousTest(unittest.TestCase):
             'set': settings,
             'targets': {
                 'exclude': features,
-                'include': features,
+                #'include': features,
+                Optional('include'): features,
                 'features': {
                     str: settings,
                     },

@@ -163,6 +163,10 @@ class Schema(object):
         Finally, a mapping does not allow any extra keys (keys not defined in the schema). To change this, provide
         `extra_keys=Allow` to the `Schema` constructor.
 
+        Please note that `default_keys` and `extra_keys` settings do not propagate to sub-schemas and are only applied
+        to the top-level mapping. If required, wrap sub-schemas with another `Schema()` and feed the settings, or
+        use [Markers](#markers) explicitly.
+
     These are just the basic rules, and for sure `Schema` can do much more than that!
     Additional logic is implemented through [Markers](#markers) and [Validators](#validation-tools),
     which are described in the following chapters.
@@ -248,8 +252,8 @@ class Schema(object):
         """
         self.compiled = self.compiled_schema_cls(
             schema, [],
-            default_keys or markers.Required,
-            extra_keys or markers.Reject)
+            default_keys,
+            extra_keys)
         self.name = self.compiled.name
 
     def __repr__(self):
