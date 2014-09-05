@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 setup(
     # http://pythonhosted.org/setuptools/setuptools.html
     name='good',
-    version='0.0.3-3',
+    version='0.0.3-4',
     author='Mark Vartanyan',
     author_email='kolypto@gmail.com',
 

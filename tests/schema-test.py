@@ -825,6 +825,10 @@ class PredicatesTest(GoodTestBase):
         self.assertValid(schema, {u'email': None})
         self.assertValid(schema, {}, {u'email': None})
 
+        # Flattening
+        schema = Schema(Maybe(Maybe(email)))
+        self.assertEqual(schema.name, u'E-Mail?')
+
     def test_Any(self):
         """ Test Any() """
 
@@ -836,6 +840,14 @@ class PredicatesTest(GoodTestBase):
 
         self.assertInvalid(schema, None,
                            Invalid(s.es_value, u'Any(Integer number|str)', s.t_none, [], any))
+
+        # Flattening
+        schema = Schema(Any(
+            1, 2,
+            Any(3, 4, Any(5, 6)),
+            7, 8
+        ))
+        self.assertEqual(schema.name, u'Any(1|2|3|4|5|6|7|8)')
 
     def test_All(self):
         """ Test All() """
@@ -850,6 +862,15 @@ class PredicatesTest(GoodTestBase):
         self.assertInvalid(schema, 190,
                            Invalid(u'Must be in range 0..100', u'Range(0..100)', u'190', [], percent))
 
+        # Flattening
+        schema = Schema(All(
+            1, 2,
+            All(3, 4, All(5, 6)),
+            7, 8,
+            Any(9, 10)
+        ))
+        self.assertEqual(schema.name, u'All(1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & Any(9|10))')
+
     def test_Neither(self):
         """ Test Neither() """
 
@@ -861,6 +882,10 @@ class PredicatesTest(GoodTestBase):
         self.assertValid(schema, 10)
         self.assertInvalid(schema, 0,
                            Invalid(u'Value not allowed', u'Not(0)', u'0', [], 0))
+
+        # Flattening
+        schema = Schema(Neither(1, Neither(2, 3, Neither(4, 5)), 6))
+        self.assertEqual(schema.name, u'None(1,2,3,4,5,6)')
 
     def test_Inclusive(self):
         """ Test Inclusive() """

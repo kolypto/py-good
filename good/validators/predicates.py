@@ -34,11 +34,14 @@ class Maybe(ValidatorBase):
     :type schema: object
     :param none: Empty value literal
     :type none: object
-    :type default: bool
-
     """
 
     def __init__(self, schema, none=None):
+        # Flatten (for the sake of friendlier error messages)
+        if isinstance(schema, Maybe) and schema.none == none:
+            schema = schema.schema
+
+        # Init
         self.schema = Schema(schema)
         self.none = none
         self.name = _(u'{schema}?').format(schema=self.schema.name)
@@ -82,6 +85,10 @@ class Any(ValidatorBase):
     """
 
     def __init__(self, *schemas):
+        # Flatten (for the sake of friendlier error messages)
+        schemas = sum(tuple(s.compiled if isinstance(s, Any) else (s,)
+                            for s in schemas), ())
+
         # Compile
         self.compiled = tuple(Schema(schema) for schema in schemas)
 
@@ -125,6 +132,10 @@ class All(ValidatorBase):
     """
 
     def __init__(self, *schemas):
+        # Flatten (for the sake of friendlier error messages)
+        schemas = sum(tuple(s.compiled if isinstance(s, All) else (s,)
+                            for s in schemas), ())
+
         # Compile
         self.compiled = tuple(Schema(schema) for schema in schemas)
 
@@ -164,11 +175,19 @@ class Neither(ValidatorBase):
     """
 
     def __init__(self, *schemas):
+        # Flatten (for the sake of friendlier error messages)
+        schemas = sum(tuple(s.compiled if isinstance(s, Neither) else (s,)
+                            for s in schemas), ())
+
         # Compile
         self.compiled = tuple(Schema(schema) for schema in schemas)
 
         # Name
-        self.name = _(u'Neither({})').format(_(u','.join(x.name for x in self.compiled)))
+        self.name = (
+            _(u'Not({})')
+            if len(self.compiled) == 1 else
+            _(u'None({})')
+        ).format(_(u','.join(x.name for x in self.compiled)))
 
     def __call__(self, v):
         # Try schemas in order

@@ -120,7 +120,7 @@ class Marker(object):
 
     def __repr__(self):
         return '{cls}({0})'.format(
-            self.name,
+            self.name or self.key,
             cls=type(self).__name__)
 
     #region Marker is a Proxy
