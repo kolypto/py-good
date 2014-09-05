@@ -1052,6 +1052,46 @@ Predicates
 
 
 
+### `Maybe`
+```python
+Maybe(schema, none=None)
+```
+
+Validate the the value either matches the given schema or is None.
+
+This supports *nullable* values and gives them a good representation.
+
+```python
+from good import Schema, Maybe, Email
+
+schema = Schema(Maybe(Email))
+
+schema(None)  #-> None
+schema('user@example.com')  #-> 'user@example.com'
+scheam('blahblah')
+#-> Invalid: Wrong E-Mail: expected E-Mail?, got blahblah
+```
+
+Note that it also have the [`Default`-like behavior](#default)
+that initializes the missing [`Required()`](#required) keys:
+
+```python
+schema = Schema({
+    'email': Maybe(Email)
+})
+
+schema({})  #-> {'email': None}
+```
+
+Arguments:
+
+* `schema`: Schema for a provided value
+* `none`: Empty value literal
+
+
+
+
+
 ### `Any`
 ```python
 Any(*schemas)

@@ -1,6 +1,62 @@
 from .. import Schema, Invalid, MultipleInvalid, Required, Optional
 from ._base import ValidatorBase
-from ..schema.util import get_literal_name
+from ..schema.util import get_literal_name, const
+
+
+class Maybe(ValidatorBase):
+    """ Validate the the value either matches the given schema or is None.
+
+    This supports *nullable* values and gives them a good representation.
+
+    ```python
+    from good import Schema, Maybe, Email
+
+    schema = Schema(Maybe(Email))
+
+    schema(None)  #-> None
+    schema('user@example.com')  #-> 'user@example.com'
+    scheam('blahblah')
+    #-> Invalid: Wrong E-Mail: expected E-Mail?, got blahblah
+    ```
+
+    Note that it also have the [`Default`-like behavior](#default)
+    that initializes the missing [`Required()`](#required) keys:
+
+    ```python
+    schema = Schema({
+        'email': Maybe(Email)
+    })
+
+    schema({})  #-> {'email': None}
+    ```
+
+    :param schema: Schema for a provided value
+    :type schema: object
+    :param none: Empty value literal
+    :type none: object
+    :type default: bool
+
+    """
+
+    def __init__(self, schema, none=None):
+        self.schema = Schema(schema)
+        self.none = none
+        self.name = _(u'{schema}?').format(schema=self.schema.name)
+
+    def __call__(self, v):
+        # Empty & Default behavior
+        if v == self.none or v is const.UNDEFINED:
+            return self.none
+
+        # Validate
+        try:
+            return self.schema(v)
+        except Invalid as ee:
+            # Add the "optional" mark "...?"
+            for e in ee:
+                e.expected += _(u'?')
+            # Reraise
+            raise
 
 
 class Any(ValidatorBase):
@@ -279,4 +335,4 @@ class Exclusive(ValidatorBase):
 
 
 
-__all__ = ('Any', 'All', 'Neither', 'Inclusive', 'Exclusive')
+__all__ = ('Maybe', 'Any', 'All', 'Neither', 'Inclusive', 'Exclusive')

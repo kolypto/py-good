@@ -801,6 +801,30 @@ class HelpersTest(GoodTestBase):
 class PredicatesTest(GoodTestBase):
     """ Test: Validators.Predicates """
 
+    def test_Maybe(self):
+        """ Test Maybe() """
+
+        # Standalone
+        email = Email()
+        email_or_none = Maybe(email)
+        schema = Schema(email_or_none)
+
+        self.assertValid(schema, u'user@example.com')
+        self.assertValid(schema, None)
+
+        self.assertInvalid(schema, u'trololo',
+                           Invalid(u'Wrong E-Mail', u'E-Mail?', u'trololo', [], email))
+
+        # Mapping
+        schema = Schema({
+            # Required(), and has default behavior
+            u'email': email_or_none
+        })
+
+        self.assertValid(schema, {u'email': u'user@example.com'})
+        self.assertValid(schema, {u'email': None})
+        self.assertValid(schema, {}, {u'email': None})
+
     def test_Any(self):
         """ Test Any() """
 
