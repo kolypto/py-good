@@ -65,6 +65,7 @@ Table of Contents
         * <a href="#inclusive">Inclusive</a>
         * <a href="#exclusive">Exclusive</a>
     * <a href="#types">Types</a>
+        * <a href="#type">Type</a>
         * <a href="#coerce">Coerce</a>
     * <a href="#values">Values</a>
         * <a href="#in">In</a>
@@ -105,7 +106,7 @@ compatibility layer for switching from [voluptuous 0.8.5](https://github.com/ale
 with 100% compatibility.
 
 This is a drop-in replacement that passes all voluptuous unit-tests and hence should work perfectly.
-Here's hoow to use it
+Here's how to use it
 
 ```python
 #from voluptuous import *  # no more
@@ -131,7 +132,7 @@ Schema
 Validation schema.
 
 A schema is a Python structure where nodes are pattern-matched against the corresponding values.
-It leverages the full flexibility of Python, allowing you to match values, types, data sctructures and much more.
+It leverages the full flexibility of Python, allowing you to match values, types, data structures and much more.
 
 When a schema is created, it's compiled into a callable function which does the validation, hence it does not need
 to analyze the schema every time.
@@ -155,13 +156,19 @@ The following rules exist:
     Schema(1)(2)  #-> Invalid: Invalid value: expected 1, got 2
     ```
 
-2. **Type**: type schema produces an `instanceof()` check on the input value:
+2. **Type**: type schema produces a strict `type(v) == schema` check on the input value:
 
     ```python
     Schema(int)(1)    #-> 1
+    Schema(int)(True)
+    #-> Invalid: Wrong type: expected Integer number, got Boolean
     Schema(int)('1')
     #-> Invalid: Wrong type: expected Integer number, got Binary String
     ```
+
+    For Python2, there is an exception for `basestring`: it won't make strict type checks, but rather `isinstance()`.
+
+    For a relaxed `isinstance()` check, see [`Type`](#type) validator.
 
 3. **Callable**: is applied to the value and the result is used as the final value.
 
@@ -1194,7 +1201,7 @@ This supports "sub-structures" with choice: if the user chooses a field from one
 then he cannot use others.
 It works on the entire mapping and hence best to use with the [`Entire`](#entire) marker.
 
-By default, `Exlusive` requires the user to choose one of the options,
+By default, `Exclusive` requires the user to choose one of the options,
 but this can be overridden with [`Optional`](#optional) marker class given as an argument:
 
 ```python
@@ -1254,6 +1261,32 @@ Types
 
 
 
+### `Type`
+```python
+Type(type)
+```
+
+Check if the value has the specific type with `isinstance()` check.
+
+In contrast to [Schema types](#schema) which performs a strict check, this check is relaxed and accepts subtypes
+as well.
+
+```python
+from good import Schema, Type
+
+schema = Schema(Type(int))
+schema(1)  #-> 1
+schema(True)  #-> True
+```
+
+Arguments:
+
+* `type`: The type to check instances against.
+
+
+
+
+
 ### `Coerce`
 ```python
 Coerce(constructor)
@@ -1300,7 +1333,7 @@ Validate that a value is in a collection.
 
 This is a plain simple `value in container` check, where `container` is a collection of literals.
 
-In constast to [`Any`](#any), it does not compile its arguments into schemas,
+In contrast to [`Any`](#any), it does not compile its arguments into schemas,
 and hence achieves better performance.
 
 ```python
@@ -1355,7 +1388,7 @@ schema = Schema({
 })
 
 schema([1])  #-> ok
-schemma([1,2,3,4])
+schema([1,2,3,4])
 #-> Invalid: Too many values (3 is the most): expected Length(..3), got 4
 ```
 
@@ -1555,7 +1588,7 @@ The following values are supported:
 * `None`: `False`
 * `bool`: direct
 * `int`: `0` = `False`, everything else is `True`
-* `str`: Textual boolan values, compatible with [YAML 1.1 boolean literals](http://yaml.org/type/bool.html), namely:
+* `str`: Textual boolean values, compatible with [YAML 1.1 boolean literals](http://yaml.org/type/bool.html), namely:
 
         y|Y|yes|Yes|YES|n|N|no|No|NO|
         true|True|TRUE|false|False|FALSE|
@@ -1878,7 +1911,7 @@ Verify that the directory exists.
 PathExists()
 ```
 
-Verify that the path eixsts.
+Verify that the path exists.
 
 
 

@@ -77,7 +77,7 @@ def get_type_name(t):
     # Lookup in the mapping
     try:
         return __type_names[t]
-    except:
+    except KeyError:
         # Specific types
         if issubclass(t, six.integer_types):
             return _(u'Integer number')
@@ -145,7 +145,7 @@ class const:
         MAPPING = 'mapping'
         MARKER = 'marker'
 
-    #: Prioritites for compiled types
+    #: Priorities for compiled types
     #: This is used for mappings to determine the sequence with which the keys are processed
     #: See _schema_priority()
 
@@ -165,8 +165,8 @@ def primitive_type(schema):
 
     Note: it does treats markers & schemas as callables!
 
-    :param s: Value of a primitive type
-    :type s: *
+    :param schema: Value of a primitive type
+    :type schema: *
     :return: const.COMPILED_TYPE.*
     :rtype: str|None
     """

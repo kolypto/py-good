@@ -10,7 +10,7 @@ class In(ValidatorBase):
 
     This is a plain simple `value in container` check, where `container` is a collection of literals.
 
-    In constast to [`Any`](#any), it does not compile its arguments into schemas,
+    In contrast to [`Any`](#any), it does not compile its arguments into schemas,
     and hence achieves better performance.
 
     ```python
@@ -45,7 +45,7 @@ class In(ValidatorBase):
     def __call__(self, v):
         # Test
         if v not in self.container:
-            raise Invalid(_(u'Value not allowed'), self.name, get_literal_name(v))
+            raise Invalid(_(u'Value not allowed'))
 
         # Okay
         return v
@@ -77,7 +77,7 @@ class Length(ValidatorBase):
     })
 
     schema([1])  #-> ok
-    schemma([1,2,3,4])
+    schema([1,2,3,4])
     #-> Invalid: Too many values (3 is the most): expected Length(..3), got 4
     ```
 
@@ -174,7 +174,7 @@ class Default(ValidatorBase):
     def __call__(self, v):
         if v is None or v is const.UNDEFINED or v == self.default:
             return self.default
-        raise Invalid(_(u'Invalid value'), self.name, get_literal_name(v))
+        raise Invalid(_(u'Invalid value'))
 
 
 class Fallback(Default):

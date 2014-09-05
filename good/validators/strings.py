@@ -77,7 +77,7 @@ class Match(ValidatorBase):
     :param pattern: RegExp pattern to match with: a string, or a compiled pattern
     :type pattern: str|_SRE_Pattern
     :param message: Error message override
-    :type message: str|None
+    :type message: unicode
     :param expected: Textual representation of what's expected from the user
     :type expected: unicode
     """
@@ -97,7 +97,7 @@ class Match(ValidatorBase):
 
         # Matched?
         if not match:
-            raise Invalid(self.message, self.name)
+            raise Invalid(self.message)
         else:
             return v
 
@@ -130,7 +130,7 @@ class Replace(Match):
 
     :type repl: unicode
     :param message: Error message override
-    :type message: str|None
+    :type message: unicode|None
     :param expected: Textual representation of what's expected from the user
     :type expected: unicode
     """
@@ -149,7 +149,7 @@ class Replace(Match):
 
         # Matched?
         if not n_subs:
-            raise Invalid(self.message, self.name)
+            raise Invalid(self.message)
         else:
             return v
 
@@ -200,7 +200,7 @@ class Url(ValidatorBase):
 
         # Matched?
         if not match:
-            raise Invalid(_(u'Wrong URL format'), self.name)
+            raise Invalid(_(u'Wrong URL format'))
 
         try:
             # Prepare
@@ -212,7 +212,7 @@ class Url(ValidatorBase):
             if parts['scheme'].lower() not in self.protocols:
                 raise Invalid(u'Protocol not allowed', _(u',').join(self.protocols), six.text_type(parts['scheme']))
             if '.' not in parts['host']:
-                raise Invalid(u'Incorrect domain name', self.name)
+                raise Invalid(u'Incorrect domain name')
 
             # Combine back again
             return six.moves.urllib.parse.urlunsplit((

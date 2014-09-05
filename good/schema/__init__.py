@@ -8,7 +8,7 @@ class Schema(object):
     """ Validation schema.
 
     A schema is a Python structure where nodes are pattern-matched against the corresponding values.
-    It leverages the full flexibility of Python, allowing you to match values, types, data sctructures and much more.
+    It leverages the full flexibility of Python, allowing you to match values, types, data structures and much more.
 
     When a schema is created, it's compiled into a callable function which does the validation, hence it does not need
     to analyze the schema every time.
@@ -32,13 +32,19 @@ class Schema(object):
         Schema(1)(2)  #-> Invalid: Invalid value: expected 1, got 2
         ```
 
-    2. **Type**: type schema produces an `instanceof()` check on the input value:
+    2. **Type**: type schema produces a strict `type(v) == schema` check on the input value:
 
         ```python
         Schema(int)(1)    #-> 1
+        Schema(int)(True)
+        #-> Invalid: Wrong type: expected Integer number, got Boolean
         Schema(int)('1')
         #-> Invalid: Wrong type: expected Integer number, got Binary String
         ```
+
+        For Python2, there is an exception for `basestring`: it won't make strict type checks, but rather `isinstance()`.
+
+        For a relaxed `isinstance()` check, see [`Type`](#type) validator.
 
     3. **Callable**: is applied to the value and the result is used as the final value.
 

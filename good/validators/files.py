@@ -4,7 +4,7 @@ from .. import Invalid
 
 
 class PathExists(ValidatorBase):
-    """ Verify that the path eixsts. """
+    """ Verify that the path exists. """
 
     name = u'Existing path'
 
@@ -13,7 +13,7 @@ class PathExists(ValidatorBase):
 
     def __call__(self, v):
         if not os.path.exists(v):
-            raise Invalid(_(u'Path does not exist'), self.name, u'Missing path')
+            raise Invalid(_(u'Path does not exist'), provided=u'Missing path')
         return v
 
 
@@ -36,7 +36,7 @@ class IsFile(PathExists):
     def __call__(self, v):
         super(IsFile, self).__call__(v)
         if not os.path.isfile(v):
-            raise Invalid(_(u'Is not a file'), self.name, u'Not a file')
+            raise Invalid(_(u'Is not a file'), provided=u'Not a file')
         return v
 
 
@@ -48,7 +48,7 @@ class IsDir(PathExists):
     def __call__(self, v):
         super(IsDir, self).__call__(v)
         if not os.path.isdir(v):
-            raise Invalid(_(u'Is not a directory'), self.name, u'Not a directory')
+            raise Invalid(_(u'Is not a directory'), provided=u'Not a directory')
         return v
 
 

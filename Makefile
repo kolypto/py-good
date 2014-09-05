@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 all: build
 
-.PHONY: test test3 check clean build publish install
+.PHONY: test test3 profile check clean build publish install
 
 PATHS=good
 TESTS=tests/
@@ -14,6 +14,8 @@ test:
 	@nosetests  $(NOSEFLAGS) $(TESTS)
 test3:
 	@nosetests3 $(NOSEFLAGS) $(TESTS)
+profile:
+	@python -m cProfile -o profile.out `which nosetests`
 
 # Package
 check:

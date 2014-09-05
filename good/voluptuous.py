@@ -6,7 +6,7 @@ compatibility layer for switching from [voluptuous 0.8.5](https://github.com/ale
 with 100% compatibility.
 
 This is a drop-in replacement that passes all voluptuous unit-tests and hence should work perfectly.
-Here's hoow to use it
+Here's how to use it
 
 ```python
 #from voluptuous import *  # no more

@@ -238,11 +238,29 @@ class SchemaCoreTest(GoodTestBase):
         self.assertValid(schema, 1.0)
         self.assertInvalid(schema, 1,    Invalid(s.es_type, s.t_float,   s.t_int,     [], float))
 
-        # String
+        # Binary
         schema = Schema(six.binary_type)
         self.assertValid(schema, b'a')
         self.assertInvalid(schema, u'a', Invalid(s.es_type, s.t_str,     s.t_unicode, [], six.binary_type))
         self.assertInvalid(schema, 1,    Invalid(s.es_type, s.t_str,     s.t_int,     [], six.binary_type))
+
+        # Basestring
+        if six.PY2:
+            # Relaxed basestring for Py2
+            schema = Schema(basestring)
+            self.assertValid(schema, u'a')
+            self.assertValid(schema, b'a')
+        else:
+            # Strict typecheck for Py3
+            schema = Schema(str)
+            self.assertValid(schema, u'a')
+            self.assertInvalid(schema, b'a',
+                               Invalid(s.es_type, s.t_unicode, s.t_str, [], str))
+
+            schema = Schema(bytes)
+            self.assertValid(schema, b'a')
+            self.assertInvalid(schema, u'a',
+                               Invalid(s.es_type, s.t_str, s.t_unicode, [], bytes))
 
         # Unicode
         schema = Schema(six.text_type)
@@ -870,6 +888,18 @@ class PredicatesTest(GoodTestBase):
 
 class TypesTest(GoodTestBase):
     """ Test: Validators.Types """
+
+    def test_Type(self):
+        """ Test Type() """
+
+        type = Type(int)
+        schema = Schema(type)
+
+        self.assertValid(schema, 1)
+        self.assertValid(schema, True)
+
+        self.assertInvalid(schema, 1.0,
+                           Invalid(s.es_type, s.t_int, s.t_float, [], type))
 
     def test_Coerce(self):
         """ Test Coerce() """

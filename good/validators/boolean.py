@@ -2,7 +2,7 @@ import six
 
 from ._base import ValidatorBase
 from .. import Invalid
-from ..schema.util import get_callable_name, get_primitive_name, get_literal_name, get_type_name
+from ..schema.util import get_callable_name, get_primitive_name, get_type_name
 
 
 class Check(ValidatorBase):
@@ -72,7 +72,7 @@ class Truthy(ValidatorBase):
 
     def __call__(self, v):
         if not self.truthy(v):
-            raise Invalid(u'Empty value', self.name, get_primitive_name(v))
+            raise Invalid(u'Empty value', provided=get_primitive_name(v))
         return v
 
 
@@ -91,7 +91,7 @@ class Falsy(ValidatorBase):
 
     def __call__(self, v):
         if not self.falsy(v):
-            raise Invalid(u'Non-empty value', self.name, get_primitive_name(v))
+            raise Invalid(u'Non-empty value', provided=get_primitive_name(v))
         return v
 
 
@@ -103,7 +103,7 @@ class Boolean(ValidatorBase):
     * `None`: `False`
     * `bool`: direct
     * `int`: `0` = `False`, everything else is `True`
-    * `str`: Textual boolan values, compatible with [YAML 1.1 boolean literals](http://yaml.org/type/bool.html), namely:
+    * `str`: Textual boolean values, compatible with [YAML 1.1 boolean literals](http://yaml.org/type/bool.html), namely:
 
             y|Y|yes|Yes|YES|n|N|no|No|NO|
             true|True|TRUE|false|False|FALSE|
@@ -148,10 +148,10 @@ class Boolean(ValidatorBase):
             elif v in self._false_values_ci:
                 return False
             else:
-                raise Invalid(_(u'Wrong boolean value'), _(u'Boolean'))
+                raise Invalid(_(u'Wrong boolean value'))
         # Other types
         else:
-            raise Invalid(_(u'Wrong boolean value type'), _(u'Boolean'), get_type_name(type(v)))
+            raise Invalid(_(u'Wrong boolean value type'), provided=get_type_name(type(v)))
 
 
 

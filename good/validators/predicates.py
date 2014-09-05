@@ -41,7 +41,7 @@ class Any(ValidatorBase):
                 pass
 
         # Nothing worked
-        raise Invalid(_(u'Invalid value'), self.name)
+        raise Invalid(_(u'Invalid value'))
 
 
 class All(ValidatorBase):
@@ -191,7 +191,7 @@ class Exclusive(ValidatorBase):
     then he cannot use others.
     It works on the entire mapping and hence best to use with the [`Entire`](#entire) marker.
 
-    By default, `Exlusive` requires the user to choose one of the options,
+    By default, `Exclusive` requires the user to choose one of the options,
     but this can be overridden with [`Optional`](#optional) marker class given as an argument:
 
     ```python
@@ -265,7 +265,7 @@ class Exclusive(ValidatorBase):
         if not provided_keys:
             if self.require_mode:
                 # Required mode: fail
-                raise Invalid(_(u'Choose one of the options'), self.name, _(u'-none-'))
+                raise Invalid(_(u'Choose one of the options'), provided=_(u'-none-'))
             else:
                 # Optional mode: ok
                 return d
@@ -275,7 +275,7 @@ class Exclusive(ValidatorBase):
             return d
 
         # Multiple used
-        raise Invalid(_(u'Choose one of the options, not multiple'), self.name, _(u',').join(sorted(provided_keys)))
+        raise Invalid(_(u'Choose one of the options, not multiple'), provided=_(u',').join(sorted(provided_keys)))
 
 
 

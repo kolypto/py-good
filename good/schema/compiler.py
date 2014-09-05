@@ -1,4 +1,3 @@
-import collections
 import six
 
 from . import markers, signals
@@ -309,10 +308,18 @@ class CompiledSchema(object):
                 return type(v) == schema, v
             return match_type
 
+        # Type check function
+        if six.PY2 and schema is basestring:
+            # Relaxed rule for Python2 basestring
+            typecheck = lambda v: isinstance(v, schema)
+        else:
+            # Strict type check for everything else
+            typecheck = lambda v: type(v) == schema
+
         # Validator
         def validate_type(v):
             # Type check
-            if type(v) != schema:  # strict!
+            if not typecheck(v):
                 # expected=<type>, provided=<type>
                 raise err_type(get_type_name(type(v)))
             # Fine
@@ -406,7 +413,7 @@ class CompiledSchema(object):
                     except signals.RemoveValue:
                         # `value_schema` commanded to drop this value
                         break
-                    except Invalid as e:
+                    except Invalid:
                         # Ignore errors and hope other members will succeed better
                         pass
                 else:

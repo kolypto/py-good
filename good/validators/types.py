@@ -1,6 +1,35 @@
 from ._base import ValidatorBase
 from .. import Invalid
-from ..schema.util import get_literal_name, get_primitive_name
+from ..schema.util import get_primitive_name, get_type_name
+
+
+class Type(ValidatorBase):
+    """ Check if the value has the specific type with `isinstance()` check.
+
+    In contrast to [Schema types](#schema) which performs a strict check, this check is relaxed and accepts subtypes
+    as well.
+
+    ```python
+    from good import Schema, Type
+
+    schema = Schema(Type(int))
+    schema(1)  #-> 1
+    schema(True)  #-> True
+    ```
+
+    :param type: The type to check instances against.
+    :type type: type
+    """
+    def __init__(self, type):
+        self.type = type
+        self.name = get_type_name(type)
+
+    def __call__(self, v):
+        # Type check
+        if not isinstance(v, self.type):
+            raise Invalid(_(u'Wrong type'), provided=get_type_name(type(v)))
+        # Fine
+        return v
 
 
 class Coerce(ValidatorBase):
@@ -34,6 +63,6 @@ class Coerce(ValidatorBase):
         try:
             return self.constructor(v)
         except (TypeError, ValueError):
-            raise Invalid(_(u'Invalid value'), self.name, get_literal_name(v))
+            raise Invalid(_(u'Invalid value'))
 
-__all__ = ('Coerce',)
+__all__ = ('Type', 'Coerce',)

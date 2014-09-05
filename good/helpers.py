@@ -125,7 +125,8 @@ class Object(object):
         # Compile schema
         self.compiled = Schema(schema)
 
-    def _format_cls_name(self, c):
+    @staticmethod
+    def _format_cls_name(c):
         return _(u'Object({cls})').format(cls=c.__name__ if c else u'*')
 
     def _format_value_type(self, v):
@@ -134,7 +135,7 @@ class Object(object):
     def __call__(self, v):
         # Check type
         if not isinstance(v, self.cls):
-            raise Invalid(_(u'Wrong value type'), self.name, self._format_value_type(v))
+            raise Invalid(_(u'Wrong value type'), provided=self._format_value_type(v))
 
         # Validate using ObjectProxy and unwrap
         return self.compiled(ObjectProxy(v)).obj
