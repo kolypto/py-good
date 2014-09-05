@@ -59,6 +59,7 @@ Table of Contents
         * <a href="#name">name</a>
         * <a href="#truth">truth</a>
     * <a href="#predicates">Predicates</a>
+        * <a href="#maybe">Maybe</a>
         * <a href="#any">Any</a>
         * <a href="#all">All</a>
         * <a href="#neither">Neither</a>

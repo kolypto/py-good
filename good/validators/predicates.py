@@ -38,7 +38,7 @@ class Maybe(ValidatorBase):
 
     def __init__(self, schema, none=None):
         # Flatten (for the sake of friendlier error messages)
-        if isinstance(schema, Maybe) and schema.none == none:
+        if type(schema) == Maybe and schema.none == none:
             schema = schema.schema
 
         # Init
@@ -86,7 +86,7 @@ class Any(ValidatorBase):
 
     def __init__(self, *schemas):
         # Flatten (for the sake of friendlier error messages)
-        schemas = sum(tuple(s.compiled if isinstance(s, Any) else (s,)
+        schemas = sum(tuple(s.compiled if type(s) == Any else (s,)
                             for s in schemas), ())
 
         # Compile
@@ -133,7 +133,7 @@ class All(ValidatorBase):
 
     def __init__(self, *schemas):
         # Flatten (for the sake of friendlier error messages)
-        schemas = sum(tuple(s.compiled if isinstance(s, All) else (s,)
+        schemas = sum(tuple(s.compiled if type(s) == All else (s,)
                             for s in schemas), ())
 
         # Compile
@@ -176,7 +176,7 @@ class Neither(ValidatorBase):
 
     def __init__(self, *schemas):
         # Flatten (for the sake of friendlier error messages)
-        schemas = sum(tuple(s.compiled if isinstance(s, Neither) else (s,)
+        schemas = sum(tuple(s.compiled if type(s) == Neither else (s,)
                             for s in schemas), ())
 
         # Compile

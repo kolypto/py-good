@@ -68,6 +68,7 @@ Table of Contents
 
    -  Predicates
 
+      -  Maybe
       -  Any
       -  All
       -  Neither
