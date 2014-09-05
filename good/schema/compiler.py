@@ -302,12 +302,6 @@ class CompiledSchema(object):
         # Error partials
         err_type = self.Invalid(_(u'Wrong type'), self.name)
 
-        # Matcher
-        if self.matcher:
-            def match_type(v):
-                return type(v) == schema, v
-            return match_type
-
         # Type check function
         if six.PY2 and schema is basestring:
             # Relaxed rule for Python2 basestring
@@ -315,6 +309,12 @@ class CompiledSchema(object):
         else:
             # Strict type check for everything else
             typecheck = lambda v: type(v) == schema
+
+        # Matcher
+        if self.matcher:
+            def match_type(v):
+                return typecheck(v), v
+            return match_type
 
         # Validator
         def validate_type(v):
