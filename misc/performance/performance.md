@@ -36,3 +36,14 @@ In this test, we compare how much time a library needs to validate 5000 dictiona
 with a schema.
 
 <img src="performance-time.png" />
+
+Results for Py3k
+----------------
+
+### Validations Per Second
+
+<img src="performance-vps-py3.png" />
+
+### Total Execution Time
+
+<img src="performance-time-py3.png" />
