@@ -813,7 +813,7 @@ class PredicatesTest(GoodTestBase):
         self.assertValid(schema, None)
 
         self.assertInvalid(schema, u'trololo',
-                           Invalid(u'Wrong E-Mail', u'E-Mail?', u'trololo', [], email))
+                           Invalid(u'Invalid E-Mail', u'E-Mail?', u'trololo', [], email))
 
         # Mapping
         schema = Schema({
@@ -1276,7 +1276,7 @@ class StringsTest(GoodTestBase):
         self.assertInvalid(schema, 1234,
                            Invalid(s.es_value_type, u'String', s.t_int, [], email))
         self.assertInvalid(schema, 'user@',
-                           Invalid(u'Wrong E-Mail', u'E-Mail', u'user@', [], email))
+                           Invalid(u'Invalid E-Mail', u'E-Mail', u'user@', [], email))
 
 
 class FilesTest(GoodTestBase):

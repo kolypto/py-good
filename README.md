@@ -1900,7 +1900,7 @@ schema = Schema(Email())
 schema('user@example.com')  #-> 'user@example.com'
 schema('user@localhost')  #-> 'user@localhost'
 schema('user')
-#-> Invalid: Wrong e-mail: expected E-Mail, got user
+#-> Invalid: Invalid e-mail: expected E-Mail, got user
 ```
 
 

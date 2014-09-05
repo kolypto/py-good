@@ -245,14 +245,14 @@ class Email(Match):
     schema('user@example.com')  #-> 'user@example.com'
     schema('user@localhost')  #-> 'user@localhost'
     schema('user')
-    #-> Invalid: Wrong e-mail: expected E-Mail, got user
+    #-> Invalid: Invalid e-mail: expected E-Mail, got user
     ```
     """
 
     _rex = re.compile(r'.+@.+')
 
     def __init__(self):
-        super(Email, self).__init__(self._rex, u'Wrong E-Mail', u'E-Mail')
+        super(Email, self).__init__(self._rex, u'Invalid E-Mail', u'E-Mail')
 
 
 __all__ = ('Lower', 'Upper', 'Capitalize', 'Title', 'Match', 'Replace', 'Url', 'Email')
