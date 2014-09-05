@@ -17,16 +17,19 @@ class Type(ValidatorBase):
     schema(True)  #-> True
     ```
 
-    :param type: The type to check instances against.
-    :type type: type
+    :param types: The type to check instances against.
+
+        If multiple types are provided, then any of them is acceptable.
+
+    :type types: list[type]
     """
-    def __init__(self, type):
-        self.type = type
-        self.name = get_type_name(type)
+    def __init__(self, *types):
+        self.types = types
+        self.name = _(u'|').join(get_type_name(x) for x in self.types)
 
     def __call__(self, v):
         # Type check
-        if not isinstance(v, self.type):
+        if not isinstance(v, self.types):
             raise Invalid(_(u'Wrong type'), provided=get_type_name(type(v)))
         # Fine
         return v

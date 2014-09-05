@@ -892,6 +892,7 @@ class TypesTest(GoodTestBase):
     def test_Type(self):
         """ Test Type() """
 
+        # Single
         type = Type(int)
         schema = Schema(type)
 
@@ -900,6 +901,14 @@ class TypesTest(GoodTestBase):
 
         self.assertInvalid(schema, 1.0,
                            Invalid(s.es_type, s.t_int, s.t_float, [], type))
+
+        # Multiple
+        type = Type(six.binary_type, six.text_type)
+        schema = Schema(type)
+
+        self.assertValid(schema,  'a')
+        self.assertValid(schema, u'a')
+        self.assertValid(schema, b'a')
 
     def test_Coerce(self):
         """ Test Coerce() """

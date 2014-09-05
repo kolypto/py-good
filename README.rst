@@ -1329,7 +1329,7 @@ Types
 
 .. code:: python
 
-    Type(type)
+    Type(*types)
 
 Check if the value has the specific type with ``isinstance()`` check.
 
@@ -1346,7 +1346,9 @@ this check is relaxed and accepts subtypes as well.
 
 Arguments:
 
--  ``type``: The type to check instances against.
+-  ``*types``: The type to check instances against.
+
+   If multiple types are provided, then any of them is acceptable.
 
 ``Coerce``
 ~~~~~~~~~~
