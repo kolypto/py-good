@@ -108,16 +108,12 @@ class Object(object):
     To override, use [`Optional()`](#optional) and [`Extra`](#extra) markers.
 
     :param schema: Object schema, given as a mapping
-    :type schema: Mapping
+    :type schema: Mapping|Callable
     :param cls: Require instances of a specific class. If `None`, allows all classes.
     :type cls: None|type|tuple[type]
     """
 
     def __init__(self, schema, cls=None):
-        # Input validation
-        if not isinstance(schema, collections.Mapping):
-            raise SchemaError('Object() argument must be a mapping, {} given'.format(type(schema)))
-
         # Prepare
         self.name = self._format_cls_name(cls)
         self.cls = object if cls is None else cls

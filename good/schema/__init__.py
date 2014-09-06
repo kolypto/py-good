@@ -46,7 +46,31 @@ class Schema(object):
 
         For a relaxed `isinstance()` check, see [`Type`](#type) validator.
 
-    3. **Callable**: is applied to the value and the result is used as the final value.
+    3. **Enum**:
+        [Python 3.4 Enums](https://docs.python.org/3/library/enum.html),
+        or the backported [enum34](https://pypi.python.org/pypi/enum34).
+
+        Tests whether the input value is a valid `Enum` value:
+
+        ```python
+        from enum import Enum
+
+        class Colors(Enum):
+            RED = 0xFF0000
+            GREEN = 0x00FF00
+            BLUE = 0x0000FF
+
+        schema = Schema(Colors)
+
+        schema(0xFF0000)  #-> <Colors.RED: 0xFF0000>
+        schema(Colors.RED)  #-> <Colors.RED: 0xFF0000>
+        schema(123)
+        #-> Invalid: Invalid Colors value, expected Colors, got 123
+        ```
+
+        Output is always an instance of the provided `Enum` type value.
+
+    4. **Callable**: is applied to the value and the result is used as the final value.
 
        Callables should raise [`Invalid`](#invalid) errors in case of a failure, however some generic error types are
        converted automatically: see [Callables](#callables).
@@ -64,7 +88,7 @@ class Schema(object):
        #-> Invalid: invalid literal for int(): expected CoerceInt(), got a
        ```
 
-    4. **`Schema`**: a schema may contain sub-schemas:
+    5. **`Schema`**: a schema may contain sub-schemas:
 
         ```python
         sub_schema = Schema(int)

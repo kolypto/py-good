@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 setup(
     # http://pythonhosted.org/setuptools/setuptools.html
     name='good',
-    version='0.0.4-0',
+    version='0.0.5-0',
     author='Mark Vartanyan',
     author_email='kolypto@gmail.com',
 
@@ -24,7 +24,7 @@ setup(
         'six >= 1.7.3',
     ],
     extras_require={
-        '_dev': ['wheel', 'nose', 'exdoc', 'jinja2', 'j2cli'],
+        '_dev': ['wheel', 'nose', 'exdoc', 'jinja2', 'j2cli', 'enum34'],
     },
     include_package_data=True,
     test_suite='nose.collector',

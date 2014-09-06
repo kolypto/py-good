@@ -240,6 +240,7 @@ class CompiledSchema(object):
             const.COMPILED_TYPE.LITERAL: self._compile_literal,
             const.COMPILED_TYPE.TYPE: self._compile_type,
             const.COMPILED_TYPE.SCHEMA: self._compile_schema,
+            const.COMPILED_TYPE.ENUM: self._compile_enum,
             const.COMPILED_TYPE.CALLABLE: self._compile_callable,
             const.COMPILED_TYPE.ITERABLE: self._compile_iterable,
             const.COMPILED_TYPE.MAPPING: self._compile_mapping,
@@ -335,6 +336,25 @@ class CompiledSchema(object):
         self.compiled_type = schema.compiled_type
 
         return schema.compiled
+
+    def _compile_enum(self, schema):
+        assert not self.matcher, 'Enum cannot be a matcher'
+
+        # Prepare self
+        self.compiled_type = const.COMPILED_TYPE.ENUM
+        self.name = six.text_type(schema.__name__)
+
+        # Error partials
+        err_value = self.Invalid(_(u'Invalid {enum} value').format(enum=self.name), self.name)
+
+        # Validator
+        def validate_enum(v):
+            try:
+                return schema(v)
+            except ValueError:
+                raise err_value(get_literal_name(v))
+        return validate_enum
+
 
     def _compile_callable(self, schema):
         """ Compile callable: wrap exceptions with correct paths """
@@ -534,7 +554,7 @@ class CompiledSchema(object):
                     # save some iterations & function calls in favor of direct matching,
                     # which introduces a HUGE performance improvement
                     k = key_schema.schema.key  # get the literal from the marker
-                    if k in d:
+                    if k in d_keys:
                         # (See comments below)
                         matches.append(( k, k, d[k] ))
                         d_keys.remove(k)

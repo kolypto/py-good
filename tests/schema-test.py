@@ -5,6 +5,7 @@ import collections
 import json
 from random import shuffle
 from copy import deepcopy
+import enum
 
 from good import *
 from good.schema.markers import Marker
@@ -1097,6 +1098,56 @@ class ValuesTest(GoodTestBase):
                                    Invalid(s.es_value, u'Any('+s.t_int+u'|Default=0)', u'a', [u'age'], any))
             else:
                 self.assertValid(schema, {u'name': u'Alex', u'age': u'a'}, {u'name': u'Alex', u'age': 0})
+
+    def test_Map(self):
+        """ Test Map() """
+
+        # Create enums
+        colors_dict = {'RED': 0xFF0000, 'GREEN': 0x00FF00, 'BLUE': 0x0000FF}
+
+        colors_cls = type('colors_cls', (), colors_dict)
+
+        class colors_enum(enum.Enum):
+            RED = 0xFF0000
+            GREEN = 0x00FF00
+            BLUE = 0x0000FF
+
+        # First see how Schema(Enum) behaves
+        schema = Schema(colors_enum)
+        self.assertValid(schema, 0xFF0000, colors_enum.RED)
+        self.assertValid(schema, colors_enum.RED, colors_enum.RED)
+
+        self.assertInvalid(schema, 123,
+                           Invalid(u'Invalid colors_enum value', u'colors_enum', u'123', [], colors_enum))
+
+        # Tests
+        tests = (
+            (colors_dict, u'Constant'),
+            (colors_cls, u'colors_cls'),
+            (colors_enum, u'colors_enum'),
+        )
+
+        # Test
+        for colors, name in tests:
+            for mode in (Map.KEY, Map.VAL, Map.BOTH):
+                # Forward, Both
+                if mode in (Map.KEY, Map.BOTH):
+                    map = Map(colors, mode)
+                    schema = Schema(map)
+
+                    self.assertValid(schema, 'RED', colors.RED if colors is colors_enum else 0xFF0000)
+                    self.assertInvalid(schema, 'BLACK',
+                                       Invalid(u'Unsupported value', name, u'BLACK', [], map))
+
+                # Reverse, Both
+                if mode in (Map.VAL, Map.BOTH):
+                    # Reverse
+                    map = Map(colors, mode)
+                    schema = Schema(map)
+
+                    self.assertValid(schema, 0xFF0000, colors.RED if colors is colors_enum else 'RED')
+                    self.assertInvalid(schema, 123,
+                                       Invalid(u'Unsupported value', name, u'123', [], map))
 
 
 class BooleansTest(GoodTestBase):

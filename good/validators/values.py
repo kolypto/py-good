@@ -4,6 +4,12 @@ from ._base import ValidatorBase
 from .. import Invalid
 from ..schema.util import get_literal_name, get_type_name, get_primitive_name, const
 
+# Try to load Enum type (if supported)
+try:
+    from enum import EnumMeta as _EnumMeta
+except ImportError:
+    _EnumMeta = None
+
 
 class In(ValidatorBase):
     """ Validate that a value is in a collection.
@@ -217,4 +223,146 @@ class Fallback(Default):
         return self.default
 
 
-__all__ = ('In', 'Length', 'Default', 'Fallback')
+class Map(ValidatorBase):
+    """ Convert Enumerations that map names to values.
+
+    Supports three kinds of enumerations:
+
+    1. Mapping.
+
+        Provided a mapping from names to values,
+        converts the input to values by mapping key:
+
+        ```python
+        from good import Schema, Map
+        schema = Schema(Map({
+            'RED': 0xFF0000,
+            'GREEN': 0x00FF00,
+            'BLUE': 0x0000FF
+        }))
+
+        schema('RED')  #-> 0xFF0000
+        schema('BLACK')
+        #-> Invalid: Unsupported value: expected Constant, provided BLACK
+        ```
+
+    2. Class.
+
+        Provided a class with attributes (names) initialized with values,
+        converts the input to values matching by attribute name:
+
+        ```python
+        class Colors:
+            RED = 0xFF0000
+            GREEN = 0x00FF00
+            BLUE = 0x0000FF
+
+        schema = Schema(Map(Colors))
+
+        schema('RED')  #-> 0xFF0000
+        schema('BLACK')
+        #-> Invalid: Unsupported value: expected Colors, provided BLACK
+        ```
+
+        Note that all attributes of the class are used, except for protected (`_name`) and callables.
+
+    3. Enum.
+
+        Supports [Python 3.4 Enums](https://docs.python.org/3/library/enum.html)
+        and the backported [enum34](https://pypi.python.org/pypi/enum34).
+
+        Provided an enumeration, converts the input to values by name.
+        In addition, enumeration value can pass through safely:
+
+        ```python
+        from enum import Enum
+
+        class Colors(Enum):
+            RED = 0xFF0000
+            GREEN = 0x00FF00
+            BLUE = 0x0000FF
+
+        schema = Schema(Map(Colors))
+        schema('RED')  #-> <Colors.RED: 0xFF0000>
+        schema('BLACK')
+        #-> Invalid: Unsupported value: expected Colors, provided BLACK
+        ```
+
+        Note that in `mode=Map.VAL` it works precisely like `Schema(Enum)`.
+
+    Finally, it supports reverse matching:
+
+    * When `mode=Map.KEY`, does only forward matching (by key) -- the default
+    * When `mode=Map.VAL`, does only reverse matching (by value)
+    * When `mode=Map.BOTH`, does bidirectional matching (by key first, then by value)
+
+    :param enum: Enumeration: dict, object, of Enum
+    :type enum: dict|type|enum.EnumMeta
+    :param mode: Matching mode: one of Map.KEY, Map.VAL, Map.BOTH
+    """
+
+    KEY = 1
+    VAL = 2
+    BOTH = KEY|VAL
+
+    def __init__(self, enum, mode=KEY):
+        assert mode in (self.KEY, self.VAL, self.BOTH), 'Mode must be: KEY|VAL|BOTH'
+
+        self.enum = None
+        self.mode = mode
+        self.name = _(u'Constant')
+
+        self.mapping = None
+        self.mapping_rev = None
+
+        self.lookup = None
+        self.rlookup = None
+
+        # Enum (if supported)
+        if _EnumMeta is not None and isinstance(enum, _EnumMeta):
+            # Enum
+            self.enum = enum
+            self.name = enum.__name__
+
+            # Lookups
+            if self.mode & self.KEY:
+                self.lookup = lambda k: k if isinstance(k, enum) else self.enum[k]
+            if self.mode & self.VAL:
+                self.rlookup = lambda v: self.enum(v)
+        else:
+            # Object?
+            if not isinstance(enum, collections.Mapping):
+                # Convert scalar public attributes to mapping
+                self.name = enum.__name__
+                enum = {k: v
+                        for k, v in vars(enum).items()
+                        if not (k.startswith('_') or callable(v))}
+
+            # Mapping
+            self.mapping = enum
+
+            # Lookups
+            if self.mode & self.KEY:
+                self.lookup = lambda k: self.mapping[k]
+            if self.mode & self.VAL:
+                self.mapping_rev = {v: k for k, v in self.mapping.items()}
+                self.rlookup = lambda v: self.mapping_rev[v]
+
+    def __call__(self, v):
+        # Forward lookup (if enabled)
+        if self.lookup:
+            try:
+                return self.lookup(v)
+            except Exception as e:
+                pass
+        # Reverse lookup (if enabled)
+        if self.rlookup:
+            try:
+                return self.rlookup(v)
+            except Exception as e:
+                pass
+        # Nothing matched
+        raise Invalid(u'Unsupported value')
+
+
+__all__ = ('In', 'Length', 'Default', 'Fallback', 'Map')

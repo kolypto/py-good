@@ -171,7 +171,31 @@ The following rules exist:
 
     For a relaxed `isinstance()` check, see [`Type`](#type) validator.
 
-3. **Callable**: is applied to the value and the result is used as the final value.
+3. **Enum**:
+    [Python 3.4 Enums](https://docs.python.org/3/library/enum.html),
+    or the backported [enum34](https://pypi.python.org/pypi/enum34).
+
+    Tests whether the input value is a valid `Enum` value:
+
+    ```python
+    from enum import Enum
+
+    class Colors(Enum):
+        RED = 0xFF0000
+        GREEN = 0x00FF00
+        BLUE = 0x0000FF
+
+    schema = Schema(Colors)
+
+    schema(0xFF0000)  #-> <Colors.RED: 0xFF0000>
+    schema(Colors.RED)  #-> <Colors.RED: 0xFF0000>
+    schema(123)
+    #-> Invalid: Invalid Colors value, expected Colors, got 123
+    ```
+
+    Output is always an instance of the provided `Enum` type value.
+
+4. **Callable**: is applied to the value and the result is used as the final value.
 
    Callables should raise [`Invalid`](#invalid) errors in case of a failure, however some generic error types are
    converted automatically: see [Callables](#callables).
@@ -189,7 +213,7 @@ The following rules exist:
    #-> Invalid: invalid literal for int(): expected CoerceInt(), got a
    ```
 
-4. **`Schema`**: a schema may contain sub-schemas:
+5. **`Schema`**: a schema may contain sub-schemas:
 
     ```python
     sub_schema = Schema(int)
@@ -1545,6 +1569,92 @@ schema = Schema({
 Arguments:
 
 * `default`: The value that's always returned
+
+
+
+
+
+### `Map`
+```python
+Map(enum, mode=1)
+```
+
+Convert Enumerations that map names to values.
+
+Supports three kinds of enumerations:
+
+1. Mapping.
+
+    Provided a mapping from names to values,
+    converts the input to values by mapping key:
+
+    ```python
+    from good import Schema, Map
+    schema = Schema(Map({
+        'RED': 0xFF0000,
+        'GREEN': 0x00FF00,
+        'BLUE': 0x0000FF
+    }))
+
+    schema('RED')  #-> 0xFF0000
+    schema('BLACK')
+    #-> Invalid: Unsupported value: expected Constant, provided BLACK
+    ```
+
+2. Class.
+
+    Provided a class with attributes (names) initialized with values,
+    converts the input to values matching by attribute name:
+
+    ```python
+    class Colors:
+        RED = 0xFF0000
+        GREEN = 0x00FF00
+        BLUE = 0x0000FF
+
+    schema = Schema(Map(Colors))
+
+    schema('RED')  #-> 0xFF0000
+    schema('BLACK')
+    #-> Invalid: Unsupported value: expected Colors, provided BLACK
+    ```
+
+    Note that all attributes of the class are used, except for protected (`_name`) and callables.
+
+3. Enum.
+
+    Supports [Python 3.4 Enums](https://docs.python.org/3/library/enum.html)
+    and the backported [enum34](https://pypi.python.org/pypi/enum34).
+
+    Provided an enumeration, converts the input to values by name.
+    In addition, enumeration value can pass through safely:
+
+    ```python
+    from enum import Enum
+
+    class Colors(Enum):
+        RED = 0xFF0000
+        GREEN = 0x00FF00
+        BLUE = 0x0000FF
+
+    schema = Schema(Map(Colors))
+    schema('RED')  #-> <Colors.RED: 0xFF0000>
+    schema('BLACK')
+    #-> Invalid: Unsupported value: expected Colors, provided BLACK
+    ```
+
+    Note that in `mode=Map.VAL` it works precisely like `Schema(Enum)`.
+
+Finally, it supports reverse matching:
+
+* When `mode=Map.KEY`, does only forward matching (by key) -- the default
+* When `mode=Map.VAL`, does only reverse matching (by value)
+* When `mode=Map.BOTH`, does bidirectional matching (by key first, then by value)
+
+Arguments:
+
+* `enum`: Enumeration: dict, object, of Enum
+* `mode`: Matching mode: one of Map.KEY, Map.VAL, Map.BOTH
 
 
 

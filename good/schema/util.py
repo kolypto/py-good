@@ -3,6 +3,12 @@
 import six
 import collections
 
+try:
+    from enum import EnumMeta, Enum
+except ImportError:
+    EnumMeta = None
+    Enum = None
+
 
 class Undefined(object):
     """ Special singleton object to represent the case when no value was provided.
@@ -29,7 +35,7 @@ class Undefined(object):
         return '<Undefined>'
 
 
-__type_names = direct = {
+__type_names = {
     None:             _(u'None'),
     type(None):       _(u'None'),
     bool:       _(u'Boolean'),
@@ -43,6 +49,9 @@ __type_names = direct = {
     frozenset:  _(u'Frozen Set'),
     dict:       _(u'Dictionary'),
 }
+if EnumMeta:
+    __type_names[EnumMeta] = u'Enum'
+    __type_names[Enum] = u'Enum'
 
 
 def register_type_name(t, name):
@@ -112,6 +121,7 @@ def get_primitive_name(schema):
         return {
             const.COMPILED_TYPE.LITERAL: six.text_type,
             const.COMPILED_TYPE.TYPE: get_type_name,
+            const.COMPILED_TYPE.ENUM: get_type_name,
             const.COMPILED_TYPE.CALLABLE: get_callable_name,
             const.COMPILED_TYPE.ITERABLE: lambda x: _(u'{type}[{content}]').format(type=get_type_name(list), content=_(u'...') if x else _(u'-')),
             const.COMPILED_TYPE.MAPPING:  lambda x: _(u'{type}[{content}]').format(type=get_type_name(dict), content=_(u'...') if x else _(u'-')),
@@ -139,6 +149,7 @@ class const:
         LITERAL = 'literal'
         TYPE = 'type'
         SCHEMA = 'schema'
+        ENUM = 'enum'
         CALLABLE = 'callable'
 
         ITERABLE = 'iterable'
@@ -153,6 +164,7 @@ class const:
         COMPILED_TYPE.LITERAL:   100,
         COMPILED_TYPE.TYPE:      50,
         COMPILED_TYPE.SCHEMA:     0,
+        COMPILED_TYPE.ENUM:       0,
         COMPILED_TYPE.CALLABLE:   0,
         COMPILED_TYPE.ITERABLE:   0,
         COMPILED_TYPE.MAPPING:    0,
@@ -175,6 +187,9 @@ def primitive_type(schema):
     # Literal
     if schema_type in const.literal_types:
         return const.COMPILED_TYPE.LITERAL
+    # Enum
+    elif Enum is not None and isinstance(schema, (EnumMeta, Enum)):
+        return const.COMPILED_TYPE.ENUM
     # Type
     elif issubclass(schema_type, six.class_types):
         return const.COMPILED_TYPE.TYPE
