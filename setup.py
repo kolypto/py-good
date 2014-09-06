@@ -24,7 +24,6 @@ setup(
         'six >= 1.7.3',
     ],
     extras_require={
-        '_dev': ['wheel', 'nose', 'exdoc', 'jinja2', 'j2cli', 'enum34'],
     },
     include_package_data=True,
     test_suite='nose.collector',

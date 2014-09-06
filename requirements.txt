@@ -1,0 +1,8 @@
+wheel
+nose
+enum34
+pytz
+
+exdoc
+jinja2
+j2cli
