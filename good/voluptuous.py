@@ -24,6 +24,16 @@ Migration steps:
 2. Run your application tests and see how it behaves
 3. Module by module, replace `good.voluptuous` with just `good`, keeping the differences in mind.
 
+Also note the small differences that are still present:
+
+* Settings for `required` and `extra` are not inherited by embedded mappings.
+
+    If your top-level schema defines `required=False`, embedded mappings will still have the default `required=True`!
+    And same with `extra`.
+
+* Different error message texts, which are easier to understand :)
+* Raises `Invalid` rather than `MultipleInvalid` for rejected extra mapping keys (see [`Extra`](#extra))
+
 Good luck! :)
 """
 
