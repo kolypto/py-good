@@ -4,8 +4,9 @@ import six
 import collections
 from functools import update_wrapper
 
-from .schema.util import const, get_literal_name
+from .schema.util import const, get_literal_name, get_callable_name
 from . import Schema, SchemaError, Invalid
+from .validators.base import ValidatorBase
 from .validators.boolean import Check
 
 
@@ -72,7 +73,7 @@ class SlotsObjectProxy(ObjectProxy):
             raise
 
 
-class Object(object):
+class Object(ValidatorBase):
     """ Specify that the provided mapping should validate an object.
 
     This uses the same mapping validation rules, but works with attributes instead:
@@ -137,7 +138,7 @@ class Object(object):
         return self.compiled(ObjectProxy(v)).obj
 
 
-class Msg(object):
+class Msg(ValidatorBase):
     """ Override the error message reported by the wrapped schema in case of validation errors.
 
     On validation, if the schema throws [`Invalid`](#invalid) -- the message is overridden with `msg`.
@@ -183,6 +184,46 @@ class Msg(object):
         except const.transformed_exceptions:
             raise Invalid(self.message or _(u'Invalid value'))
 
+
+class Test(ValidatorBase):
+    """ Test the value with the provided function, expecting that it won't throw errors.
+
+    If no errors were thrown -- the value is valid and *the original input value is used*.
+    If any error was thrown -- the value is considered invalid.
+
+    This is especially useful to discard tranformations made by the wrapped validator:
+
+    ```python
+    from good import Schema, Coerce
+
+    schema = Schema(Coerce(int))
+
+    schema(123)  #-> 123
+    schema('123')  #-> '123' -- still string
+    schema('abc')
+    #-> Invalid: Invalid value, expected *Integer number, got abc
+    ```
+
+    :param fun: Callable to test the value with, or a validator function.
+
+        Note that this won't work with mutable input values since they're modified in-place!
+
+    :type fun: callable|ValidatorBase
+    """
+
+    def __init__(self, fun):
+        self.fun = fun
+        self.name = get_callable_name(fun)
+
+    def __call__(self, v):
+        try:
+            self.fun(v)
+        except Invalid:
+            raise
+        except Exception:
+            raise Invalid(_(u'Invalid value'))
+        else:
+            return v
 
 
 def message(message, name=None):
@@ -278,4 +319,4 @@ def truth(message, expected=None):
         return update_wrapper(Check(func, message, expected), func)
     return decorator
 
-__all__ = ('Object', 'Msg', 'message', 'name', 'truth')
+__all__ = ('Object', 'Msg', 'Test', 'message', 'name', 'truth')

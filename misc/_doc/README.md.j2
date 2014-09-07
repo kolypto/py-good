@@ -51,6 +51,7 @@ Table of Contents
     * <a href="#helpers">Helpers</a>
         * <a href="#object">Object</a>
         * <a href="#msg">Msg</a>
+        * <a href="#test">Test</a>
         * <a href="#message">message</a>
         * <a href="#name">name</a>
         * <a href="#truth">truth</a>
@@ -150,6 +151,10 @@ Markers
 
 Validation Tools
 ================
+
+All validators listed here inherit from `ValidatorBase` which defines the standard interface.
+Currently it makes no difference whether it's just a callable, a class, or a subclass of `ValidatorBase`,
+but in the future it may gain special features.
 
 Helpers
 -------

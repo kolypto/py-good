@@ -1176,6 +1176,18 @@ class ValuesTest(GoodTestBase):
 class BooleansTest(GoodTestBase):
     """ Test: Validators.Booleans """
 
+    def test_Test(self):
+        """ Test Test() """
+
+        v_test = Test(Coerce(int))
+        schema = Schema(v_test)
+
+        self.assertValid(schema, 123)
+        self.assertValid(schema, '123')
+
+        self.assertInvalid(schema, 'abc',
+                           Invalid(u'Invalid value', u'*' + s.t_int, u'abc', [], v_test))
+
     def test_Check(self):
         """ Test Check() """
 

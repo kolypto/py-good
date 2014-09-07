@@ -62,6 +62,7 @@ Table of Contents
 
       -  Object
       -  Msg
+      -  Test
       -  message
       -  name
       -  truth
@@ -153,6 +154,19 @@ Migration steps:
 2. Run your application tests and see how it behaves
 3. Module by module, replace ``good.voluptuous`` with just ``good``,
    keeping the differences in mind.
+
+Also note the small differences that are still present:
+
+-  Settings for ``required`` and ``extra`` are not inherited by embedded
+   mappings.
+
+   If your top-level schema defines ``required=False``, embedded
+   mappings will still have the default ``required=True``! And same with
+   ``extra``.
+
+-  Different error message texts, which are easier to understand :)
+-  Raises ``Invalid`` rather than ``MultipleInvalid`` for rejected extra
+   mapping keys (see ```Extra`` <#extra>`__)
 
 Good luck! :)
 
@@ -978,6 +992,11 @@ Arguments:
 Validation Tools
 ================
 
+All validators listed here inherit from ``ValidatorBase`` which defines
+the standard interface. Currently it makes no difference whether it's
+just a callable, a class, or a subclass of ``ValidatorBase``, but in the
+future it may gain special features.
+
 Helpers
 -------
 
@@ -1066,6 +1085,41 @@ Arguments:
 -  ``schema``: The wrapped schema to modify the error for
 -  ``message``: Error message to use instead of the one that's reported
    by the underlying schema
+
+``Test``
+~~~~~~~~
+
+.. code:: python
+
+    Test(fun)
+
+Test the value with the provided function, expecting that it won't throw
+errors.
+
+If no errors were thrown -- the value is valid and *the original input
+value is used*. If any error was thrown -- the value is considered
+invalid.
+
+This is especially useful to discard tranformations made by the wrapped
+validator:
+
+.. code:: python
+
+    from good import Schema, Coerce
+
+    schema = Schema(Coerce(int))
+
+    schema(123)  #-> 123
+    schema('123')  #-> '123' -- still string
+    schema('abc')
+    #-> Invalid: Invalid value, expected *Integer number, got abc
+
+Arguments:
+
+-  ``fun``: Callable to test the value with, or a validator function.
+
+   Note that this won't work with mutable input values since they're
+   modified in-place!
 
 ``message``
 ~~~~~~~~~~~
