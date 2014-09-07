@@ -1018,9 +1018,9 @@ class ValuesTest(GoodTestBase):
         self.assertValid(schema, 2)
 
         self.assertInvalid(schema, u'1',
-                           Invalid(u'Value not allowed', u'In(1,2,3)', u'1', [], allowed))
+                           Invalid(u'Unsupported value', u'In(1,2,3)', u'1', [], allowed))
         self.assertInvalid(schema, 99,
-                           Invalid(u'Value not allowed', u'In(1,2,3)', u'99', [], allowed))
+                           Invalid(u'Unsupported value', u'In(1,2,3)', u'99', [], allowed))
 
     def test_Length(self):
         """ Test Length() """
@@ -1156,6 +1156,22 @@ class ValuesTest(GoodTestBase):
                     self.assertInvalid(schema, 123,
                                        Invalid(u'Unsupported value', name, u'123', [], map))
 
+    def test_InMap(self):
+        """ Test In(Map()) """
+
+        class colors_enum(enum.Enum):
+            RED = 0xFF0000
+            GREEN = 0x00FF00
+            BLUE = 0x0000FF
+
+        v_in = In(Map(colors_enum))  # yes they work together
+        schema = Schema(v_in)
+
+        self.assertValid(schema, 'RED')
+        self.assertValid(schema, 'GREEN')
+
+        self.assertInvalid(schema, 'BLACK',
+                           Invalid(u'Unsupported value', u'colors_enum', u'BLACK', [], v_in))
 
 class BooleansTest(GoodTestBase):
     """ Test: Validators.Booleans """

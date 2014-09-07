@@ -26,7 +26,7 @@ class In(ValidatorBase):
 
     schema(1)  #-> 1
     schema(99)
-    #-> Invalid: Value not allowed: expected In(1,2,3), got 99
+    #-> Invalid: Unsupported value: expected In(1,2,3), got 99
     ```
 
     The same example will work with [`Any`](#any), but slower :-)
@@ -41,17 +41,21 @@ class In(ValidatorBase):
         assert isinstance(container, collections.Container), '`container` must support `in` operation'
         self.container = container
 
-        self.name = _(u'In({container})').format(
-            container=
-                _(u',').join(map(get_literal_name, self.container))  # iterable
-                if isinstance(container, collections.Iterable) else
-                get_primitive_name(self.container)  # not iterable
-        )
+        # Name
+        if isinstance(self.container, Map):
+            self.name = self.container.name  # Inherit name
+        else:
+            # Format
+            if isinstance(self.container, collections.Iterable):
+                cs = _(u',').join(map(get_literal_name, self.container))
+            else:
+                cs = get_primitive_name(self.container)
+            self.name = _(u'In({container})').format(container=cs)
 
     def __call__(self, v):
         # Test
         if v not in self.container:
-            raise Invalid(_(u'Value not allowed'))
+            raise Invalid(_(u'Unsupported value'))
 
         # Okay
         return v
@@ -290,11 +294,25 @@ class Map(ValidatorBase):
 
         Note that in `mode=Map.VAL` it works precisely like `Schema(Enum)`.
 
-    Finally, it supports reverse matching:
+    In addition to the "straignt" mode (lookup by key), it supports reverse matching:
 
     * When `mode=Map.KEY`, does only forward matching (by key) -- the default
     * When `mode=Map.VAL`, does only reverse matching (by value)
     * When `mode=Map.BOTH`, does bidirectional matching (by key first, then by value)
+
+    Another neat feature is that `Map` supports `in` containment checks,
+    which works great together with [`In`](#in): `In(Map(enum-value))` will test if a value is convertible, but won't
+    actually do the convertion.
+
+    ```python
+    from good import Schema, Map, In
+
+    schema = Schema(In(Map(Colors)))
+
+    schema('RED') #-> 'RED'
+    schema('BLACK')
+    #-> Invalid: Unsupported value, expected Colors, got BLACK
+    ```
 
     :param enum: Enumeration: dict, object, of Enum
     :type enum: dict|type|enum.EnumMeta
@@ -348,21 +366,34 @@ class Map(ValidatorBase):
                 self.mapping_rev = {v: k for k, v in self.mapping.items()}
                 self.rlookup = lambda v: self.mapping_rev[v]
 
+    def __getitem__(self, v):
+        # Try both forward and reverse lookups
+        for lookup in (self.lookup, self.rlookup):
+            # If enabled
+            if lookup:
+                try:
+                    # Try to get the mapped value
+                    return lookup(v)
+                except Exception as e:
+                    # Ok, try again
+                    pass
+
+        # Nothing worked
+        raise KeyError(v)
+
+    def __contains__(self, v):
+        try:
+            self[v]
+        except KeyError:
+            return False
+        else:
+            return True
+
     def __call__(self, v):
-        # Forward lookup (if enabled)
-        if self.lookup:
-            try:
-                return self.lookup(v)
-            except Exception as e:
-                pass
-        # Reverse lookup (if enabled)
-        if self.rlookup:
-            try:
-                return self.rlookup(v)
-            except Exception as e:
-                pass
-        # Nothing matched
-        raise Invalid(_(u'Unsupported value'))
+        try:
+            return self[v]
+        except KeyError:
+            raise Invalid(_(u'Unsupported value'))
 
 
 __all__ = ('In', 'Length', 'Default', 'Fallback', 'Map')

@@ -16,7 +16,7 @@ README.rst: README.md
 # Package
 .PHONY: clean build publish
 clean:
-	@rm -rf build/ dist/ *.egg-info/ README.rst
+	@rm -rf build/ dist/ *.egg-info/ README.rst README.md
 build: README.rst
 	@./setup.py build sdist bdist_wheel
 publish: README.rst

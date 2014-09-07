@@ -1419,7 +1419,7 @@ schema = Schema(In({1, 2, 3}))
 
 schema(1)  #-> 1
 schema(99)
-#-> Invalid: Value not allowed: expected In(1,2,3), got 99
+#-> Invalid: Unsupported value: expected In(1,2,3), got 99
 ```
 
 The same example will work with [`Any`](#any), but slower :-)
@@ -1650,11 +1650,25 @@ Supports three kinds of enumerations:
 
     Note that in `mode=Map.VAL` it works precisely like `Schema(Enum)`.
 
-Finally, it supports reverse matching:
+In addition to the "straignt" mode (lookup by key), it supports reverse matching:
 
 * When `mode=Map.KEY`, does only forward matching (by key) -- the default
 * When `mode=Map.VAL`, does only reverse matching (by value)
 * When `mode=Map.BOTH`, does bidirectional matching (by key first, then by value)
+
+Another neat feature is that `Map` supports `in` containment checks,
+which works great together with [`In`](#in): `In(Map(enum-value))` will test if a value is convertible, but won't
+actually do the convertion.
+
+```python
+from good import Schema, Map, In
+
+schema = Schema(In(Map(Colors)))
+
+schema('RED') #-> 'RED'
+schema('BLACK')
+#-> Invalid: Unsupported value, expected Colors, got BLACK
+```
 
 Arguments:
 
