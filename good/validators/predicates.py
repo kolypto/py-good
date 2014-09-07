@@ -1,5 +1,5 @@
 from .. import Schema, Invalid, MultipleInvalid, Required, Optional
-from ._base import ValidatorBase
+from .base import ValidatorBase
 from ..schema.util import get_literal_name, const
 
 

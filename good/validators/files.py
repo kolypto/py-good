@@ -1,5 +1,5 @@
 import os
-from ._base import ValidatorBase
+from .base import ValidatorBase
 from .. import Invalid
 
 

@@ -2,7 +2,7 @@ import six
 from functools import wraps
 import re
 
-from ._base import ValidatorBase
+from .base import ValidatorBase
 from .. import Invalid
 from ..schema.util import get_type_name
 
