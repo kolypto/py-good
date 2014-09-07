@@ -33,6 +33,7 @@ data = {
     'boolean': docmodule(good.validators.boolean),
     'numbers': docmodule(good.validators.numbers),
     'strings': docmodule(good.validators.strings),
+    'dates': docmodule(good.validators.dates),
     'files': docmodule(good.validators.files),
 }
 

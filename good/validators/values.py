@@ -362,7 +362,7 @@ class Map(ValidatorBase):
             except Exception as e:
                 pass
         # Nothing matched
-        raise Invalid(u'Unsupported value')
+        raise Invalid(_(u'Unsupported value'))
 
 
 __all__ = ('In', 'Length', 'Default', 'Fallback', 'Map')

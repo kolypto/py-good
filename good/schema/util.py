@@ -2,6 +2,7 @@
 
 import six
 import collections
+from datetime import date, time, datetime
 
 try:
     from enum import EnumMeta, Enum
@@ -48,6 +49,9 @@ __type_names = {
     set:        _(u'Set'),
     frozenset:  _(u'Frozen Set'),
     dict:       _(u'Dictionary'),
+    date:       _(u'Date'),
+    time:       _(u'Time'),
+    datetime:   _(u'DateTime'),
 }
 if EnumMeta:
     __type_names[EnumMeta] = u'Enum'

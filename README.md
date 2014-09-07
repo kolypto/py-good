@@ -91,6 +91,10 @@ Table of Contents
         * <a href="#replace">Replace</a>
         * <a href="#url">Url</a>
         * <a href="#email">Email</a>
+    * <a href="#dates">Dates</a>
+        * <a href="#datetime">DateTime</a>
+        * <a href="#date">Date</a>
+        * <a href="#time">Time</a>
     * <a href="#files">Files</a>
         * <a href="#isfile">IsFile</a>
         * <a href="#isdir">IsDir</a>
@@ -2018,6 +2022,201 @@ schema('user@localhost')  #-> 'user@localhost'
 schema('user')
 #-> Invalid: Invalid e-mail: expected E-Mail, got user
 ```
+
+
+
+
+
+
+
+Dates
+-----
+
+
+
+### `DateTime`
+```python
+DateTime(formats, localize=None, astz=None)
+```
+
+Validate that the input is a Python `datetime`.
+
+Supports the following input values:
+
+1. `datetime`: passthrough
+2. string: parses the string with any of the specified formats
+    (see [strptime()](https://docs.python.org/3.4/library/datetime.html#strftime-and-strptime-behavior))
+
+```python
+from datetime import datetime
+from good import Schema, DateTime
+
+schema = Schema(DateTime('%Y-%m-%d %H:%M:%S'))
+
+schema('2014-09-06 21:22:23')  #-> datetime.datetime(2014, 9, 6, 21, 22, 23)
+schema(datetime.now())  #-> datetime.datetime(2014, 9, 6, 21, 22, 23)
+schema('2014')
+#-> Invalid: Invalid datetime format, expected DateTime, got 2014.
+```
+
+Notes on timezones:
+
+* If the format does not support timezones, it always returns *naive* `datetime` objects (without `tzinfo`).
+* If timezones are supported by the format (with `%z`/`%Z`),
+   it returns an *aware* `datetime` objects (with `tzinfo`).
+* Since Python2 does not always support `%z` -- `DateTime` does this manually.
+  Due to the limited nature of this workaround, the support for `%z` only works if it's at the end of the string!
+
+As a result, '00:00:00' is parsed into a *naive* datetime, and '00:00:00 +0200' results in an *aware* datetime.
+
+If your application wants different rules, use `localize` and `astz`:
+
+* `localize` argument is the default timezone to set on *naive* datetimes,
+    or a callable which is applied to the input and should return adjusted `datetime`.
+* `astz` argument is the timezone to adjust the *aware* datetime to, or a callable.
+
+Then the generic recipe is:
+
+* Set `localize` to the timezone (or a callable) that you expect the user to input the datetime in
+* Set `astz` to the timezone you wish to have in the result.
+
+This works best with the excellent [pytz](http://pytz.sourceforge.net/) library:
+
+```python
+import pytz
+from good import Schema, DateTime
+
+# Formats: with and without timezone
+formats = [
+    '%Y-%m-%d %H:%M:%S',
+    '%Y-%m-%d %H:%M:%S%z'
+]
+
+# The used timezones
+UTC = pytz.timezone('UTC')
+Oslo = pytz.timezone('Europe/Oslo')
+
+### Example: Use Europe/Oslo by default
+schema = Schema(DateTime(
+    formats,
+    localize=Oslo
+))
+
+schema('2014-01-01 00:00:00')
+#-> datetime.datetime(2014, 1, 1, 0, 0, tzinfo='Europe/Oslo')
+schema('2014-01-01 00:00:00-0100')
+#-> datetime.datetime(2014, 1, 1, 0, 0, tzinfo=-0100)
+
+### Example: Use Europe/Oslo by default and convert to an aware UTC
+schema = Schema(DateTime(
+    formats,
+    localize=Oslo,
+    astz=UTC
+))
+
+schema('2014-01-01 00:00:00')
+#-> datetime.datetime(2013, 12, 31, 23, 17, tzinfo=<UTC>)
+schema('2014-01-01 00:00:00-0100')
+#-> datetime.datetime(2014, 1, 1, 1, 0, tzinfo=<UTC>)
+
+### Example: Use Europe/Oslo by default, convert to a naive UTC
+# This is the recommended way
+schema = Schema(DateTime(
+    formats,
+    localize=Oslo,
+    astz=lambda v: v.astimezone(UTC).replace(tzinfo=None)
+))
+
+schema('2014-01-01 00:00:00')
+#-> datetime.datetime(2013, 12, 31, 23, 17)
+schema('2014-01-01 00:00:00-0100')
+#-> datetime.datetime(2014, 1, 1, 1, 0)
+```
+
+Note: to save some pain, make sure to *always* work with naive `datetimes` adjusted to UTC!
+Armin Ronacher [explains it here](http://lucumr.pocoo.org/2011/7/15/eppur-si-muove/).
+
+Summarizing all the above, the validation procedure is a 3-step process:
+
+1. Parse (only with strings)
+2. If is *naive* -- apply `localize` and make it *aware* (if `localize` is specified)
+3. If is *aware* -- apply `astz` to convert it (if `astz` is specified)
+
+Arguments:
+
+* `formats`: Supported format string, or an iterable of formats to try them all.
+* `localize`: Adjust *naive* `datetimes` to a timezone, making it *aware*.
+
+    A `tzinfo` timezone object,
+    or a callable which is applied to a *naive* datetime and should return an adjusted value.
+
+    Only called for *naive* `datetime`s.
+* `astz`: Adjust *aware* `datetimes` to another timezone.
+
+    A `tzinfo` timezone object,
+    or a callable which is applied to an *aware* datetime and should return an adjusted value.
+
+    Only called for *aware* `datetime`s, including those created by `localize`
+
+
+
+
+
+### `Date`
+```python
+Date(formats, localize=None, astz=None)
+```
+
+Validate that the input is a Python `date`.
+
+Supports the following input values:
+
+1. `date`: passthrough
+2. `datetime`: takes the `.date()` part
+2. string: parses (see [`DateTime`](#datetime))
+
+```python
+from datetime import date
+from good import Schema, Date
+
+schema = Schema(Date('%Y-%m-%d'))
+
+schema('2014-09-06')  #-> datetime.date(2014, 9, 6)
+schema(date(2014, 9, 6))  #-> datetime.date(2014, 9, 6)
+schema('2014')
+#-> Invalid: Invalid date format, expected Date, got 2014.
+```
+
+Arguments:
+
+
+
+
+
+
+
+
+
+### `Time`
+```python
+Time(formats, localize=None, astz=None)
+```
+
+Validate that the input is a Python `time`.
+
+Supports the following input values:
+
+1. `time`: passthrough
+2. `datetime`: takes the `.timetz()` part
+2. string: parses (see [`DateTime`](#datetime))
+
+Since `time` is subject to timezone problems,
+make sure you've read the notes in the relevant section of [`DateTime`](#datetime) docs.
+
+Arguments:
+
+
+
 
 
 

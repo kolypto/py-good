@@ -2,14 +2,17 @@ from __future__ import print_function
 import six
 import unittest
 import collections
+from datetime import datetime, date, time, timedelta
 import json
 from random import shuffle
 from copy import deepcopy
 import enum
+import pytz
 
 from good import *
 from good.schema.markers import Marker
 from good.schema.util import get_type_name, Undefined, const
+from good.validators.dates import FixedOffset
 
 
 class s:
@@ -23,6 +26,10 @@ class s:
     t_unicode = get_type_name(six.text_type)  # Unicode string
     t_list = get_type_name(list)
     t_dict = get_type_name(dict)
+    t_enum = get_type_name(enum.Enum)
+    t_datetime = get_type_name(datetime)
+    t_date = get_type_name(date)
+    t_time = get_type_name(time)
 
     v_no = u'-none-'
 
@@ -1353,6 +1360,123 @@ class StringsTest(GoodTestBase):
                            Invalid(s.es_value_type, u'String', s.t_int, [], email))
         self.assertInvalid(schema, 'user@',
                            Invalid(u'Invalid E-Mail', u'E-Mail', u'user@', [], email))
+
+
+class DatesTest(GoodTestBase):
+    """ Test: Validators.Dates """
+
+    def test_DateTime(self):
+        """ Test DateTime() """
+        # Since, naive datetime
+        v_datetime = DateTime('%Y-%m-%d')
+        schema = Schema(v_datetime)
+
+        self.assertValid(schema, datetime(2014, 9, 7))  # passthrough
+        self.assertValid(schema, '2014-09-07',
+                         datetime(2014, 9, 7))  # parse
+
+        self.assertInvalid(schema, '2014-09',
+                           Invalid(u'Invalid DateTime format', s.t_datetime, u'2014-09', [], v_datetime))
+        self.assertInvalid(schema, '2014-09-07X',
+                           Invalid(u'Invalid DateTime format', s.t_datetime, u'2014-09-07X', [], v_datetime))
+
+        # Multiple, datetime (both naive and aware)
+        formats = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M:%S%z']
+        v_datetime = DateTime(formats)
+        schema = Schema(v_datetime)
+
+        self.assertValid(schema, '2014-09-07 01:08:00',
+                         datetime(2014, 9, 7, 1, 8, 0, tzinfo=None))
+        self.assertValid(schema, '2014-09-07 01:08:00+0130',
+                         datetime(2014, 9, 7, 1, 8, 0, tzinfo=FixedOffset(timedelta(hours= 1, minutes= 30))))
+        self.assertValid(schema, '2014-09-07 01:08:00-0130',
+                         datetime(2014, 9, 7, 1, 8, 0, tzinfo=FixedOffset(timedelta(hours=-1, minutes=-30))))
+
+        # & Localize
+        UTC = pytz.UTC
+        for localize in (UTC, lambda dt: UTC.localize(dt)):
+            schema = Schema(DateTime(formats, localize=localize))  # assume UTC
+
+            self.assertValid(schema, '2014-09-07 01:08:00',
+                             datetime(2014, 9, 7, 1, 8, 0, tzinfo=FixedOffset('+0000')))
+            self.assertValid(schema, '2014-09-07 01:08:00+0100',
+                             datetime(2014, 9, 7, 1, 8, 0, tzinfo=FixedOffset('+0100')))
+            self.assertValid(schema, '2014-09-07 01:08:00-0100',
+                             datetime(2014, 9, 7, 2, 8, 0, tzinfo=FixedOffset('+0000')))
+
+        # & AzTz
+        Japan = pytz.timezone('Japan')
+        for astz in (Japan, lambda dt: dt.astimezone(Japan)):
+            schema = Schema(DateTime(formats, localize=UTC, astz=astz))  # assume UTC, convert to Japan
+
+            self.assertValid(schema, '2014-09-07 01:08:00',
+                             datetime(2014, 9, 7, 1, 8, 0, tzinfo=UTC))
+            self.assertValid(schema, '2014-09-07 01:08:00+0100',
+                             datetime(2014, 9, 7, 0, 8, 0, tzinfo=UTC))
+            self.assertValid(schema, '2014-09-07 01:08:00-0100',
+                             datetime(2014, 9, 7, 2, 8, 0, tzinfo=UTC))
+
+        # Passthrough applies `localize` and `astz`
+        schema = Schema(DateTime(formats, localize=UTC, astz=Japan))
+        for tz in (None, UTC):
+            self.assertValid(schema, datetime(2014, 9, 7, 1, 8, 0, tzinfo=tz),
+                                     datetime(2014, 9, 7, 1, 8, 0, tzinfo=UTC))
+
+    def test_Date(self):
+        """ Test Date() """
+
+        v_date = Date('%Y-%m-%d')
+        schema = Schema(v_date)
+
+        # Naive
+        self.assertValid(schema, date(2014, 9, 7))  # passthrough
+        self.assertValid(schema, datetime(2014, 9, 7),
+                                     date(2014, 9, 7))  # .date()
+        self.assertValid(schema, '2014-09-07',
+                             date(2014, 9, 7))  # parse
+
+        self.assertInvalid(schema, '2014-09-07X',
+                           Invalid(u'Invalid Date format', s.t_date, u'2014-09-07X', [], v_date))
+
+        # Aware
+        UTC, Japan = pytz.UTC, pytz.timezone('Japan')
+        schema = Schema(Date('%Y-%m-%d', localize=UTC, astz=Japan))
+
+        self.assertValid(schema, '2014-09-07',
+                             date(2014, 9, 7))
+        self.assertValid(schema, date(2014, 9, 7),
+                                 date(2014, 9, 7))
+
+    def test_Time(self):
+        """ Test Time() """
+
+        v_time = Time(['%H:%M:%S', '%H:%M:%S%z'])
+        schema = Schema(v_time)
+
+        # Naive
+        self.assertValid(schema, time(1, 8, 0))  # Passthrough
+        self.assertValid(schema, datetime(1,1,1, 1, 8, 0),
+                                            time(1, 8, 0))  # .time()
+        self.assertValid(schema, '01:08:00',
+                              time(1, 8, 0))  # parse
+        self.assertValid(schema, '01:08:00+0200',
+                              time(1, 8, 0, tzinfo=FixedOffset('+0200')))  # parse
+
+        self.assertInvalid(schema, '01:08:00X',
+                           Invalid(u'Invalid Time format', s.t_time, u'01:08:00X', [], v_time))
+
+        # localize & astz
+        CET, Japan = pytz.timezone('CET'), pytz.timezone('Japan')
+        schema = Schema(Time('%H:%M:%S', localize=CET, astz=Japan))
+
+        self.assertValid(schema, '01:08:00',
+                              #time(1, 8, 0, tzinfo=CET))
+                              time(9, 8, 0, tzinfo=Japan))  # time() comparison ignores tzinfo: http://stackoverflow.com/q/25706527
+        self.assertValid(schema, time(1, 8, 0, tzinfo=CET),
+                                 #time(1, 8, 0, tzinfo=CET))
+                                 time(9, 8, 0, tzinfo=Japan))  # time() comparison ignores tzinfo: http://stackoverflow.com/q/25706527
+
+
 
 
 class FilesTest(GoodTestBase):
