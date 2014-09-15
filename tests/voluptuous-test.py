@@ -207,8 +207,14 @@ class VoluptuousTest(unittest.TestCase):
         v=_compile_scalar(lambda v: float(v))([], '1')
         self.assertEqual(v, 1.0)
 
+        # Remember what error message does Python use for float('a')
+        try:
+            float('a')
+        except ValueError as e:
+            PY_STR2FLOAT_MESSAGE = six.text_type(e)
+
         #with raises(Invalid, 'not a valid value'):
-        with raises(MultipleInvalid, u"could not convert string to float: "+(u"'a'" if six.PY3 else u"a")+u", expected <lambda>()"):  # yes, that's not user-friendly, but lambdas don't provide much info
+        with raises(MultipleInvalid, PY_STR2FLOAT_MESSAGE+u", expected <lambda>()"):  # yes, that's not user-friendly, but lambdas don't provide much info
             _compile_scalar(lambda v: float(v))([], 'a')
 
     def test_Required(self):

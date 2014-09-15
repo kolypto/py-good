@@ -41,6 +41,18 @@ class s:
     es_extra = u'Extra keys not allowed'
     es_rejected = u'Value rejected'
 
+    # Remember what error message does Python use for int(None)
+    try:
+        int(None)
+    except TypeError as e:
+        PY_NONE2INT_MESSAGE = six.text_type(e)
+
+    # Remember what error message does Python use for int('a')
+    try:
+        int('a')
+    except ValueError as e:
+        PY_STR2INT_MESSAGE = six.text_type(e)
+
 
 class GoodTestBase(unittest.TestCase):
     """ Helpers for testing """
@@ -332,8 +344,8 @@ class SchemaCoreTest(GoodTestBase):
         self.assertValid(schema, True, 1)
         self.assertValid(schema, b'1', 1)
 
-        self.assertInvalid(schema, None, Invalid(u'int() argument must be a string or a number, not \'NoneType\'',  u'intify()', s.t_none,  [], intify))
-        self.assertInvalid(schema, u'a', Invalid(u'invalid literal for int() with base 10: \'a\'',                  u'intify()', u'a',      [], intify))
+        self.assertInvalid(schema, None, Invalid(s.PY_NONE2INT_MESSAGE,  u'intify()', s.t_none,  [], intify))
+        self.assertInvalid(schema, 'a', Invalid(s.PY_STR2INT_MESSAGE,   u'intify()', u'a',      [], intify))
 
         # Simple callable that throws Invalid
         schema = Schema(intify_ex)
