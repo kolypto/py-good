@@ -1,3 +1,8 @@
+## 0.0.7 (2014-09-20)
+* Renamed module: `good.validators._base` -> `good.validators.base`
+* PyPy: fixed slight incompatibilities with PyPy
+* Error-passthrough for iterable schemas of a single member: [issue #2](https://github.com/kolypto/py-good/issues/2)
+
 ## 0.0.6 (2014-09-07)
 
 * New validators: `Test`, `Date`, `Time`, `DateTime`
