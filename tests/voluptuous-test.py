@@ -242,7 +242,7 @@ class VoluptuousTest(unittest.TestCase):
     
         validate = Schema(Msg([['one', 'two', int]], 'not okay!'))
         #with raises(MultipleInvalid, 'invalid list value @ data[0][0]'):
-        with raises(MultipleInvalid, u"not okay!, expected List[List[one|two|Integer number]] @ data[0]"):
+        with raises(MultipleInvalid, u"not okay!, expected List[one|two|Integer number] @ data[0][0]"):
             validate([['three']])
 
     def test_message(self):

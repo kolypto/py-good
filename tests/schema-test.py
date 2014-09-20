@@ -326,6 +326,20 @@ class SchemaCoreTest(GoodTestBase):
         self.assertValid(schema, [u'a', u'b'])
         self.assertValid(schema, [u'a', u'b', 1, 2], [u'a', u'b'])
 
+        # List of no items :)
+        schema = Schema([])
+        self.assertValid(schema, [])
+
+        # List of a single item
+        person = {'age': int}
+        schema = Schema([person])
+
+        self.assertValid(schema, [])
+        self.assertValid(schema, [{'age': 10}])
+        self.assertValid(schema, [{'age': 10}, {'age': 20}])
+        self.assertInvalid(schema, [{'age': 10}, {'age': 20}, {'age': None}],
+                           Invalid(s.es_type, s.t_int, s.t_none, [2, 'age'], int))
+
     def test_callable(self):
         """ Test Schema(<callable>) """
         def intify(v):

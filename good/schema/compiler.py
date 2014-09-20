@@ -402,6 +402,11 @@ class CompiledSchema(object):
         schema_type = type(schema)
         schema_subs = tuple(map(self.sub_compile, schema))
 
+        # When the schema is an iterable with a single item (e.g. [dict(...)]),
+        # Invalid errors from schema members should be immediately used.
+        # This allows to report sane errors with `Schema([{'age': int}])`
+        error_passthrough = len(schema_subs) == 1
+
         # Prepare self
         self.compiled_type = const.COMPILED_TYPE.ITERABLE
         self.name = _(u'{iterable_cls}[{iterable_options}]').format(
@@ -433,9 +438,14 @@ class CompiledSchema(object):
                     except signals.RemoveValue:
                         # `value_schema` commanded to drop this value
                         break
-                    except Invalid:
-                        # Ignore errors and hope other members will succeed better
-                        pass
+                    except Invalid as e:
+                        if error_passthrough:
+                            # Error-Passthrough enabled: add the original error
+                            errors.append(e.enrich(path=[value_index]))
+                            break
+                        else:
+                            # Error-Passthrough disabled: Ignore errors and hope other members will succeed better
+                            pass
                 else:
                     errors.append(err_value(get_literal_name(value), path=[value_index]))
 
