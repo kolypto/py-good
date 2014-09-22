@@ -1582,7 +1582,7 @@ Since mappings also have length, they can be validated as well:
 
     schema([1])  #-> ok
     schema([1,2,3,4])
-    #-> Invalid: Too many values (3 is the most): expected Length(..3), got 4
+    #-> Invalid: Too long (3 is the most): expected Length(..3), got 4
 
 Arguments:
 

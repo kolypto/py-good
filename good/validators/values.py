@@ -88,7 +88,7 @@ class Length(ValidatorBase):
 
     schema([1])  #-> ok
     schema([1,2,3,4])
-    #-> Invalid: Too many values (3 is the most): expected Length(..3), got 4
+    #-> Invalid: Too long (3 is the most): expected Length(..3), got 4
     ```
 
     :param min: Minimal allowed length, or `None` to impose no limits.
@@ -99,12 +99,12 @@ class Length(ValidatorBase):
 
     def __init__(self, min=None, max=None):
         # `min` validator
-        self.min_error = lambda length: Invalid(_(u'Too few values ({min} is the least)').format(min=min),
+        self.min_error = lambda length: Invalid(_(u'Too short ({min} is the least)').format(min=min),
                                                 get_literal_name(min), get_literal_name(length))
         self.min = min
 
         # `max` validator
-        self.max_error = lambda length: Invalid(_(u'Too many values ({max} is the most)').format(max=max),
+        self.max_error = lambda length: Invalid(_(u'Too long ({max} is the most)').format(max=max),
                                                 get_literal_name(max), get_literal_name(length))
         self.max = max
 

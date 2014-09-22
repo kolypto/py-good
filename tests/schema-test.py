@@ -600,7 +600,7 @@ class SchemaCoreTest(GoodTestBase):
         # Entire
         def max3keys(d):
             if len(d) > 3:
-                raise Invalid(u'Too many keys', u'<=3 keys', u'{} keys'.format(len(d)))
+                raise Invalid(u'Too long', u'<=3 keys', u'{} keys'.format(len(d)))
             return d
 
         schema = Schema({
@@ -612,7 +612,7 @@ class SchemaCoreTest(GoodTestBase):
         self.assertValid(schema,   {u'a': 1, u'b': 2})
         self.assertValid(schema,   {u'a': 1, u'b': 2, u'c': 3})
         self.assertInvalid(schema, {u'a': 1, u'b': 2, u'c': 3, u'd': 4},
-                           Invalid(u'Too many keys', u'<=3 keys', u'4 keys', [], max3keys))
+                           Invalid(u'Too long', u'<=3 keys', u'4 keys', [], max3keys))
 
     def test_mapping_priority(self):
         """ Test Schema(<mapping>), priority test """
@@ -1065,13 +1065,13 @@ class ValuesTest(GoodTestBase):
                 self.assertValid(schema, [])
             else:
                 self.assertInvalid(schema, [],
-                                   Invalid(u'Too few values (1 is the least)', u'1', u'0', [], lencheck))
+                                   Invalid(u'Too short (1 is the least)', u'1', u'0', [], lencheck))
 
             if lencheck.max is None:
                 self.assertValid(schema, [1,2,3,4])
             else:
                 self.assertInvalid(schema, [1,2,3,4],
-                                   Invalid(u'Too many values (3 is the most)', u'3', u'4', [], lencheck))
+                                   Invalid(u'Too long (3 is the most)', u'3', u'4', [], lencheck))
 
         # Test with a non-Sized input
         schema = Schema(lencheck)
@@ -1092,7 +1092,7 @@ class ValuesTest(GoodTestBase):
 
         self.assertInvalid(schema, {}, MultipleInvalid([
             Invalid(s.es_required, s.t_unicode, s.v_no, [], Required(six.text_type)),
-            Invalid(u'Too few values (1 is the least)', u'1', u'0', [], lencheck)
+            Invalid(u'Too short (1 is the least)', u'1', u'0', [], lencheck)
         ]))
 
     def test_Default(self):

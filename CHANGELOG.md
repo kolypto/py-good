@@ -1,3 +1,6 @@
+## 0.0.8 (2014-10-01)
+* Changed `Length()` error message so it's acceptable for both lists and strings
+
 ## 0.0.7 (2014-09-20)
 * Renamed module: `good.validators._base` -> `good.validators.base`
 * PyPy: fixed slight incompatibilities with PyPy
