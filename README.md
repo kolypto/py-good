@@ -305,7 +305,7 @@ Moreover, instances of the following types are converted to callables on the com
 
     Schema({
         # These two keys should have integer values
-        In('age', 'height'): int,
+        In(('age', 'height')): int,
         # All other keys should have string values
         str: str,
     })({
