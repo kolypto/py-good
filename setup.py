@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" Slim yet handsome validation library (voluptuous 2) """
+""" Slim yet handsome validation library """
 
 from setuptools import setup, find_packages
 
@@ -13,7 +13,8 @@ setup(
     url='https://github.com/kolypto/py-good',
     license='BSD',
     description=__doc__,
-    long_description=open('README.rst').read(),
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     keywords=['validation'],
 
     packages=find_packages(),

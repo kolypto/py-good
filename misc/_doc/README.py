@@ -3,6 +3,8 @@ from exdoc import doc, getmembers
 
 import json
 
+# TODO: the whole library is Python3-compatible, but `exdoc` is not ; this file is Python2
+
 doccls = lambda cls, *allowed_keys: {
     'cls': doc(cls),
     'attrs': {name: doc(m) for name, m in getmembers(cls, None, lambda key, value: key in allowed_keys or not key.startswith('_'))}
