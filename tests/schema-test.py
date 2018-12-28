@@ -1013,6 +1013,10 @@ class PredicatesTest(GoodTestBase):
                 self.assertInvalid(schema, {'password': u'c'},
                                Invalid(u'Choose one of the options', u'Exclusive(email,login)', s.v_no, [], exclusive_group))
 
+    def test_Inclusive_and_Exclusive__support_ints(self):
+        """ Test that `Inclusive` and `Exclusive` support not only string literals, but also ints and bools """
+        self.assertEqual(Inclusive(1,2,3).name, 'Inclusive(1,2,3)')
+        self.assertEqual(Exclusive(1,2,3).name, 'Exclusive(1,2,3)')
 
 class TypesTest(GoodTestBase):
     """ Test: Validators.Types """

@@ -210,3 +210,6 @@ def primitive_type(schema):
     else:
         return None
 
+def commajoin_as_strings(iterable):
+    """ Join the given iterable with ',' """
+    return _(u',').join((six.text_type(i) for i in iterable))
