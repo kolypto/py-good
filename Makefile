@@ -6,7 +6,6 @@ SHELL := /bin/bash
 # Package
 clean:
 	@rm -rf build/ dist/ *.egg-info/ README.md README.rst
-	@pip install -e .  # have to reinstall because we are using self
 README.md: $(shell find * -type f -name '*.py' -o -name '*.j2') $(wildcard misc/_doc/**)
 	@python misc/_doc/README.py | j2 --format=json -o README.md misc/_doc/README.md.j2
 README.rst: README.md
