@@ -1,4 +1,4 @@
-|Build Status|
+`Build Status <https://travis-ci.org/kolypto/py-good>`__
 
 Good
 ====
@@ -130,20 +130,20 @@ Voluptuous Drop-In Replacement
 Despite Good is modelled after Voluptuous and is highly compatible,
 there still are differences that would definitely break your project.
 
-If you're not ready for such a change -- ``good.voluptuous`` is the
+If you’re not ready for such a change – ``good.voluptuous`` is the
 solution: compatibility layer for switching from `voluptuous
 0.8.5 <https://github.com/alecthomas/voluptuous>`__ with 100%
 compatibility.
 
 This is a drop-in replacement that passes all voluptuous unit-tests and
-hence should work perfectly. Here's how to use it
+hence should work perfectly. Here’s how to use it
 
 .. code:: python
 
-    #from voluptuous import *  # no more
-    from good.voluptuous import *  # replacement
+   #from voluptuous import *  # no more
+   from good.voluptuous import *  # replacement
 
-    # .. and use it like before
+   # .. and use it like before
 
 Includes all the features and is absolutely compatible, except for the
 error message texts, which became much more user-friendly :)
@@ -179,7 +179,7 @@ A schema is a Python structure where nodes are pattern-matched against
 the corresponding values. It leverages the full flexibility of Python,
 allowing you to match values, types, data structures and much more.
 
-When a schema is created, it's compiled into a callable function which
+When a schema is created, it’s compiled into a callable function which
 does the validation, hence it does not need to analyze the schema every
 time.
 
@@ -187,11 +187,11 @@ Once the Schema is defined, validation can be triggered by calling it:
 
 .. code:: python
 
-    from good import Schema
+   from good import Schema
 
-    schema = Schema({ 'a': str })
-    # Test
-    schema({ 'a': 'i am a valid string' })
+   schema = Schema({ 'a': str })
+   # Test
+   schema({ 'a': 'i am a valid string' })
 
 The following rules exist:
 
@@ -200,21 +200,21 @@ The following rules exist:
 
    .. code:: python
 
-       Schema(1)(1)  #-> 1
-       Schema(1)(2)  #-> Invalid: Invalid value: expected 1, got 2
+      Schema(1)(1)  #-> 1
+      Schema(1)(2)  #-> Invalid: Invalid value: expected 1, got 2
 
 2. **Type**: type schema produces a strict ``type(v) == schema`` check
    on the input value:
 
    .. code:: python
 
-       Schema(int)(1)    #-> 1
-       Schema(int)(True)
-       #-> Invalid: Wrong type: expected Integer number, got Boolean
-       Schema(int)('1')
-       #-> Invalid: Wrong type: expected Integer number, got Binary String
+      Schema(int)(1)    #-> 1
+      Schema(int)(True)
+      #-> Invalid: Wrong type: expected Integer number, got Boolean
+      Schema(int)('1')
+      #-> Invalid: Wrong type: expected Integer number, got Binary String
 
-   For Python2, there is an exception for ``basestring``: it won't make
+   For Python2, there is an exception for ``basestring``: it won’t make
    strict type checks, but rather ``isinstance()``.
 
    For a relaxed ``isinstance()`` check, see ```Type`` <#type>`__
@@ -228,49 +228,52 @@ The following rules exist:
 
    .. code:: python
 
-       from enum import Enum
+      from enum import Enum
 
-       class Colors(Enum):
-           RED = 0xFF0000
-           GREEN = 0x00FF00
-           BLUE = 0x0000FF
+      class Colors(Enum):
+          RED = 0xFF0000
+          GREEN = 0x00FF00
+          BLUE = 0x0000FF
 
-       schema = Schema(Colors)
+      schema = Schema(Colors)
 
-       schema(0xFF0000)  #-> <Colors.RED: 0xFF0000>
-       schema(Colors.RED)  #-> <Colors.RED: 0xFF0000>
-       schema(123)
-       #-> Invalid: Invalid Colors value, expected Colors, got 123
+      schema(0xFF0000)  #-> <Colors.RED: 0xFF0000>
+      schema(Colors.RED)  #-> <Colors.RED: 0xFF0000>
+      schema(123)
+      #-> Invalid: Invalid Colors value, expected Colors, got 123
 
    Output is always an instance of the provided ``Enum`` type value.
 
 4. **Callable**: is applied to the value and the result is used as the
    final value.
 
-Callables should raise ```Invalid`` <#invalid>`__ errors in case of a
-failure, however some generic error types are converted automatically:
-see `Callables <#callables>`__.
+   Callables should raise ```Invalid`` <#invalid>`__ errors in case of a
+   failure, however some generic error types are converted
+   automatically: see `Callables <#callables>`__.
 
-In addition, validators are allowed to transform a value to the required
-form. For instance, ```Coerce(int)`` <#coerce>`__ returns a callable
-which will convert input values into ``int`` or fail.
+   In addition, validators are allowed to transform a value to the
+   required form. For instance, ```Coerce(int)`` <#coerce>`__ returns a
+   callable which will convert input values into ``int`` or fail.
 
-\`\`\`python def CoerceInt(v): # naive Coerce(int) implementation return
-int(v)
+   .. code:: python
 
-Schema(CoerceInt)(1) #-> 1 Schema(CoerceInt)('1') #-> 1
-Schema(CoerceInt)('a') #-> Invalid: invalid literal for int(): expected
-CoerceInt(), got a \`\`\`
+      def CoerceInt(v):  # naive Coerce(int) implementation
+          return int(v)
+
+      Schema(CoerceInt)(1)    #-> 1
+      Schema(CoerceInt)('1')  #-> 1
+      Schema(CoerceInt)('a')
+      #-> Invalid: invalid literal for int(): expected CoerceInt(), got a
 
 5. **``Schema``**: a schema may contain sub-schemas:
 
    .. code:: python
 
-       sub_schema = Schema(int)
-       schema = Schema([None, sub_schema])
+      sub_schema = Schema(int)
+      schema = Schema([None, sub_schema])
 
-       schema([None, 1, 2])  #-> [None, 1, 2]
-       schema([None, '1'])  #-> Invalid: invalid value
+      schema([None, 1, 2])  #-> [None, 1, 2]
+      schema([None, '1'])  #-> Invalid: invalid value
 
    Since ``Schema`` is callable, validation transparently by just
    calling it :)
@@ -289,11 +292,11 @@ the compilation phase:
 
    .. code:: python
 
-       schema = Schema([1, 2, 3])  # List of valid values
+      schema = Schema([1, 2, 3])  # List of valid values
 
-       schema([1, 2, 2])  #-> [1, 2, 2]
-       schema([1, 2, 4])  #-> Invalid: Invalid value @ [2]: expected List[1|2|3], got 4
-       schema((1, 2, 2))  #-> Invalid: Wrong value type: expected List, got Tuple
+      schema([1, 2, 2])  #-> [1, 2, 2]
+      schema([1, 2, 4])  #-> Invalid: Invalid value @ [2]: expected List[1|2|3], got 4
+      schema((1, 2, 2))  #-> Invalid: Wrong value type: expected List, got Tuple
 
    Each value within the iterable is a schema as well, and validation
    requires that each member of the input value matches *any* of the
@@ -302,12 +305,12 @@ the compilation phase:
 
    .. code:: python
 
-       Schema([ # All values should be
-           # .. int ..
-           int,
-           # .. or a string, casted to int ..
-           lambda v: int(v)
-       ])([ 1, 2, '3' ])  #-> [ 1, 2, 3 ]
+      Schema([ # All values should be
+          # .. int ..
+          int,
+          # .. or a string, casted to int ..
+          lambda v: int(v)
+      ])([ 1, 2, '3' ])  #-> [ 1, 2, 3 ]
 
    This example works like this:
 
@@ -316,12 +319,12 @@ the compilation phase:
    2. For every member of the list, test that there is a matching value
       in the schema.
 
-      E.g. for value ``1`` -- ``int`` matches (immediate
-      ``instanceof()`` check). However, for value ``'3'`` -- ``int``
-      fails, but the callable manages to do it with no errors, and
-      transforms the value as well.
+      E.g. for value ``1`` – ``int`` matches (immediate ``instanceof()``
+      check). However, for value ``'3'`` – ``int`` fails, but the
+      callable manages to do it with no errors, and transforms the value
+      as well.
 
-      Since lists are ordered, the first schema that didn't fail is
+      Since lists are ordered, the first schema that didn’t fail is
       used.
 
 2. **Mappings** (``dict``, custom mappings):
@@ -331,32 +334,32 @@ the compilation phase:
 
    .. code:: python
 
-       Schema({
-           'name': str,
-           'age': lambda v: int(v)
-       })({
-           'name': 'Alex',
-           'age': '18',
-       })  #-> {'name': 'Alex', 'age': 18}
+      Schema({
+          'name': str,
+          'age': lambda v: int(v)
+      })({
+          'name': 'Alex',
+          'age': '18',
+      })  #-> {'name': 'Alex', 'age': 18}
 
    When validating, *both* keys and values are schemas, which allows to
    use nested schemas and interesting validation rules. For instance,
-   let's use ```In`` <#in>`__ validator to match certain keys:
+   let’s use ```In`` <#in>`__ validator to match certain keys:
 
    .. code:: python
 
-       from good import Schema, In
+      from good import Schema, In
 
-       Schema({
-           # These two keys should have integer values
-           In(('age', 'height')): int,
-           # All other keys should have string values
-           str: str,
-       })({
-           'age': 18,
-           'height': 173,
-           'name': 'Alex',
-       })
+      Schema({
+          # These two keys should have integer values
+          In({'age', 'height'}): int,
+          # All other keys should have string values
+          str: str,
+      })({
+          'age': 18,
+          'height': 173,
+          'name': 'Alex',
+      })
 
    This works like this:
 
@@ -393,10 +396,10 @@ validation:
 
 -  Throwing errors.
 
-   If the callable throws ```Invalid`` <#invalid>`__ exception, it's
+   If the callable throws ```Invalid`` <#invalid>`__ exception, it’s
    used as is with all the rich info it provides. Schema is smart enough
    to fill into most of the arguments (see
-   ```Invalid.enrich`` <#invalidenrich>`__), so it's enough to use a
+   ```Invalid.enrich`` <#invalidenrich>`__), so it’s enough to use a
    custom message, and probably, set a human-friendly ``expected``
    field.
 
@@ -416,7 +419,7 @@ validation:
    E.g. ``def intify(v):pass`` becomes ``'intify()'`` in reported
    errors.
 
-   If a custom name is desired on the callable -- set the ``name``
+   If a custom name is desired on the callable – set the ``name``
    attribute on the callable object. This works best with classes,
    however a function can accept ``name`` attribute as well.
 
@@ -447,12 +450,12 @@ which define the sequence for matching keys in a mapping schema:
 
    .. code:: python
 
-       Schema({
-           'name': str,  # Specific rule with a literal
-           str: int,     # General rule with a type
-       })
+      Schema({
+          'name': str,  # Specific rule with a literal
+          str: int,     # General rule with a type
+      })
 
-3. Callables, iterables, mappings -- have lower priorities.
+3. Callables, iterables, mappings – have lower priorities.
 
 In addition, `Markers <#markers>`__ have individual priorities, which
 can be higher that literals (```Remove()`` <#remove>`__ marker) or lower
@@ -463,7 +466,7 @@ Creating a Schema
 
 .. code:: python
 
-    Schema(schema, default_keys=None, extra_keys=None)
+   Schema(schema, default_keys=None, extra_keys=None)
 
 Creates a compiled ``Schema`` object from the given schema definition.
 
@@ -492,7 +495,7 @@ Validating
 
 .. code:: python
 
-    Schema.__call__(value)
+   Schema.__call__(value)
 
 Having a ```Schema`` <#schema>`__, user input can be validated by
 calling the Schema on the input value.
@@ -523,25 +526,25 @@ collects all errors and throws these after the whole input value is
 validated. This makes sure that you can report *all* errors at once.
 
 With simple schemas, like ``Schema(int)``, only a single error is
-available: e.g. wrong value type. In this case,
+available: e.g. wrong value type. In this case,
 ```Invalid`` <#invalid>`__ error is raised.
 
 However, with complex schemas with embedded structures and such,
-multiple errors can occur: then [``MultipleInvalid``\ ] is reported.
+multiple errors can occur: then [``MultipleInvalid``] is reported.
 
 All errors are available right at the top-level:
 
 .. code:: python
 
-    from good import Invalid, MultipleInvalid
+   from good import Invalid, MultipleInvalid
 
 Invalid
 -------
 
 .. code:: python
 
-    Invalid(message, expected=None, provided=None, path=None,
-            validator=None, **info)
+   Invalid(message, expected=None, provided=None, path=None,
+           validator=None, **info)
 
 Validation error for a single value.
 
@@ -554,17 +557,16 @@ Arguments:
 -  ``expected``: Expected value: info about the value the validator was
    expecting.
 
-   If validator does not specify it -- the name of the validator is
-   used.
+   If validator does not specify it – the name of the validator is used.
 -  ``provided``: Provided value: info about the value that was actually
    supplied by the user
 
-   If validator does not specify it -- the input value is typecasted to
+   If validator does not specify it – the input value is typecasted to
    string and stored here.
 -  ``path``: Path to the error value.
 
-   E.g. if an invalid value was encountered at ['a'].b[1], then
-   path=['a', 'b', 1].
+   E.g. if an invalid value was encountered at [‘a’].b[1], then
+   path=[‘a’, ‘b’, 1].
 -  ``validator``: The validator that has failed: a schema item
 -  ``**info``: Custom values that might be provided by the validator. No
    built-in validator uses this.
@@ -574,8 +576,8 @@ Arguments:
 
 .. code:: python
 
-    Invalid.enrich(expected=None, provided=None, path=None,
-                   validator=None)
+   Invalid.enrich(expected=None, provided=None, path=None,
+                  validator=None)
 
 Enrich this error with additional information.
 
@@ -592,20 +594,20 @@ whole input with multiple different schemas:
 
 .. code:: python
 
-    from good import Schema, Invalid
+   from good import Schema, Invalid
 
-    schema = Schema(int)
-    input = {
-        'user': {
-            'age': 10,
-        }
-    }
+   schema = Schema(int)
+   input = {
+       'user': {
+           'age': 10,
+       }
+   }
 
-    try:
-        schema(input['user']['age'])
-    except Invalid as e:
-        e.enrich(path=['user', 'age'])  # Make the path reflect the reality
-        raise  # re-raise the error with updated fields
+   try:
+       schema(input['user']['age'])
+   except Invalid as e:
+       e.enrich(path=['user', 'age'])  # Make the path reflect the reality
+       raise  # re-raise the error with updated fields
 
 This is used when validating a value within a container.
 
@@ -623,12 +625,12 @@ MultipleInvalid
 
 .. code:: python
 
-    MultipleInvalid(errors)
+   MultipleInvalid(errors)
 
 Validation errors for multiple values.
 
 This error is raised when the ```Schema`` <#schema>`__ has reported
-multiple errors, e.g. for several dictionary keys.
+multiple errors, e.g. for several dictionary keys.
 
 ``MultipleInvalid`` has the same attributes as
 ```Invalid`` <#invalid>`__, but the values are taken from the first
@@ -636,7 +638,7 @@ error in the list.
 
 In addition, it has the ``errors`` attribute, which is a list of
 ```Invalid`` <#invalid>`__ errors collected by the schema. The list is
-guaranteed to be plain: e.g. there will be no underlying hierarchy of
+guaranteed to be plain: e.g. there will be no underlying hierarchy of
 ``MultipleInvalid``.
 
 Note that both ``Invalid`` and ``MultipleInvalid`` are iterable, which
@@ -644,14 +646,14 @@ allows to process them in singularity:
 
 .. code:: python
 
-    try:
-        schema(input_value)
-    except Invalid as ee:
-        reported_problems = {}
-        for e in ee:  # Iterate over `Invalid`
-            path_str = u'.'.join(e.path)  # 'a.b.c.d', JavaScript-friendly :)
-            reported_problems[path_str] = e.message
-        #.. send reported_problems to the user
+   try:
+       schema(input_value)
+   except Invalid as ee:
+       reported_problems = {}
+       for e in ee:  # Iterate over `Invalid`
+           path_str = u'.'.join(e.path)  # 'a.b.c.d', JavaScript-friendly :)
+           reported_problems[path_str] = e.message
+       #.. send reported_problems to the user
 
 In this example, we create a dictionary of paths (as strings) mapped to
 error strings for the user.
@@ -660,7 +662,7 @@ Arguments:
 
 -  ``errors``: The reported errors.
 
-   If it contains ``MultipleInvalid`` errors -- the list is recursively
+   If it contains ``MultipleInvalid`` errors – the list is recursively
    flattened so all of them are guaranteed to be instances of
    ```Invalid`` <#invalid>`__.
 
@@ -673,28 +675,28 @@ Immediately, the example is:
 
 .. code:: python
 
-    from good import Schema, Required
+   from good import Schema, Required
 
-    Schema({
-        'name': str,  # required key
-        Optional('age'): int,  # optional key
-    }, default_keys=Required)
+   Schema({
+       'name': str,  # required key
+       Optional('age'): int,  # optional key
+   }, default_keys=Required)
 
 This way, keys marked with ``Required()`` will report errors if no value
 if provided.
 
-Typically, a marker "decorates" a mapping key, but some of them can be
-"standalone":
+Typically, a marker “decorates” a mapping key, but some of them can be
+“standalone”:
 
 .. code:: python
 
-    from good import Schema, Extra
-    Schema({
-        'name': str,
-        Extra: int  # allow any keys, provided their values are integer
-    })
+   from good import Schema, Extra
+   Schema({
+       'name': str,
+       Extra: int  # allow any keys, provided their values are integer
+   })
 
-Each marker can have it's own unique behavior since nothing is hardcoded
+Each marker can have it’s own unique behavior since nothing is hardcoded
 into the core ```Schema`` <#schema>`__. Keep on reading to learn how
 markers perform.
 
@@ -703,7 +705,7 @@ markers perform.
 
 .. code:: python
 
-    Required(key)
+   Required(key)
 
 ``Required(key)`` is used to decorate mapping keys and hence specify
 that these keys must always be present in the input mapping.
@@ -713,27 +715,27 @@ default marker:
 
 .. code:: python
 
-    from good import Schema, Required
+   from good import Schema, Required
 
-    schema = Schema({
-        'name': str,
-        'age': int
-    }, default_keys=Required)  # wrap with Required() by default
+   schema = Schema({
+       'name': str,
+       'age': int
+   }, default_keys=Required)  # wrap with Required() by default
 
-    schema({'name': 'Mark'})
-    #-> Invalid: Required key not provided @ ['age']: expected age, got -none-
+   schema({'name': 'Mark'})
+   #-> Invalid: Required key not provided @ ['age']: expected age, got -none-
 
 Remember that mapping keys are schemas as well, and ``Require`` will
 expect to always have a match:
 
 .. code:: python
 
-    schema = Schema({
-        Required(str): int,
-    })
+   schema = Schema({
+       Required(str): int,
+   })
 
-    schema({})  # no `str` keys provided
-    #-> Invalid: Required key not provided: expected String, got -none-
+   schema({})  # no `str` keys provided
+   #-> Invalid: Required key not provided: expected String, got -none-
 
 In addition, the ``Required`` marker has special behavior with
 ```Default`` <#default>`__ that allows to set the key to a default value
@@ -747,7 +749,7 @@ Arguments:
 
 .. code:: python
 
-    Optional(key)
+   Optional(key)
 
 ``Optional(key)`` is controversial to ```Required(key)`` <#required>`__:
 specified that the mapping key is not required.
@@ -758,38 +760,38 @@ This only has meaning when a ```Schema`` <#schema>`__ has
 ``Optional()`` steps in: those keys are already decorated and hence are
 not wrapped with ``Required()``.
 
-So, it's only used to prevent ``Schema`` from putting ``Required()`` on
+So, it’s only used to prevent ``Schema`` from putting ``Required()`` on
 a key. In all other senses, it has absolutely no special behavior.
 
-As a result, optional key can be missing, but if it was provided -- its
+As a result, optional key can be missing, but if it was provided – its
 value must match the value schema.
 
 Example: use as ``default_keys``:
 
 .. code:: python
 
-    schema = Schema({
-        'name': str,
-        'age': int
-    }, default_keys=Optional)  # Make all keys optional by default
+   schema = Schema({
+       'name': str,
+       'age': int
+   }, default_keys=Optional)  # Make all keys optional by default
 
-    schema({})  #-> {} -- okay
-    schema({'name': None})
-    #->  Invalid: Wrong type @ ['name']: expected String, got None
+   schema({})  #-> {} -- okay
+   schema({'name': None})
+   #->  Invalid: Wrong type @ ['name']: expected String, got None
 
 Example: use to mark specific keys are not required:
 
 .. code:: python
 
-    schema = Schema({
-        'name': str,
-        Optional(str): int  # key is optional
-    })
+   schema = Schema({
+       'name': str,
+       Optional(str): int  # key is optional
+   })
 
-    schema({'name': 'Mark'})  # valid
-    schema({'name': 'Mark', 'age': 10})  # valid
-    schema({'name': 'Mark', 'age': 'X'})
-    #-> Invalid: Wrong type @ ['age']: expected Integer number, got Binary String
+   schema({'name': 'Mark'})  # valid
+   schema({'name': 'Mark', 'age': 10})  # valid
+   schema({'name': 'Mark', 'age': 'X'})
+   #-> Invalid: Wrong type @ ['age']: expected Integer number, got Binary String
 
 Arguments:
 
@@ -798,7 +800,7 @@ Arguments:
 
 .. code:: python
 
-    Remove(key)
+   Remove(key)
 
 ``Remove(key)`` marker is used to declare that the key, if encountered,
 should be removed, without validating the value.
@@ -810,31 +812,31 @@ Example:
 
 .. code:: python
 
-    schema = Schema({
-        Remove('name'): str, # `str` does not mean anything since the key is removed anyway
-        'age': int
-    })
+   schema = Schema({
+       Remove('name'): str, # `str` does not mean anything since the key is removed anyway
+       'age': int
+   })
 
-    schema({'name': 111, 'age': 18})  #-> {'age': 18}
+   schema({'name': 111, 'age': 18})  #-> {'age': 18}
 
-However, it's more natural to use ``Remove()`` on values. Remember that
+However, it’s more natural to use ``Remove()`` on values. Remember that
 in this case ``'name'`` will become ```Required()`` <#required>`__, if
 not decorated with ```Optional()`` <#optional>`__:
 
 .. code:: python
 
-    schema = Schema({
-        Optional('name'): Remove
-    })
+   schema = Schema({
+       Optional('name'): Remove
+   })
 
-    schema({'name': 111, 'age': 18})  #-> {'age': 18}
+   schema({'name': 111, 'age': 18})  #-> {'age': 18}
 
 **Bonus**: ``Remove()`` can be used in iterables as well:
 
 .. code:: python
 
-    schema = Schema([str, Remove(int)])
-    schema(['a', 'b', 1, 2])  #-> ['a', 'b']
+   schema = Schema([str, Remove(int)])
+   schema(['a', 'b', 1, 2])  #-> ['a', 'b']
 
 Arguments:
 
@@ -843,7 +845,7 @@ Arguments:
 
 .. code:: python
 
-    Reject(key)
+   Reject(key)
 
 ``Reject(key)`` marker is used to report ```Invalid`` <#invalid>`__
 errors every time is matches something in the input.
@@ -855,13 +857,13 @@ Example:
 
 .. code:: python
 
-    schema = Schema({
-        Reject('name'): None,  # Reject by key
-        Optional('age'): Msg(Reject, u"Field is not supported anymore"), # alternative form
-    })
+   schema = Schema({
+       Reject('name'): None,  # Reject by key
+       Optional('age'): Msg(Reject, u"Field is not supported anymore"), # alternative form
+   })
 
-    schema({'name': 111})
-    #-> Invalid: Field is not supported anymore @ ['name']: expected -none-, got name
+   schema({'name': 111})
+   #-> Invalid: Field is not supported anymore @ ['name']: expected -none-, got name
 
 Arguments:
 
@@ -870,7 +872,7 @@ Arguments:
 
 .. code:: python
 
-    Allow(key)
+   Allow(key)
 
 ``Allow(key)`` is a no-op marker that never complains on anything.
 
@@ -883,7 +885,7 @@ Arguments:
 
 .. code:: python
 
-    Extra(key)
+   Extra(key)
 
 ``Extra`` is a catch-all marker to define the behavior for mapping keys
 not defined in the schema.
@@ -891,7 +893,7 @@ not defined in the schema.
 It has the lowest priority, and delegates its function to its value,
 which can be a schema, or another marker.
 
-Given without argument, it's compiled with an identity function
+Given without argument, it’s compiled with an identity function
 ``lambda x:x`` which is a catch-all: it matches any value. Together with
 lowest priority, ``Extra`` will only catch values which did not match
 anything else.
@@ -903,40 +905,40 @@ Example with ``Extra: <schema>``:
 
 .. code:: python
 
-    schema = Schema({
-        'name': str,
-        Extra: int  # this will allow extra keys provided they're int
-    })
+   schema = Schema({
+       'name': str,
+       Extra: int  # this will allow extra keys provided they're int
+   })
 
-    schema({'name': 'Alex', 'age': 18'})  #-> ok
-    schema({'name': 'Alex', 'age': 'X'})
-    #-> Invalid: Wrong type @ ['age']: expected Integer number, got Binary String
+   schema({'name': 'Alex', 'age': 18'})  #-> ok
+   schema({'name': 'Alex', 'age': 'X'})
+   #-> Invalid: Wrong type @ ['age']: expected Integer number, got Binary String
 
 Example with ``Extra: Reject``: reject all extra values:
 
 .. code:: python
 
-    schema = Schema({
-        'name': str,
-        Extra: Reject
-    })
+   schema = Schema({
+       'name': str,
+       Extra: Reject
+   })
 
-    schema({'name': 'Alex', 'age': 'X'})
-    #-> Invalid: Extra keys not allowed @ ['age']: expected -none-, got age
+   schema({'name': 'Alex', 'age': 'X'})
+   #-> Invalid: Extra keys not allowed @ ['age']: expected -none-, got age
 
 Example with ``Extra: Remove``: silently discard all extra values:
 
 .. code:: python
 
-    schema = Schema({'name': str}, extra_keys=Remove)
-    schema({'name': 'Alex', 'age': 'X'})  #-> {'name': 'Alex'}
+   schema = Schema({'name': str}, extra_keys=Remove)
+   schema({'name': 'Alex', 'age': 'X'})  #-> {'name': 'Alex'}
 
 Example with ``Extra: Allow``: allow any extra values:
 
 .. code:: python
 
-    schema = Schema({'name': str}, extra_keys=Allow)
-    schema({'name': 'Alex', 'age': 'X'})  #-> {'name': 'Alex', 'age': 'X'}
+   schema = Schema({'name': str}, extra_keys=Allow)
+   schema({'name': 'Alex', 'age': 'X'})  #-> {'name': 'Alex', 'age': 'X'}
 
 Arguments:
 
@@ -945,7 +947,7 @@ Arguments:
 
 .. code:: python
 
-    Entire(key)
+   Entire(key)
 
 ``Entire`` is a convenience marker that validates the entire mapping
 using validators provided as a value.
@@ -957,34 +959,34 @@ This opens the possibilities to define rules on multiple fields. This
 feature is leveraged by the ```Inclusive`` <#inclusive>`__ and
 ```Exclusive`` <#exclusive>`__ group validators.
 
-For example, let's require the mapping to have no more than 3 keys:
+For example, let’s require the mapping to have no more than 3 keys:
 
 .. code:: python
 
-    from good import Schema, Entire
+   from good import Schema, Entire
 
-    def maxkeys(n):
-        # Return a validator function
-        def validator(d):
-            # `d` is the dictionary.
-            # Validate it
-            assert len(d) <= 3, 'Dict size should be <= 3'
-            # Return the value since all callable schemas should do that
-            return d
-        return validator
+   def maxkeys(n):
+       # Return a validator function
+       def validator(d):
+           # `d` is the dictionary.
+           # Validate it
+           assert len(d) <= 3, 'Dict size should be <= 3'
+           # Return the value since all callable schemas should do that
+           return d
+       return validator
 
-    schema = Schema({
-        str: int,
-        Entire: maxkeys(3)
-    })
+   schema = Schema({
+       str: int,
+       Entire: maxkeys(3)
+   })
 
 In this example, ``Entire`` is executed for every input dictionary, and
-magically calls the schema it's mapped to. The ``maxkeys(n)`` schema is
-a validator that complains on the dictionary size if it's too huge.
+magically calls the schema it’s mapped to. The ``maxkeys(n)`` schema is
+a validator that complains on the dictionary size if it’s too huge.
 ``Schema`` catches the ``AssertionError`` thrown by it and converts it
 to ```Invalid`` <#invalid>`__.
 
-Note that the schema this marker is mapped to can't replace the mapping
+Note that the schema this marker is mapped to can’t replace the mapping
 object, but it can mutate the given mapping.
 
 Arguments:
@@ -993,7 +995,7 @@ Validation Tools
 ================
 
 All validators listed here inherit from ``ValidatorBase`` which defines
-the standard interface. Currently it makes no difference whether it's
+the standard interface. Currently it makes no difference whether it’s
 just a callable, a class, or a subclass of ``ValidatorBase``, but in the
 future it may gain special features.
 
@@ -1007,7 +1009,7 @@ Collection of miscellaneous helpers to alter the validation process.
 
 .. code:: python
 
-    Object(schema, cls=None)
+   Object(schema, cls=None)
 
 Specify that the provided mapping should validate an object.
 
@@ -1016,28 +1018,28 @@ instead:
 
 .. code:: python
 
-    from good import Schema, Object
+   from good import Schema, Object
 
-    intify = lambda v: int(v)  # Naive Coerce(int) implementation
+   intify = lambda v: int(v)  # Naive Coerce(int) implementation
 
-    # Define a class to play with
-    class Person(object):
-        category = u'Something'  # Not validated
+   # Define a class to play with
+   class Person(object):
+       category = u'Something'  # Not validated
 
-        def __init__(self, name, age):
-            self.name = name
-            self.age = age
+       def __init__(self, name, age):
+           self.name = name
+           self.age = age
 
-    # Schema
-    schema = Schema(Object({
-        'name': str,
-        'age': intify,
-    }))
+   # Schema
+   schema = Schema(Object({
+       'name': str,
+       'age': intify,
+   }))
 
-    # Validate
-    schema(Person(name=u'Alex', age='18'))  #-> Girl(name=u'Alex', age=18)
+   # Validate
+   schema(Person(name=u'Alex', age='18'))  #-> Girl(name=u'Alex', age=18)
 
-Internally, it validates the object's ``__dict__``: hence, class
+Internally, it validates the object’s ``__dict__``: hence, class
 attributes are excluded from validation. Validation is performed with
 the help of a wrapper class which proxies object attributes as mapping
 keys, and then Schema validates it as a mapping.
@@ -1057,12 +1059,12 @@ Arguments:
 
 .. code:: python
 
-    Msg(schema, message)
+   Msg(schema, message)
 
 Override the error message reported by the wrapped schema in case of
 validation errors.
 
-On validation, if the schema throws ```Invalid`` <#invalid>`__ -- the
+On validation, if the schema throws ```Invalid`` <#invalid>`__ – the
 message is overridden with ``msg``.
 
 Some other error types are converted to ``Invalid``: see notes on
@@ -1070,20 +1072,20 @@ Some other error types are converted to ``Invalid``: see notes on
 
 .. code:: python
 
-    from good import Schema, Msg
+   from good import Schema, Msg
 
-    intify = lambda v: int(v)  # Naive Coerce(int) implementation
-    intify.name = u'Number'
+   intify = lambda v: int(v)  # Naive Coerce(int) implementation
+   intify.name = u'Number'
 
-    schema = Schema(Msg(intify, u'Need a number'))
-    schema(1)  #-> 1
-    schema('a')
-    #-> Invalid: Need a number: expected Number, got a
+   schema = Schema(Msg(intify, u'Need a number'))
+   schema(1)  #-> 1
+   schema('a')
+   #-> Invalid: Need a number: expected Number, got a
 
 Arguments:
 
 -  ``schema``: The wrapped schema to modify the error for
--  ``message``: Error message to use instead of the one that's reported
+-  ``message``: Error message to use instead of the one that’s reported
    by the underlying schema
 
 ``Test``
@@ -1091,13 +1093,13 @@ Arguments:
 
 .. code:: python
 
-    Test(fun)
+   Test(fun)
 
-Test the value with the provided function, expecting that it won't throw
+Test the value with the provided function, expecting that it won’t throw
 errors.
 
-If no errors were thrown -- the value is valid and *the original input
-value is used*. If any error was thrown -- the value is considered
+If no errors were thrown – the value is valid and *the original input
+value is used*. If any error was thrown – the value is considered
 invalid.
 
 This is especially useful to discard tranformations made by the wrapped
@@ -1105,20 +1107,20 @@ validator:
 
 .. code:: python
 
-    from good import Schema, Coerce
+   from good import Schema, Coerce
 
-    schema = Schema(Coerce(int))
+   schema = Schema(Coerce(int))
 
-    schema(123)  #-> 123
-    schema('123')  #-> '123' -- still string
-    schema('abc')
-    #-> Invalid: Invalid value, expected *Integer number, got abc
+   schema(123)  #-> 123
+   schema('123')  #-> '123' -- still string
+   schema('abc')
+   #-> Invalid: Invalid value, expected *Integer number, got abc
 
 Arguments:
 
 -  ``fun``: Callable to test the value with, or a validator function.
 
-   Note that this won't work with mutable input values since they're
+   Note that this won’t work with mutable input values since they’re
    modified in-place!
 
 ``message``
@@ -1126,17 +1128,17 @@ Arguments:
 
 .. code:: python
 
-    message(message, name=None)
+   message(message, name=None)
 
 Convenience decorator that applies ```Msg()`` <#msg>`__ to a callable.
 
 .. code:: python
 
-    from good import Schema, message
+   from good import Schema, message
 
-    @message(u'Need a number')
-    def intify(v):
-        return int(v)
+   @message(u'Need a number')
+   def intify(v):
+       return int(v)
 
 Arguments:
 
@@ -1150,7 +1152,7 @@ Returns: ``callable`` decorator
 
 .. code:: python
 
-    name(name, validator=None)
+   name(name, validator=None)
 
 Set a name on a validator callable.
 
@@ -1159,12 +1161,12 @@ Useful for user-friendly reporting when using lambdas to populate the
 
 .. code:: python
 
-    from good import Schema, name
+   from good import Schema, name
 
-    Schema(lambda x: int(x))('a')
-    #-> Invalid: invalid literal for int(): expected <lambda>(), got
-    Schema(name('int()', lambda x: int(x))('a')
-    #-> Invalid: invalid literal for int(): expected int(), got a
+   Schema(lambda x: int(x))('a')
+   #-> Invalid: invalid literal for int(): expected <lambda>(), got
+   Schema(name('int()', lambda x: int(x))('a')
+   #-> Invalid: invalid literal for int(): expected int(), got a
 
 Note that it is only useful with lambdas, since function name is used if
 available: see notes on `Schema Callables <#callables>`__.
@@ -1172,16 +1174,16 @@ available: see notes on `Schema Callables <#callables>`__.
 Arguments:
 
 -  ``name``: Name to assign on the validator callable
--  ``validator``: Validator callable. If not provided -- a decorator is
+-  ``validator``: Validator callable. If not provided – a decorator is
    returned instead:
 
    .. code:: python
 
-       from good import name
+      from good import name
 
-       @name(u'int()')
-       def int(v):
-           return int(v)
+      @name(u'int()')
+      def int(v):
+          return int(v)
 
 Returns: ``callable`` The same validator callable
 
@@ -1190,17 +1192,17 @@ Returns: ``callable`` The same validator callable
 
 .. code:: python
 
-    truth(message, expected=None)
+   truth(message, expected=None)
 
 Convenience decorator that applies ```Check`` <#check>`__ to a callable.
 
 .. code:: python
 
-    from good import truth
+   from good import truth
 
-    @truth(u'Must be an existing directory')
-    def isDir(v):
-        return os.path.isdir(v)
+   @truth(u'Must be an existing directory')
+   def isDir(v):
+       return os.path.isdir(v)
 
 Arguments:
 
@@ -1218,7 +1220,7 @@ Predicates
 
 .. code:: python
 
-    Maybe(schema, none=None)
+   Maybe(schema, none=None)
 
 Validate the the value either matches the given schema or is None.
 
@@ -1226,25 +1228,25 @@ This supports *nullable* values and gives them a good representation.
 
 .. code:: python
 
-    from good import Schema, Maybe, Email
+   from good import Schema, Maybe, Email
 
-    schema = Schema(Maybe(Email))
+   schema = Schema(Maybe(Email))
 
-    schema(None)  #-> None
-    schema('user@example.com')  #-> 'user@example.com'
-    scheam('blahblah')
-    #-> Invalid: Wrong E-Mail: expected E-Mail?, got blahblah
+   schema(None)  #-> None
+   schema('user@example.com')  #-> 'user@example.com'
+   scheam('blahblah')
+   #-> Invalid: Wrong E-Mail: expected E-Mail?, got blahblah
 
 Note that it also have the ```Default``-like behavior <#default>`__ that
 initializes the missing ```Required()`` <#required>`__ keys:
 
 .. code:: python
 
-    schema = Schema({
-        'email': Maybe(Email)
-    })
+   schema = Schema({
+       'email': Maybe(Email)
+   })
 
-    schema({})  #-> {'email': None}
+   schema({})  #-> {'email': None}
 
 Arguments:
 
@@ -1256,7 +1258,7 @@ Arguments:
 
 .. code:: python
 
-    Any(*schemas)
+   Any(*schemas)
 
 Try the provided schemas in order and use the first one that succeeds.
 
@@ -1266,16 +1268,16 @@ has matched.
 
 .. code:: python
 
-    from good import Schema, Any
+   from good import Schema, Any
 
-    schema = Schema(Any(
-        # allowed string constants
-        'true', 'false',
-        # otherwise coerce as a bool
-        lambda v: 'true' if v else 'false'
-    ))
-    schema('true')  #-> 'true'
-    schema(0)  #-> 'false'
+   schema = Schema(Any(
+       # allowed string constants
+       'true', 'false',
+       # otherwise coerce as a bool
+       lambda v: 'true' if v else 'false'
+   ))
+   schema('true')  #-> 'true'
+   schema(0)  #-> 'false'
 
 Arguments:
 
@@ -1286,7 +1288,7 @@ Arguments:
 
 .. code:: python
 
-    All(*schemas)
+   All(*schemas)
 
 Value must pass all validators wrapped with ``All()`` predicate.
 
@@ -1296,18 +1298,18 @@ in order, which is in fact a composition of validators:
 
 .. code:: python
 
-    from good import Schema, All, Range
+   from good import Schema, All, Range
 
-    schema = Schema(All(
-        # Must be an integer ..
-        int,
-        # .. and in the allowed range
-        Range(0, 10)
-    ))
+   schema = Schema(All(
+       # Must be an integer ..
+       int,
+       # .. and in the allowed range
+       Range(0, 10)
+   ))
 
-    schema(1)  #-> 1
-    schema(99)
-    #-> Invalid: Not in range: expected 0..10, got 99
+   schema(1)  #-> 1
+   schema(99)
+   #-> Invalid: Not in range: expected 0..10, got 99
 
 Arguments:
 
@@ -1318,7 +1320,7 @@ Arguments:
 
 .. code:: python
 
-    Neither(*schemas)
+   Neither(*schemas)
 
 Value must not match any of the schemas.
 
@@ -1327,18 +1329,18 @@ each schema has raised an error.
 
 .. code:: python
 
-    from good import Schema, All, Neither
+   from good import Schema, All, Neither
 
-    schema = Schema(All(
-        # Integer
-        int,
-        # But not zero
-        Neither(0)
-    ))
+   schema = Schema(All(
+       # Integer
+       int,
+       # But not zero
+       Neither(0)
+   ))
 
-    schema(1)  #-> 1
-    schema(0)
-    #-> Invalid: Value not allowed: expected Not(0), got 0
+   schema(1)  #-> 1
+   schema(0)
+   #-> Invalid: Value not allowed: expected Not(0), got 0
 
 Arguments:
 
@@ -1349,34 +1351,34 @@ Arguments:
 
 .. code:: python
 
-    Inclusive(*keys)
+   Inclusive(*keys)
 
 ``Inclusive`` validates the defined inclusive group of mapping keys: if
-any of them was provided -- then all of them become required.
+any of them was provided – then all of them become required.
 
-This exists to support "sub-structures" within the mapping which only
+This exists to support “sub-structures” within the mapping which only
 make sense if specified together. Since this validator works on the
 entire mapping, the best way is to use it together with the
 ```Entire`` <#entire>`__ marker:
 
 .. code:: python
 
-    from good import Schema, Entire, Inclusive
+   from good import Schema, Entire, Inclusive
 
-    schema = Schema({
-        # Fields for all files
-        'name': str,
-        # Fields for images only
-        Optional('width'): int,
-        Optional('height'): int,
-        # Now put a validator on the entire mapping
-        Entire: Inclusive('width', 'height')
-    })
+   schema = Schema({
+       # Fields for all files
+       'name': str,
+       # Fields for images only
+       Optional('width'): int,
+       Optional('height'): int,
+       # Now put a validator on the entire mapping
+       Entire: Inclusive('width', 'height')
+   })
 
-    schema({'name': 'monica.jpg'})  #-> ok
-    schema({'name': 'monica.jpg', 'width': 800, 'height': 600})  #-> ok
-    schema({'name': 'monica.jpg', 'width': 800})
-    #-> Invalid: Required key not provided: expected height, got -none-
+   schema({'name': 'monica.jpg'})  #-> ok
+   schema({'name': 'monica.jpg', 'width': 800, 'height': 600})  #-> ok
+   schema({'name': 'monica.jpg', 'width': 800})
+   #-> Invalid: Required key not provided: expected height, got -none-
 
 Note that ``Inclusive`` only supports literals.
 
@@ -1389,13 +1391,13 @@ Arguments:
 
 .. code:: python
 
-    Exclusive(*keys)
+   Exclusive(*keys)
 
 ``Exclusive`` validates the defined exclusive group of mapping keys: if
-any of them was provided -- then none of the remaining keys can be used.
+any of them was provided – then none of the remaining keys can be used.
 
-This supports "sub-structures" with choice: if the user chooses a field
-from one of them -- then he cannot use others. It works on the entire
+This supports “sub-structures” with choice: if the user chooses a field
+from one of them – then he cannot use others. It works on the entire
 mapping and hence best to use with the ```Entire`` <#entire>`__ marker.
 
 By default, ``Exclusive`` requires the user to choose one of the
@@ -1404,41 +1406,41 @@ marker class given as an argument:
 
 .. code:: python
 
-    from good import Exclusive, Required, Optional
+   from good import Exclusive, Required, Optional
 
-    # Requires either of them
-    Exclusive('login', 'password')
-    Exclusive(Required, 'login', 'password')  # the default
+   # Requires either of them
+   Exclusive('login', 'password')
+   Exclusive(Required, 'login', 'password')  # the default
 
-    # Requires either of them, or none
-    Exclusive(Optional, 'login', 'password')
+   # Requires either of them, or none
+   Exclusive(Optional, 'login', 'password')
 
-Let's demonstrate with the API that supports multiple types of
+Let’s demonstrate with the API that supports multiple types of
 authentication, but requires the user to choose just one:
 
 .. code:: python
 
-    from good import Schema, Entire, Exclusive
+   from good import Schema, Entire, Exclusive
 
-    schema = Schema({
-        # Authentication types: login+password | email+password
-        Optional('login'): str,
-        Optional('email'): str,
-        'password': str,
-        # Now put a validator on the entire mapping
-        # that forces the user to choose
-        Entire: Msg(  # also override the message
-            Exclusive('login', 'email'),
-            u'Choose one'
-        )
-    })
+   schema = Schema({
+       # Authentication types: login+password | email+password
+       Optional('login'): str,
+       Optional('email'): str,
+       'password': str,
+       # Now put a validator on the entire mapping
+       # that forces the user to choose
+       Entire: Msg(  # also override the message
+           Exclusive('login', 'email'),
+           u'Choose one'
+       )
+   })
 
-    schema({'login': 'kolypto', 'password': 'qwerty'})  #-> ok
-    schema({'email': 'kolypto', 'password': 'qwerty'})  #-> ok
-    schema({'login': 'a', 'email': 'b', 'password': 'c'})
-    #-> MultipleInvalid:
-    #->     Invalid: Choose one @ [login]: expected login|email, got login
-    #->     Invalid: Choose one @ [email]: expected login|email, got email
+   schema({'login': 'kolypto', 'password': 'qwerty'})  #-> ok
+   schema({'email': 'kolypto', 'password': 'qwerty'})  #-> ok
+   schema({'login': 'a', 'email': 'b', 'password': 'c'})
+   #-> MultipleInvalid:
+   #->     Invalid: Choose one @ [login]: expected login|email, got login
+   #->     Invalid: Choose one @ [email]: expected login|email, got email
 
 Note that ``Exclusive`` only supports literals.
 
@@ -1458,7 +1460,7 @@ Types
 
 .. code:: python
 
-    Type(*types)
+   Type(*types)
 
 Check if the value has the specific type with ``isinstance()`` check.
 
@@ -1467,11 +1469,11 @@ this check is relaxed and accepts subtypes as well.
 
 .. code:: python
 
-    from good import Schema, Type
+   from good import Schema, Type
 
-    schema = Schema(Type(int))
-    schema(1)  #-> 1
-    schema(True)  #-> True
+   schema = Schema(Type(int))
+   schema(1)  #-> 1
+   schema(True)  #-> True
 
 Arguments:
 
@@ -1484,7 +1486,7 @@ Arguments:
 
 .. code:: python
 
-    Coerce(constructor)
+   Coerce(constructor)
 
 Coerce a value to a type with the provided callable.
 
@@ -1495,17 +1497,17 @@ If *constructor* fails with ``TypeError`` or ``ValueError``, the value
 is considered invalid and ``Coerce`` complains on that with a custom
 message.
 
-However, if *constructor* raises ```Invalid`` <#invalid>`__ -- the error
+However, if *constructor* raises ```Invalid`` <#invalid>`__ – the error
 object is used as it.
 
 .. code:: python
 
-    from good import Schema, Coerce
+   from good import Schema, Coerce
 
-    schema = Schema(Coerce(int))
-    schema(u'1')  #-> 1
-    schema(u'a')
-    #-> Invalid: Invalid value: expected *Integer number, got a
+   schema = Schema(Coerce(int))
+   schema(u'1')  #-> 1
+   schema(u'a')
+   #-> Invalid: Invalid value: expected *Integer number, got a
 
 Arguments:
 
@@ -1519,7 +1521,7 @@ Values
 
 .. code:: python
 
-    In(container)
+   In(container)
 
 Validate that a value is in a collection.
 
@@ -1531,13 +1533,13 @@ into schemas, and hence achieves better performance.
 
 .. code:: python
 
-    from good import Schema, In
+   from good import Schema, In
 
-    schema = Schema(In({1, 2, 3}))
+   schema = Schema(In({1, 2, 3}))
 
-    schema(1)  #-> 1
-    schema(99)
-    #-> Invalid: Unsupported value: expected In(1,2,3), got 99
+   schema(1)  #-> 1
+   schema(99)
+   #-> Invalid: Unsupported value: expected In(1,2,3), got 99
 
 The same example will work with ```Any`` <#any>`__, but slower :-)
 
@@ -1553,36 +1555,36 @@ Arguments:
 
 .. code:: python
 
-    Length(min=None, max=None)
+   Length(min=None, max=None)
 
 Validate that the provided collection has length in a certain range.
 
 .. code:: python
 
-    from good import Schema, Length
+   from good import Schema, Length
 
-    schema = Schema(All(
-        # Ensure it's a list (and not any other iterable type)
-        list,
-        # Validate length
-        Length(max=3),
-    ))
+   schema = Schema(All(
+       # Ensure it's a list (and not any other iterable type)
+       list,
+       # Validate length
+       Length(max=3),
+   ))
 
 Since mappings also have length, they can be validated as well:
 
 .. code:: python
 
-    schema = Schema({
-        # Strings mapped to integers
-        str: int,
-        # Size = 1..3
-        # Empty dicts are not allowed since `str` is implicitly `Required(str)`
-        Entire: Length(max=3)
-    })
+   schema = Schema({
+       # Strings mapped to integers
+       str: int,
+       # Size = 1..3
+       # Empty dicts are not allowed since `str` is implicitly `Required(str)`
+       Entire: Length(max=3)
+   })
 
-    schema([1])  #-> ok
-    schema([1,2,3,4])
-    #-> Invalid: Too long (3 is the most): expected Length(..3), got 4
+   schema([1])  #-> ok
+   schema([1,2,3,4])
+   #-> Invalid: Too long (3 is the most): expected Length(..3), got 4
 
 Arguments:
 
@@ -1594,54 +1596,54 @@ Arguments:
 
 .. code:: python
 
-    Default(default)
+   Default(default)
 
-Initialize a value to a default if it's not provided.
+Initialize a value to a default if it’s not provided.
 
-"Not provided" means ``None``, so basically it replaces ``None``\ s with
+“Not provided” means ``None``, so basically it replaces ``None``\ s with
 the default:
 
 .. code:: python
 
-    from good import Schema, Any, Default
+   from good import Schema, Any, Default
 
-    schema = Schema(Any(
-        # Accept ints
-        int,
-        # Replace `None` with 0
-        Default(0)
-    ))
+   schema = Schema(Any(
+       # Accept ints
+       int,
+       # Replace `None` with 0
+       Default(0)
+   ))
 
-    schema(1)  #-> 1
-    schema(None)  #-> 0
+   schema(1)  #-> 1
+   schema(None)  #-> 0
 
 It raises ```Invalid`` <#invalid>`__ on all values except for ``None``
 and ``default``:
 
 .. code:: python
 
-    schema = Schema(Default(42))
+   schema = Schema(Default(42))
 
-    schema(42)  #-> 42
-    schema(None)  #-> 42
-    schema(1)
-    #-> Invalid: Invalid value
+   schema(42)  #-> 42
+   schema(None)  #-> 42
+   schema(1)
+   #-> Invalid: Invalid value
 
 In addition, ``Default`` has special behavior with ``Required`` marker
-which is built into it: if a required key was not provided -- it's
+which is built into it: if a required key was not provided – it’s
 created with the default value:
 
 .. code:: python
 
-    from good import Schema, Default
+   from good import Schema, Default
 
-    schema = Schema({
-        # remember that keys are implicitly required
-        'name': str,
-        'age': Any(int, Default(0))
-    })
+   schema = Schema({
+       # remember that keys are implicitly required
+       'name': str,
+       'age': Any(int, Default(0))
+   })
 
-    schema({'name': 'Alex'})  #-> {'name': 'Alex', 'age': 0}
+   schema({'name': 'Alex'})  #-> {'name': 'Alex', 'age': 0}
 
 Arguments:
 
@@ -1652,7 +1654,7 @@ Arguments:
 
 .. code:: python
 
-    Fallback(default)
+   Fallback(default)
 
 Always returns the default value.
 
@@ -1663,42 +1665,42 @@ worked:
 
 .. code:: python
 
-    from good import Schema, Any, Fallback
+   from good import Schema, Any, Fallback
 
-    schema = Schema(Any(
-        int,
-        # All non-integer numbers are replaced with `None`
-        Fallback(None)
-    ))
+   schema = Schema(Any(
+       int,
+       # All non-integer numbers are replaced with `None`
+       Fallback(None)
+   ))
 
 Like ```Default`` <#default>`__, it also works with mappings.
 
 Internally, ``Default`` and ``Fallback`` work by feeding the schema with
 a special ```Undefined`` <good/schema/util.py>`__ value: if the schema
-manages to return some value without errors -- then it has the named
-"default behavior", and this validator just leverages the feature.
+manages to return some value without errors – then it has the named
+“default behavior”, and this validator just leverages the feature.
 
-A "fallback value" may be provided manually, and will work absolutely
+A “fallback value” may be provided manually, and will work absolutely
 the same (since value schema manages to succeed even though
 ``Undefined`` was given):
 
 .. code:: python
 
-    schema = Schema({
-        'name': str,
-        'age': Any(int, lambda v: 42)
-    })
+   schema = Schema({
+       'name': str,
+       'age': Any(int, lambda v: 42)
+   })
 
 Arguments:
 
--  ``default``: The value that's always returned
+-  ``default``: The value that’s always returned
 
 ``Map``
 ~~~~~~~
 
 .. code:: python
 
-    Map(enum, mode=1)
+   Map(enum, mode=1)
 
 Convert Enumerations that map names to values.
 
@@ -1711,16 +1713,16 @@ Supports three kinds of enumerations:
 
    .. code:: python
 
-       from good import Schema, Map
-       schema = Schema(Map({
-           'RED': 0xFF0000,
-           'GREEN': 0x00FF00,
-           'BLUE': 0x0000FF
-       }))
+      from good import Schema, Map
+      schema = Schema(Map({
+          'RED': 0xFF0000,
+          'GREEN': 0x00FF00,
+          'BLUE': 0x0000FF
+      }))
 
-       schema('RED')  #-> 0xFF0000
-       schema('BLACK')
-       #-> Invalid: Unsupported value: expected Constant, provided BLACK
+      schema('RED')  #-> 0xFF0000
+      schema('BLACK')
+      #-> Invalid: Unsupported value: expected Constant, provided BLACK
 
 2. Class.
 
@@ -1729,16 +1731,16 @@ Supports three kinds of enumerations:
 
    .. code:: python
 
-       class Colors:
-           RED = 0xFF0000
-           GREEN = 0x00FF00
-           BLUE = 0x0000FF
+      class Colors:
+          RED = 0xFF0000
+          GREEN = 0x00FF00
+          BLUE = 0x0000FF
 
-       schema = Schema(Map(Colors))
+      schema = Schema(Map(Colors))
 
-       schema('RED')  #-> 0xFF0000
-       schema('BLACK')
-       #-> Invalid: Unsupported value: expected Colors, provided BLACK
+      schema('RED')  #-> 0xFF0000
+      schema('BLACK')
+      #-> Invalid: Unsupported value: expected Colors, provided BLACK
 
    Note that all attributes of the class are used, except for protected
    (``_name``) and callables.
@@ -1754,25 +1756,25 @@ Supports three kinds of enumerations:
 
    .. code:: python
 
-       from enum import Enum
+      from enum import Enum
 
-       class Colors(Enum):
-           RED = 0xFF0000
-           GREEN = 0x00FF00
-           BLUE = 0x0000FF
+      class Colors(Enum):
+          RED = 0xFF0000
+          GREEN = 0x00FF00
+          BLUE = 0x0000FF
 
-       schema = Schema(Map(Colors))
-       schema('RED')  #-> <Colors.RED: 0xFF0000>
-       schema('BLACK')
-       #-> Invalid: Unsupported value: expected Colors, provided BLACK
+      schema = Schema(Map(Colors))
+      schema('RED')  #-> <Colors.RED: 0xFF0000>
+      schema('BLACK')
+      #-> Invalid: Unsupported value: expected Colors, provided BLACK
 
    Note that in ``mode=Map.VAL`` it works precisely like
    ``Schema(Enum)``.
 
-In addition to the "straignt" mode (lookup by key), it supports reverse
+In addition to the “straignt” mode (lookup by key), it supports reverse
 matching:
 
--  When ``mode=Map.KEY``, does only forward matching (by key) -- the
+-  When ``mode=Map.KEY``, does only forward matching (by key) – the
    default
 -  When ``mode=Map.VAL``, does only reverse matching (by value)
 -  When ``mode=Map.BOTH``, does bidirectional matching (by key first,
@@ -1780,18 +1782,18 @@ matching:
 
 Another neat feature is that ``Map`` supports ``in`` containment checks,
 which works great together with ```In`` <#in>`__:
-``In(Map(enum-value))`` will test if a value is convertible, but won't
+``In(Map(enum-value))`` will test if a value is convertible, but won’t
 actually do the convertion.
 
 .. code:: python
 
-    from good import Schema, Map, In
+   from good import Schema, Map, In
 
-    schema = Schema(In(Map(Colors)))
+   schema = Schema(In(Map(Colors)))
 
-    schema('RED') #-> 'RED'
-    schema('BLACK')
-    #-> Invalid: Unsupported value, expected Colors, got BLACK
+   schema('RED') #-> 'RED'
+   schema('BLACK')
+   #-> Invalid: Unsupported value, expected Colors, got BLACK
 
 Arguments:
 
@@ -1806,21 +1808,21 @@ Boolean
 
 .. code:: python
 
-    Check(bvalidator, message, expected)
+   Check(bvalidator, message, expected)
 
 Use the provided boolean function as a validator and raise errors when
-it's ``False``.
+it’s ``False``.
 
 .. code:: python
 
-    import os.path
-    from good import Schema, Check
+   import os.path
+   from good import Schema, Check
 
-    schema = Schema(
-        Check(os.path.isdir, u'Must be an existing directory'))
-    schema('/')  #-> '/'
-    schema('/404')
-    #-> Invalid: Must be an existing directory: expected isDir(), got /404
+   schema = Schema(
+       Check(os.path.isdir, u'Must be an existing directory'))
+   schema('/')  #-> '/'
+   schema('/404')
+   #-> Invalid: Must be an existing directory: expected isDir(), got /404
 
 Arguments:
 
@@ -1834,41 +1836,43 @@ Arguments:
 
 .. code:: python
 
-    Truthy()
+   Truthy()
 
 Assert that the value is truthy, in the Python sense.
 
-This fails on all "falsy" values: ``False``, ``0``, empty collections,
+This fails on all “falsy” values: ``False``, ``0``, empty collections,
 etc.
 
 .. code:: python
 
-    from good import Schema, Truthy
+   from good import Schema, Truthy
 
-    schema = Schema(Truthy())
+   schema = Schema(Truthy())
 
-    schema(1)  #-> 1
-    schema([1,2,3])  #-> [1,2,3]
-    schema(None)
-    #-> Invalid: Empty value: expected truthy(), got None
+   schema(1)  #-> 1
+   schema([1,2,3])  #-> [1,2,3]
+   schema(None)
+   #-> Invalid: Empty value: expected truthy(), got None
 
 ``Falsy``
 ~~~~~~~~~
 
 .. code:: python
 
-    Falsy()
+   Falsy()
 
 Assert that the value is falsy, in the Python sense.
 
 Supplementary to ```Truthy`` <#truthy>`__.
+
+.. _boolean-1:
 
 ``Boolean``
 ~~~~~~~~~~~
 
 .. code:: python
 
-    Boolean()
+   Boolean()
 
 Convert human-readable boolean values to a ``bool``.
 
@@ -1882,9 +1886,9 @@ The following values are supported:
 
    ::
 
-       y|Y|yes|Yes|YES|n|N|no|No|NO|
-       true|True|TRUE|false|False|FALSE|
-       on|On|ON|off|Off|OFF
+        y|Y|yes|Yes|YES|n|N|no|No|NO|
+        true|True|TRUE|false|False|FALSE|
+        on|On|ON|off|Off|OFF
 
    ```Invalid`` <#invalid>`__ is thrown if an unknown string literal is
    provided.
@@ -1893,15 +1897,15 @@ Example:
 
 .. code:: python
 
-    from good import Schema, Boolean
+   from good import Schema, Boolean
 
-    schema = Schema(Boolean())
+   schema = Schema(Boolean())
 
-    schema(None)  #-> False
-    schema(0)  #-> False
-    schema(1)  #-> True
-    schema(True)  #-> True
-    schema(u'yes')  #-> True
+   schema(None)  #-> False
+   schema(0)  #-> False
+   schema(1)  #-> True
+   schema(True)  #-> True
+   schema(u'yes')  #-> True
 
 Numbers
 -------
@@ -1911,23 +1915,23 @@ Numbers
 
 .. code:: python
 
-    Range(min=None, max=None)
+   Range(min=None, max=None)
 
 Validate that the value is within the defined range, inclusive. Raise
 ```Invalid`` <#invalid>`__ error if not.
 
 .. code:: python
 
-    from good import Schema, Range
+   from good import Schema, Range
 
-    schema = Schema(Range(1, 10))
+   schema = Schema(Range(1, 10))
 
-    schema(1)  #-> 1
-    schema(10)  #-> 10
-    schema(15)
-    #-> Invalid: Value must be at most 10: expected Range(1..10), got 15
+   schema(1)  #-> 1
+   schema(10)  #-> 10
+   schema(15)
+   #-> Invalid: Value must be at most 10: expected Range(1..10), got 15
 
-If the value cannot be compared to a number -- raises
+If the value cannot be compared to a number – raises
 ```Invalid`` <#invalid>`__. Note that in Python2 almost everything can
 be compared to a number, including strings, dicts and lists!
 
@@ -1941,22 +1945,22 @@ Arguments:
 
 .. code:: python
 
-    Clamp(min=None, max=None)
+   Clamp(min=None, max=None)
 
 Clamp a value to the defined range, inclusive.
 
 .. code:: python
 
-    from good import Schema, Clamp
+   from good import Schema, Clamp
 
-    schema = Schema(Clamp(1, 10))
+   schema = Schema(Clamp(1, 10))
 
-    schema(-1)  #-> 1
-    schema(1)  #-> 1
-    schema(10)  #-> 10
-    schema(15)  #-> 10
+   schema(-1)  #-> 1
+   schema(1)  #-> 1
+   schema(10)  #-> 10
+   schema(15)  #-> 10
 
-If the value cannot be compared to a number -- raises
+If the value cannot be compared to a number – raises
 ```Invalid`` <#invalid>`__. Note that in Python2 almost everything can
 be compared to a number, including strings, dicts and lists!
 
@@ -1973,7 +1977,7 @@ Strings
 
 .. code:: python
 
-    Lower()
+   Lower()
 
 Casts the provided string to lowercase, fails is the input value is not
 a string.
@@ -1982,20 +1986,20 @@ Supports both binary and unicode strings.
 
 .. code:: python
 
-    from good import Schema, Lower
+   from good import Schema, Lower
 
-    schema = Schema(Lower())
+   schema = Schema(Lower())
 
-    schema(u'ABC')  #-> u'abc'
-    schema(123)
-    #-> Invalid: Not a string: expected String, provided Integer number
+   schema(u'ABC')  #-> u'abc'
+   schema(123)
+   #-> Invalid: Not a string: expected String, provided Integer number
 
 ``Upper``
 ~~~~~~~~~
 
 .. code:: python
 
-    Upper()
+   Upper()
 
 Casts the input string to UPPERCASE.
 
@@ -2004,7 +2008,7 @@ Casts the input string to UPPERCASE.
 
 .. code:: python
 
-    Capitalize()
+   Capitalize()
 
 Capitalizes the input string.
 
@@ -2013,7 +2017,7 @@ Capitalizes the input string.
 
 .. code:: python
 
-    Title()
+   Title()
 
 Casts The Input String To Title Case
 
@@ -2022,55 +2026,55 @@ Casts The Input String To Title Case
 
 .. code:: python
 
-    Match(pattern, message=None, expected=None)
+   Match(pattern, message=None, expected=None)
 
 Validate the input string against a regular expression.
 
 .. code:: python
 
-    from good import Schema, Match
+   from good import Schema, Match
 
-    schema = Schema(All(
-        unicode,
-        Match(r'^0x[A-F0-9]+$', 'hex number')
-    ))
+   schema = Schema(All(
+       unicode,
+       Match(r'^0x[A-F0-9]+$', 'hex number')
+   ))
 
-    schema('0xDEADBEEF')  #-> '0xDEADBEEF'
-    schema('0x')
-    #-> Invalid: Wrong format: expected hex number, got 0xDEADBEEF
+   schema('0xDEADBEEF')  #-> '0xDEADBEEF'
+   schema('0x')
+   #-> Invalid: Wrong format: expected hex number, got 0xDEADBEEF
 
 Arguments:
 
 -  ``pattern``: RegExp pattern to match with: a string, or a compiled
    pattern
 -  ``message``: Error message override
--  ``expected``: Textual representation of what's expected from the user
+-  ``expected``: Textual representation of what’s expected from the user
 
 ``Replace``
 ~~~~~~~~~~~
 
 .. code:: python
 
-    Replace(pattern, repl, message=None, expected=None)
+   Replace(pattern, repl, message=None, expected=None)
 
 RegExp substitution.
 
 .. code:: python
 
-    from good import Schema, Replace
+   from good import Schema, Replace
 
-    schema = Schema(Replace(
-        # Grab domain name
-        r'^https?://([^/]+)/.*'
-        # Replace
-        r'',
-        # Tell the user that we're expecting a URL
-        u'URL'
-    ))
+   schema = Schema(Replace(
+       # Grab domain name
+       r'^https?://([^/]+)/.*'
+       # Replace
+       r'',
+       # Tell the user that we're expecting a URL
+       u'URL'
+   ))
 
-    schema('http://example.com/a/b/c')  #-> 'example.com'
-    schema('user@example.com')
-    #-> Invalid: Wrong format: expected URL, got user@example.com
+   schema('http://example.com/a/b/c')  #-> 'example.com'
+   schema('user@example.com')
+   #-> Invalid: Wrong format: expected URL, got user@example.com
 
 Arguments:
 
@@ -2081,32 +2085,32 @@ Arguments:
    Backreferences are supported, just like in the
    ```re`` <https://docs.python.org/2/library/re.html>`__ module.
 -  ``message``: Error message override
--  ``expected``: Textual representation of what's expected from the user
+-  ``expected``: Textual representation of what’s expected from the user
 
 ``Url``
 ~~~~~~~
 
 .. code:: python
 
-    Url(protocols=('http', 'https'))
+   Url(protocols=('http', 'https'))
 
-Validate a URL, make sure it's in the absolute format, including the
+Validate a URL, make sure it’s in the absolute format, including the
 protocol.
 
 .. code:: python
 
-    from good import Schema, Url
+   from good import Schema, Url
 
-    schema = Schema(Url('https'))
+   schema = Schema(Url('https'))
 
-    schema('example.com')  #-> 'https://example.com'
-    schema('http://example.com')  #-> 'http://example.com'
+   schema('example.com')  #-> 'https://example.com'
+   schema('http://example.com')  #-> 'http://example.com'
 
 Arguments:
 
 -  ``protocols``: List of allowed protocols.
 
-   If no protocol is provided by the user -- the first protocol is used
+   If no protocol is provided by the user – the first protocol is used
    by default.
 
 ``Email``
@@ -2114,23 +2118,23 @@ Arguments:
 
 .. code:: python
 
-    Email()
+   Email()
 
 Validate that a value is an e-mail address.
 
-This simply tests for the presence of the '@' sign, surrounded by some
+This simply tests for the presence of the ‘@’ sign, surrounded by some
 characters.
 
 .. code:: python
 
-    from good import Email
+   from good import Email
 
-    schema = Schema(Email())
+   schema = Schema(Email())
 
-    schema('user@example.com')  #-> 'user@example.com'
-    schema('user@localhost')  #-> 'user@localhost'
-    schema('user')
-    #-> Invalid: Invalid e-mail: expected E-Mail, got user
+   schema('user@example.com')  #-> 'user@example.com'
+   schema('user@localhost')  #-> 'user@localhost'
+   schema('user')
+   #-> Invalid: Invalid e-mail: expected E-Mail, got user
 
 Dates
 -----
@@ -2140,7 +2144,7 @@ Dates
 
 .. code:: python
 
-    DateTime(formats, localize=None, astz=None)
+   DateTime(formats, localize=None, astz=None)
 
 Validate that the input is a Python ``datetime``.
 
@@ -2152,15 +2156,15 @@ Supports the following input values:
 
 .. code:: python
 
-    from datetime import datetime
-    from good import Schema, DateTime
+   from datetime import datetime
+   from good import Schema, DateTime
 
-    schema = Schema(DateTime('%Y-%m-%d %H:%M:%S'))
+   schema = Schema(DateTime('%Y-%m-%d %H:%M:%S'))
 
-    schema('2014-09-06 21:22:23')  #-> datetime.datetime(2014, 9, 6, 21, 22, 23)
-    schema(datetime.now())  #-> datetime.datetime(2014, 9, 6, 21, 22, 23)
-    schema('2014')
-    #-> Invalid: Invalid datetime format, expected DateTime, got 2014.
+   schema('2014-09-06 21:22:23')  #-> datetime.datetime(2014, 9, 6, 21, 22, 23)
+   schema(datetime.now())  #-> datetime.datetime(2014, 9, 6, 21, 22, 23)
+   schema('2014')
+   #-> Invalid: Invalid datetime format, expected DateTime, got 2014.
 
 Notes on timezones:
 
@@ -2168,12 +2172,12 @@ Notes on timezones:
    ``datetime`` objects (without ``tzinfo``).
 -  If timezones are supported by the format (with ``%z``/``%Z``), it
    returns an *aware* ``datetime`` objects (with ``tzinfo``).
--  Since Python2 does not always support ``%z`` -- ``DateTime`` does
-   this manually. Due to the limited nature of this workaround, the
-   support for ``%z`` only works if it's at the end of the string!
+-  Since Python2 does not always support ``%z`` – ``DateTime`` does this
+   manually. Due to the limited nature of this workaround, the support
+   for ``%z`` only works if it’s at the end of the string!
 
-As a result, '00:00:00' is parsed into a *naive* datetime, and '00:00:00
-+0200' results in an *aware* datetime.
+As a result, ‘00:00:00’ is parsed into a *naive* datetime, and ‘00:00:00
++0200’ results in an *aware* datetime.
 
 If your application wants different rules, use ``localize`` and
 ``astz``:
@@ -2195,54 +2199,54 @@ This works best with the excellent
 
 .. code:: python
 
-    import pytz
-    from good import Schema, DateTime
+   import pytz
+   from good import Schema, DateTime
 
-    # Formats: with and without timezone
-    formats = [
-        '%Y-%m-%d %H:%M:%S',
-        '%Y-%m-%d %H:%M:%S%z'
-    ]
+   # Formats: with and without timezone
+   formats = [
+       '%Y-%m-%d %H:%M:%S',
+       '%Y-%m-%d %H:%M:%S%z'
+   ]
 
-    # The used timezones
-    UTC = pytz.timezone('UTC')
-    Oslo = pytz.timezone('Europe/Oslo')
+   # The used timezones
+   UTC = pytz.timezone('UTC')
+   Oslo = pytz.timezone('Europe/Oslo')
 
-    ### Example: Use Europe/Oslo by default
-    schema = Schema(DateTime(
-        formats,
-        localize=Oslo
-    ))
+   ### Example: Use Europe/Oslo by default
+   schema = Schema(DateTime(
+       formats,
+       localize=Oslo
+   ))
 
-    schema('2014-01-01 00:00:00')
-    #-> datetime.datetime(2014, 1, 1, 0, 0, tzinfo='Europe/Oslo')
-    schema('2014-01-01 00:00:00-0100')
-    #-> datetime.datetime(2014, 1, 1, 0, 0, tzinfo=-0100)
+   schema('2014-01-01 00:00:00')
+   #-> datetime.datetime(2014, 1, 1, 0, 0, tzinfo='Europe/Oslo')
+   schema('2014-01-01 00:00:00-0100')
+   #-> datetime.datetime(2014, 1, 1, 0, 0, tzinfo=-0100)
 
-    ### Example: Use Europe/Oslo by default and convert to an aware UTC
-    schema = Schema(DateTime(
-        formats,
-        localize=Oslo,
-        astz=UTC
-    ))
+   ### Example: Use Europe/Oslo by default and convert to an aware UTC
+   schema = Schema(DateTime(
+       formats,
+       localize=Oslo,
+       astz=UTC
+   ))
 
-    schema('2014-01-01 00:00:00')
-    #-> datetime.datetime(2013, 12, 31, 23, 17, tzinfo=<UTC>)
-    schema('2014-01-01 00:00:00-0100')
-    #-> datetime.datetime(2014, 1, 1, 1, 0, tzinfo=<UTC>)
+   schema('2014-01-01 00:00:00')
+   #-> datetime.datetime(2013, 12, 31, 23, 17, tzinfo=<UTC>)
+   schema('2014-01-01 00:00:00-0100')
+   #-> datetime.datetime(2014, 1, 1, 1, 0, tzinfo=<UTC>)
 
-    ### Example: Use Europe/Oslo by default, convert to a naive UTC
-    # This is the recommended way
-    schema = Schema(DateTime(
-        formats,
-        localize=Oslo,
-        astz=lambda v: v.astimezone(UTC).replace(tzinfo=None)
-    ))
+   ### Example: Use Europe/Oslo by default, convert to a naive UTC
+   # This is the recommended way
+   schema = Schema(DateTime(
+       formats,
+       localize=Oslo,
+       astz=lambda v: v.astimezone(UTC).replace(tzinfo=None)
+   ))
 
-    schema('2014-01-01 00:00:00')
-    #-> datetime.datetime(2013, 12, 31, 23, 17)
-    schema('2014-01-01 00:00:00-0100')
-    #-> datetime.datetime(2014, 1, 1, 1, 0)
+   schema('2014-01-01 00:00:00')
+   #-> datetime.datetime(2013, 12, 31, 23, 17)
+   schema('2014-01-01 00:00:00-0100')
+   #-> datetime.datetime(2014, 1, 1, 1, 0)
 
 Note: to save some pain, make sure to *always* work with naive
 ``datetimes`` adjusted to UTC! Armin Ronacher `explains it
@@ -2251,9 +2255,9 @@ here <http://lucumr.pocoo.org/2011/7/15/eppur-si-muove/>`__.
 Summarizing all the above, the validation procedure is a 3-step process:
 
 1. Parse (only with strings)
-2. If is *naive* -- apply ``localize`` and make it *aware* (if
+2. If is *naive* – apply ``localize`` and make it *aware* (if
    ``localize`` is specified)
-3. If is *aware* -- apply ``astz`` to convert it (if ``astz`` is
+3. If is *aware* – apply ``astz`` to convert it (if ``astz`` is
    specified)
 
 Arguments:
@@ -2280,7 +2284,7 @@ Arguments:
 
 .. code:: python
 
-    Date(formats, localize=None, astz=None)
+   Date(formats, localize=None, astz=None)
 
 Validate that the input is a Python ``date``.
 
@@ -2292,15 +2296,15 @@ Supports the following input values:
 
 .. code:: python
 
-    from datetime import date
-    from good import Schema, Date
+   from datetime import date
+   from good import Schema, Date
 
-    schema = Schema(Date('%Y-%m-%d'))
+   schema = Schema(Date('%Y-%m-%d'))
 
-    schema('2014-09-06')  #-> datetime.date(2014, 9, 6)
-    schema(date(2014, 9, 6))  #-> datetime.date(2014, 9, 6)
-    schema('2014')
-    #-> Invalid: Invalid date format, expected Date, got 2014.
+   schema('2014-09-06')  #-> datetime.date(2014, 9, 6)
+   schema(date(2014, 9, 6))  #-> datetime.date(2014, 9, 6)
+   schema('2014')
+   #-> Invalid: Invalid date format, expected Date, got 2014.
 
 Arguments:
 
@@ -2309,7 +2313,7 @@ Arguments:
 
 .. code:: python
 
-    Time(formats, localize=None, astz=None)
+   Time(formats, localize=None, astz=None)
 
 Validate that the input is a Python ``time``.
 
@@ -2319,7 +2323,7 @@ Supports the following input values:
 2. ``datetime``: takes the ``.timetz()`` part
 3. string: parses (see ```DateTime`` <#datetime>`__)
 
-Since ``time`` is subject to timezone problems, make sure you've read
+Since ``time`` is subject to timezone problems, make sure you’ve read
 the notes in the relevant section of ```DateTime`` <#datetime>`__ docs.
 
 Arguments:
@@ -2332,26 +2336,26 @@ Files
 
 .. code:: python
 
-    IsFile()
+   IsFile()
 
 Verify that the file exists.
 
 .. code:: python
 
-    from good import Schema, IsFile
+   from good import Schema, IsFile
 
-    schema = Schema(IsFile())
+   schema = Schema(IsFile())
 
-    schema('/etc/hosts')  #-> '/etc/hosts'
-    schema('/etc')
-    #-> Invalid: is not a file: expected Existing file path, got /etc
+   schema('/etc/hosts')  #-> '/etc/hosts'
+   schema('/etc')
+   #-> Invalid: is not a file: expected Existing file path, got /etc
 
 ``IsDir``
 ~~~~~~~~~
 
 .. code:: python
 
-    IsDir()
+   IsDir()
 
 Verify that the directory exists.
 
@@ -2360,9 +2364,6 @@ Verify that the directory exists.
 
 .. code:: python
 
-    PathExists()
+   PathExists()
 
 Verify that the path exists.
-
-.. |Build Status| image:: https://api.travis-ci.org/kolypto/py-good.png?branch=master
-   :target: https://travis-ci.org/kolypto/py-good
