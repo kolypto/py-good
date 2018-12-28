@@ -679,6 +679,51 @@ class SchemaCoreTest(GoodTestBase):
         assertValid(schema, {100: None}, {100: 'Extra'})
         schema.pop(Extra)
 
+    def test_mapping_order_of_keys(self):
+        """ Test whether mappings support Matches even when the ordering of keys is different """
+        # This issue has arisen while reviewing PR-6: https://github.com/kolypto/py-good/pull/6
+        # It didn't work, because compiled schema had `str` before `In()` in a sorted array.
+        # This should not be so: matching should work even if the ordering of keys is different.
+        # To check this, I'm using OrderedDict()
+
+        def shifted_lists(l):
+            """ Generate ordered schema lists with shifted elements """
+            for i in range(len(l)):
+                yield deepcopy(l[i:]+l[:i])
+
+        # Test with two literals and a matcher
+        schema_list = [
+            ('age', int),
+            ('height', int),
+            (str, str)
+        ]
+        data = collections.OrderedDict((('age', 18), ('name', 'Alex'), ('height', 173)))
+
+        for s in shifted_lists(schema_list):
+            Schema(collections.OrderedDict(s))(data)  # all should go well
+
+        # Test with three equivalent non-literal types
+        schema_list = [
+            (int, int),
+            (str, str),
+            (bool, bool),
+        ]
+        data = collections.OrderedDict(((1, 1), ('a', 'b'), (False, False)))
+
+        for s in shifted_lists(schema_list):
+            Schema(collections.OrderedDict(s))(data)
+
+        # Test with In()
+        # Becaue it has overlapping matchers (`str` will match `'name', 'age',`), it will only work as OrderedDict:
+        # This is the very issue that I discovered thanks to PR-6: one sorting works, the other one does not
+        schema_list = [
+            (In({'age', 'height'}), int),
+            (All(str, Neither(In({'age', 'height'}))), str)  # yes, have to define it this ugly way
+        ]
+        data = collections.OrderedDict((('age', 18), ('name', 'Alex'), ('height', 173)))
+
+        for s in shifted_lists(schema_list):
+            Schema(collections.OrderedDict(s))(data)
 
 class InvalidJsonTest(unittest.TestCase):
 

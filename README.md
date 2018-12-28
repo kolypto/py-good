@@ -306,8 +306,8 @@ Moreover, instances of the following types are converted to callables on the com
     Schema({
         # These two keys should have integer values
         In({'age', 'height'}): int,
-        # All other keys should have string values
-        str: str,
+        # All other string keys (other than 'age', 'height') should have string values
+        All(str, Neither(In({'age', 'height'}))): str,
     })({
         'age': 18,
         'height': 173,
