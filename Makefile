@@ -4,6 +4,7 @@ SHELL := /bin/bash
 .PHONY: clean build publish test test-tox test-docker
 
 # Package
+.PHONY: clean
 clean:
 	@rm -rf build/ dist/ *.egg-info/ README.md README.rst
 README.md: $(shell find * -type f -name '*.py' -o -name '*.j2') $(wildcard misc/_doc/**)
@@ -11,6 +12,7 @@ README.md: $(shell find * -type f -name '*.py' -o -name '*.j2') $(wildcard misc/
 README.rst: README.md
 	@pandoc -f markdown -t rst -o README.rst README.md
 
+.PHONY: build publish-test publish
 build: README.rst
 	@./setup.py build sdist bdist_wheel
 publish-test: README.rst
@@ -19,6 +21,7 @@ publish: README.rst
 	@twine upload dist/*
 
 
+.PHONY: test test-tox test-docker test-docker-2.6
 test:
 	@nosetests
 test-tox:
