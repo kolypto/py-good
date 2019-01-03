@@ -3,11 +3,9 @@ from exdoc import doc, getmembers
 
 import json
 
-# TODO: the whole library is Python3-compatible, but `exdoc` is not ; this file is Python2
-
 doccls = lambda cls, *allowed_keys: {
     'cls': doc(cls),
-    'attrs': {name: doc(m) for name, m in getmembers(cls, None, lambda key, value: key in allowed_keys or not key.startswith('_'))}
+    'attrs': {name: doc(m, cls) for name, m in getmembers(cls, None, lambda key, value: key in allowed_keys or not key.startswith('_'))}
 }
 
 joindict = lambda *dicts: reduce(lambda memo, d: memo.update(d) or memo, dicts, {})
@@ -49,4 +47,4 @@ class MyJsonEncoder(json.JSONEncoder):
             return o.__name__
         return super(MyJsonEncoder, self).default(o)
 
-print json.dumps(data, indent=2, cls=MyJsonEncoder)
+print(json.dumps(data, indent=2, cls=MyJsonEncoder))
