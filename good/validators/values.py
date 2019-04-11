@@ -1,4 +1,5 @@
-import collections
+try: from collections import abc  # 3.x
+except ImportError: import collections as abc  # 2.7
 
 from .base import ValidatorBase
 from .. import Invalid
@@ -38,7 +39,7 @@ class In(ValidatorBase):
     """
 
     def __init__(self, container):
-        assert isinstance(container, collections.Container), '`container` must support `in` operation'
+        assert isinstance(container, abc.Container), '`container` must support `in` operation'
         self.container = container
 
         # Name
@@ -46,7 +47,7 @@ class In(ValidatorBase):
             self.name = self.container.name  # Inherit name
         else:
             # Format
-            if isinstance(self.container, collections.Iterable):
+            if isinstance(self.container, abc.Iterable):
                 cs = _(u',').join(map(get_literal_name, self.container))
             else:
                 cs = get_primitive_name(self.container)
@@ -115,7 +116,7 @@ class Length(ValidatorBase):
         )
 
     def __call__(self, v):
-        if not isinstance(v, collections.Sized):
+        if not isinstance(v, abc.Sized):
             raise Invalid(_(u'Input is not a collection'), u'Collection', get_type_name(type(v)))
 
         length = len(v)
@@ -349,7 +350,7 @@ class Map(ValidatorBase):
                 self.rlookup = lambda v: self.enum(v)
         else:
             # Object?
-            if not isinstance(enum, collections.Mapping):
+            if not isinstance(enum, abc.Mapping):
                 # Convert scalar public attributes to mapping
                 self.name = enum.__name__
                 enum = {k: v

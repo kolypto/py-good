@@ -1,8 +1,10 @@
 """ Misc utilities """
 
 import six
-import collections
 from datetime import date, time, datetime
+
+try: from collections import abc  # 3.x
+except ImportError: import collections as abc  # 2.7
 
 try:
     from enum import EnumMeta, Enum
@@ -67,7 +69,7 @@ def register_type_name(t, name):
     :type name: unicode
     """
     assert isinstance(t, type)
-    assert isinstance(name, unicode)
+    assert isinstance(name, six.text_type)
     __type_names[t] = name
 
 
@@ -198,10 +200,10 @@ def primitive_type(schema):
     elif issubclass(schema_type, six.class_types):
         return const.COMPILED_TYPE.TYPE
     # Mapping
-    elif isinstance(schema, collections.Mapping):
+    elif isinstance(schema, abc.Mapping):
         return const.COMPILED_TYPE.MAPPING
     # Iterable
-    elif isinstance(schema, collections.Iterable):
+    elif isinstance(schema, abc.Iterable):
         return const.COMPILED_TYPE.ITERABLE
     # Callable
     elif callable(schema):

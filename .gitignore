@@ -16,6 +16,9 @@
 .project
 *.sublime-project
 
+# Env
+/.python-version
+
 # Temps
 *~
 *.tmp
@@ -28,6 +31,8 @@ Thumbs.db
 # Utils
 .sass-cache/
 .coverage
+/.noseids
+/profile.*
 
 # Generated
 __pycache__

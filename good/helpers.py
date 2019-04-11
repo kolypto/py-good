@@ -1,8 +1,10 @@
 """ Collection of miscellaneous helpers to alter the validation process. """
 
 import six
-import collections
 from functools import update_wrapper
+
+try: from collections import abc  # 3.x
+except ImportError: import collections as abc  # 2.7
 
 from .schema.util import const, get_literal_name, get_callable_name
 from . import Schema, SchemaError, Invalid
@@ -10,7 +12,7 @@ from .validators.base import ValidatorBase
 from .validators.boolean import Check
 
 
-class ObjectProxy(collections.Mapping, dict):
+class ObjectProxy(abc.Mapping, dict):
     """ Proxy object attributes as dictionary keys.
 
     Used with Object() validator
