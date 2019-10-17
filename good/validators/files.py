@@ -1,4 +1,6 @@
 import os
+from gettext import gettext as _
+
 from .base import ValidatorBase
 from .. import Invalid
 

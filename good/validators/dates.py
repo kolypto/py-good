@@ -1,5 +1,4 @@
-from __future__ import division
-import six
+from gettext import gettext as _
 from datetime import date, time, datetime, tzinfo, timedelta
 
 
@@ -37,7 +36,7 @@ class FixedOffset(tzinfo):
         super(FixedOffset, self).__init__()
 
         # Parse
-        if isinstance(offset, six.string_types):
+        if isinstance(offset, str):
             offset = self.parse_z(offset)
 
         # Create
@@ -193,7 +192,7 @@ class DateTime(ValidatorBase):
     def __init__(self, formats, localize=None, astz=None):
         # Ensure a tuple
         self.formats = tuple([formats]
-                             if isinstance(formats, six.string_types) else
+                             if isinstance(formats, str) else
                              formats)
 
         # Converters
@@ -229,7 +228,7 @@ class DateTime(ValidatorBase):
         except Exception as e:
             if isinstance(e, Invalid):
                 raise
-            six.reraise(RuntimeError, e)
+            raise RuntimeError(str(e)) from e
 
     @classmethod
     def strptime(cls, value, format):
@@ -263,7 +262,7 @@ class DateTime(ValidatorBase):
         # Input types
         if isinstance(v, datetime):
             dt = v
-        elif not isinstance(v, (six.string_types, datetime)):
+        elif not isinstance(v, (str, datetime)):
             raise Invalid(_(u'Invalid value type'), provided=get_type_name(type(v)))
         else:
             # Try all formats

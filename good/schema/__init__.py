@@ -1,10 +1,8 @@
-import six
-
 from .compiler import CompiledSchema
 from . import markers
 
 
-class Schema(object):
+class Schema:
     """ Validation schema.
 
     A schema is a Python structure where nodes are pattern-matched against the corresponding values.
@@ -283,11 +281,8 @@ class Schema(object):
     def __repr__(self):
         return repr(self.compiled)
 
-    def __unicode__(self):
-        return six.text_type(self.compiled)
-
-    if six.PY3:
-        __str__ = __unicode__
+    def __str__(self):
+        return str(self.compiled)
 
     def __call__(self, value):
         """ Having a [`Schema`](#schema), user input can be validated by calling the Schema on the input value.

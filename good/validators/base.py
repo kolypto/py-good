@@ -1,7 +1,4 @@
-import six
-
-
-class ValidatorBase(object):
+class ValidatorBase:
     """ Base for class-based validators """
 
     #: Validator name.
@@ -21,10 +18,4 @@ class ValidatorBase(object):
         return self.name
 
     def __str__(self):
-        return six.text_type(self).encode('utf8')
-
-    def __unicode__(self):
         return self.name
-
-    if six.PY3:
-        __bytes__, __str__ = __str__, __unicode__

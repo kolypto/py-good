@@ -38,7 +38,6 @@ Good luck! :)
 """
 
 import good
-import six
 import os
 from functools import wraps
 
@@ -50,14 +49,14 @@ def _convert_errors(func):
             expected=e.expected)
         if e.expected != u'-none-' else e.message,
         e.path,
-        six.text_type(e))
+        str(e))
 
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except good.SchemaError as e:
-            raise SchemaError(six.text_type(e))
+            raise SchemaError(str(e))
         except good.MultipleInvalid as ee:
             raise MultipleInvalid([cast_Invalid(e) for e in ee])
         except good.Invalid as e:
@@ -139,7 +138,7 @@ extra = Extra  # alias
 
 #region Schema
 
-class Schema(object):
+class Schema:
     #: Value conversion map for the `required` argument
     _required_arg_map = {
         True: Required,
@@ -190,10 +189,10 @@ class Object(good.Object):
 
 
 def Msg(schema, msg):
-    return good.Msg(schema, six.text_type(msg))
+    return good.Msg(schema, str(msg))
 
 def message(default=None):
-    message_decorator = good.message(six.text_type(default or u'invalid value'))
+    message_decorator = good.message(str(default or u'invalid value'))
     # voluptuous produces a 2nd-level decorator which allows to override the message, good only allows Msg()
     def decorator(func):
         return lambda msg=None: _wrapMsg(message_decorator(func), msg)

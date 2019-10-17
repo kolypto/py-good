@@ -1,4 +1,4 @@
-import six
+from gettext import gettext as _
 
 from .base import ValidatorBase
 from .. import Invalid
@@ -28,8 +28,8 @@ class Check(ValidatorBase):
     """
 
     def __init__(self, bvalidator, message, expected):
-        assert isinstance(message, six.text_type), 'Check() message must be a unicode string'
-        assert isinstance(expected, six.text_type) or expected is None, 'Check() expected must be a unicode string'
+        assert isinstance(message, str), 'Check() message must be a unicode string'
+        assert isinstance(expected, str) or expected is None, 'Check() expected must be a unicode string'
 
         self.bvalidator = bvalidator
         self.name = get_callable_name(bvalidator)
@@ -137,11 +137,11 @@ class Boolean(ValidatorBase):
         if v is None:
             return False
         # Bool, Int
-        elif isinstance(v, six.integer_types):
+        elif isinstance(v, int):
             return v != 0
         # Str
-        elif isinstance(v, six.string_types):
-            v = six.text_type(v)
+        elif isinstance(v, str):
+            v = str(v)
             # Match
             if v in self._true_values_ci:
                 return True

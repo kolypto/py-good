@@ -27,14 +27,14 @@ Each marker can have it's own unique behavior since nothing is hardcoded into th
 Keep on reading to learn how markers perform.
 """
 
+from gettext import gettext as _
 
-import six
 from .signals import RemoveValue
 from .errors import Invalid, MultipleInvalid
 from .util import const, get_type_name, get_literal_name
 
 
-class Marker(object):
+class Marker:
     """ A Marker is a class that decorates a mapping key.
 
     Its compilation goes in 3 phases:
@@ -133,14 +133,11 @@ class Marker(object):
         #  key == key | key == Marker.key | key is Marker
         return self.key == (other.key if isinstance(other, Marker) else other) or other is type(self)
 
+    def __bytes__(self):
+        return bytes(self.key)
+
     def __str__(self):
-        return six.binary_type(self.key)
-
-    def __unicode__(self):
         return get_literal_name(self.key)
-
-    if six.PY3:
-        __bytes__, __str__ = __str__, __unicode__
 
     #endregion
 

@@ -1,5 +1,6 @@
 ## 0.0.8 (2019-10-17)
 * Python 3.8 support
+* Dropped support for Python 2.7, 3.4
 
 ## 0.0.7 (2014-09-20)
 * Renamed module: `good.validators._base` -> `good.validators.base`

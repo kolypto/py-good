@@ -1,5 +1,5 @@
-try: from collections import abc  # 3.x
-except ImportError: import collections as abc  # 2.7
+from collections import abc
+from gettext import gettext as _
 
 from .base import ValidatorBase
 from .. import Invalid

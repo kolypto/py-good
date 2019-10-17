@@ -945,7 +945,7 @@ from good import Schema, Object
 intify = lambda v: int(v)  # Naive Coerce(int) implementation
 
 # Define a class to play with
-class Person(object):
+class Person:
     category = u'Something'  # Not validated
 
     def __init__(self, name, age):

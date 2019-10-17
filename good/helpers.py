@@ -1,10 +1,8 @@
 """ Collection of miscellaneous helpers to alter the validation process. """
 
-import six
+from collections import abc
+from gettext import gettext as _
 from functools import update_wrapper
-
-try: from collections import abc  # 3.x
-except ImportError: import collections as abc  # 2.7
 
 from .schema.util import const, get_literal_name, get_callable_name
 from . import Schema, SchemaError, Invalid
@@ -38,16 +36,16 @@ class ObjectProxy(abc.Mapping, dict):
         return iter(vars(self.obj))
 
     def __contains__(self, key):
-        return hasattr(self.obj, six.text_type(key))
+        return hasattr(self.obj, str(key))
 
     def __getitem__(self, key):
-        return getattr(self.obj, six.text_type(key))
+        return getattr(self.obj, str(key))
 
     def __setitem__(self, key, value):
-        return setattr(self.obj, six.text_type(key), value)
+        return setattr(self.obj, str(key), value)
 
     def __delitem__(self, key):
-        return delattr(self.obj, six.text_type(key))
+        return delattr(self.obj, str(key))
 
 
 class SlotsObjectProxy(ObjectProxy):
@@ -86,7 +84,7 @@ class Object(ValidatorBase):
     intify = lambda v: int(v)  # Naive Coerce(int) implementation
 
     # Define a class to play with
-    class Person(object):
+    class Person:
         category = u'Something'  # Not validated
 
         def __init__(self, name, age):
@@ -165,7 +163,7 @@ class Msg(ValidatorBase):
     """
 
     def __init__(self, schema, message):
-        assert isinstance(message, six.text_type), 'Msg() message must be a unicode string'
+        assert isinstance(message, str), 'Msg() message must be a unicode string'
         self.message = message
         self.compiled = Schema(schema).compiled
         self.name = self.compiled.name
@@ -320,5 +318,6 @@ def truth(message, expected=None):
     def decorator(func):
         return update_wrapper(Check(func, message, expected), func)
     return decorator
+
 
 __all__ = ('Object', 'Msg', 'Test', 'message', 'name', 'truth')

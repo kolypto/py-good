@@ -1,6 +1,7 @@
-import six
-from functools import wraps
 import re
+from functools import wraps
+from gettext import gettext as _
+from urllib.parse import urlunsplit
 
 from .base import ValidatorBase
 from .. import Invalid
@@ -14,8 +15,8 @@ def stringmethod(func):
     @wraps(func)
     def factory():
         def validator(v):
-            if not isinstance(v, six.string_types):
-                raise Invalid(_(u'Not a string'), get_type_name(six.text_type), get_type_name(type(v)))
+            if not isinstance(v, str):
+                raise Invalid(_(u'Not a string'), get_type_name(str), get_type_name(type(v)))
             return getattr(v, method_name)()
         return validator
     return factory
@@ -186,7 +187,7 @@ class Url(ValidatorBase):
     def __init__(self, protocols=('http', 'https')):
         self.protocols = tuple(x.lower()
                                for x in ((protocols,)
-                                         if isinstance(protocols, six.string_types) else
+                                         if isinstance(protocols, str) else
                                          tuple(protocols)))
 
         self.rex = re.compile(self._url_rex)
@@ -210,12 +211,12 @@ class Url(ValidatorBase):
 
             # Validate
             if parts['scheme'].lower() not in self.protocols:
-                raise Invalid(u'Protocol not allowed', _(u',').join(self.protocols), six.text_type(parts['scheme']))
+                raise Invalid(u'Protocol not allowed', _(u',').join(self.protocols), str(parts['scheme']))
             if '.' not in parts['host']:
                 raise Invalid(u'Incorrect domain name')
 
             # Combine back again
-            return six.moves.urllib.parse.urlunsplit((
+            return urlunsplit((
                 parts['scheme'],
                   ('{auth}@'.format(**parts) if parts['auth'] else '')
                 + parts['host']

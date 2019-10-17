@@ -18,12 +18,6 @@ The whole internals have been reworked towards readability and robustness. And y
 The rationale for a remake was to make it modular with a tiny core and everything else built on top of that,
 ensure that all error messages are user-friendly out of the box, and tweak the performance.
 """
-
-# Init gettext translations, and do not litter the root scope
-import gettext as _gettext, six as _six
-_gettext.install('good', **({'unicode': True} if _six.PY2 else {}))
-
-
 # Core
 
 from .schema.errors import SchemaError, Invalid, MultipleInvalid

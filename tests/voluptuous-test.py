@@ -19,13 +19,13 @@ def raises(exc, msg=None):
         if isinstance(e, MultipleInvalid):
             ee = e
             for e in ee.errors:
-                if six.text_type(e) == msg:
+                if str(e) == msg:
                     break
             else:
                 assert False, u'None of MultipleInvalid matched:' + u'\n' + \
-                              u'\n'.join(u'* ' + repr(six.text_type(e)) for e in ee.errors)
+                              u'\n'.join(u'* ' + repr(str(e)) for e in ee.errors)
         elif isinstance(e, Invalid):
-            assert six.text_type(e) == msg, u'Wrong error message:\n* ' + six.text_type(e)
+            assert str(e) == msg, u'Wrong error message:\n* ' + str(e)
         else:
             assert 0, 'Wrong exc class: {}'.format(e)
 
@@ -85,7 +85,7 @@ class VoluptuousTest(unittest.TestCase):
 
     def test_compile_object(self):
         # From: def _compile_object(self, schema):
-        class Structure(object):
+        class Structure:
             def __init__(self, one=None, three=None):
                 self.one = one
                 self.three = three
@@ -129,7 +129,7 @@ class VoluptuousTest(unittest.TestCase):
 
         validate = Schema({
             'adict': {
-                'strfield': six.binary_type,
+                'strfield': bytes,
                 'intfield': int
             }
         })
@@ -141,7 +141,7 @@ class VoluptuousTest(unittest.TestCase):
                 }
             })
         except MultipleInvalid as ee:
-            errors = sorted(six.text_type(e) for e in ee.errors)
+            errors = sorted(str(e) for e in ee.errors)
             self.assertEqual(errors, [
                 # "expected str for dictionary value @ data['adict']['strfield']",
                 u"Wrong type, expected Binary String @ data['adict']['strfield']",
@@ -211,7 +211,7 @@ class VoluptuousTest(unittest.TestCase):
         try:
             float('a')
         except ValueError as e:
-            PY_STR2FLOAT_MESSAGE = six.text_type(e)
+            PY_STR2FLOAT_MESSAGE = str(e)
 
         #with raises(Invalid, 'not a valid value'):
         with raises(MultipleInvalid, PY_STR2FLOAT_MESSAGE+u", expected <lambda>()"):  # yes, that's not user-friendly, but lambdas don't provide much info
@@ -436,7 +436,7 @@ class VoluptuousTest(unittest.TestCase):
         else:
             assert False, "Did not raise Invalid"
 
-        schema = Schema({Required('toaster'): str, Extra: six.text_type})
+        schema = Schema({Required('toaster'): str, Extra: str})
         r = schema({'toaster': 'blue', 'another_valid_key': u'another_valid_value'})
         self.assertEqual(
             r, {'toaster': 'blue', 'another_valid_key': u'another_valid_value'})

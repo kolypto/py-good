@@ -1,4 +1,4 @@
-import six
+from gettext import gettext as _
 
 from . import markers, signals
 from .errors import SchemaError, Invalid, MultipleInvalid
@@ -15,7 +15,7 @@ def Identity(v):
 Identity.name = _(u'*')  # Set a name on it (for repr())
 
 
-class CompiledSchema(object):
+class CompiledSchema:
     """ Schema compiler.
 
     Converts a Schema into a callable, recursively.
@@ -46,7 +46,7 @@ class CompiledSchema(object):
         self.compiled = self.compile_schema(self.schema)
 
         assert self.compiled_type is not None, 'Compiler did not set a schema `compiled_type`'
-        assert isinstance(self.name, six.text_type), 'Compiler did not set a valid schema name: {!r} (must be unicode)'.format(self.name)
+        assert isinstance(self.name, str), 'Compiler did not set a valid schema name: {!r} (must be unicode)'.format(self.name)
 
     def __call__(self, value):
         """ Validate value against the compiled schema
@@ -75,11 +75,8 @@ class CompiledSchema(object):
                 extra_keys=self.extra_keys.__name__ if isinstance(self.extra_keys, type) else repr(self.extra_keys)
             )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
-
-    if six.PY3:
-        __str__ = __unicode__
 
     @property
     def supports_undefined(self):
@@ -128,7 +125,7 @@ class CompiledSchema(object):
         if issubclass(schema_type, markers.Marker):
             return const.COMPILED_TYPE.MARKER
         # Marker Type
-        elif issubclass(schema_type, six.class_types) and issubclass(schema, markers.Marker):
+        elif issubclass(schema_type, type) and issubclass(schema, markers.Marker):
             return const.COMPILED_TYPE.MARKER
         # CompiledSchema
         elif isinstance(schema, CompiledSchema):
@@ -211,8 +208,8 @@ class CompiledSchema(object):
             """
             return Invalid(
                 message,
-                expected, #six.text_type(expected),  # -- must be unicode
-                provided, #six.text_type(provided),  # -- must be unicode
+                expected, #str(expected),  # -- must be unicode
+                provided, #str(provided),  # -- must be unicode
                 self.path + (path or []),
                 self.schema,
                 **info
@@ -304,12 +301,7 @@ class CompiledSchema(object):
         err_type = self.Invalid(_(u'Wrong type'), self.name)
 
         # Type check function
-        if six.PY2 and schema is basestring:
-            # Relaxed rule for Python2 basestring
-            typecheck = lambda v: isinstance(v, schema)
-        else:
-            # Strict type check for everything else
-            typecheck = lambda v: type(v) == schema
+        typecheck = lambda v: type(v) == schema
 
         # Matcher
         if self.matcher:
@@ -342,7 +334,7 @@ class CompiledSchema(object):
 
         # Prepare self
         self.compiled_type = const.COMPILED_TYPE.ENUM
-        self.name = six.text_type(schema.__name__)
+        self.name = str(schema.__name__)
 
         # Error partials
         err_value = self.Invalid(_(u'Invalid {enum} value').format(enum=self.name), self.name)
@@ -381,7 +373,7 @@ class CompiledSchema(object):
             except const.transformed_exceptions as e:
                 message = _(u'{message}').format(
                     Exception=type(e).__name__,
-                    message=six.text_type(e))
+                    message=str(e))
                 e = Invalid(message)
                 raise enrich_exception(e, v)
 
@@ -468,7 +460,7 @@ class CompiledSchema(object):
         self.compiled_type = const.COMPILED_TYPE.MARKER
 
         # If this marker is not instantiated -- do it with an identity callable which is valid for everything
-        if issubclass(type(schema), six.class_types):
+        if issubclass(type(schema), type):
             schema = schema(Identity)  \
                 .on_compiled(name=Identity.name)  # Set a special name on it
 

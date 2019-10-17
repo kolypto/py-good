@@ -1,3 +1,5 @@
+from gettext import gettext as _
+
 from .base import ValidatorBase
 from .. import Invalid
 from ..schema.util import get_literal_name, get_type_name

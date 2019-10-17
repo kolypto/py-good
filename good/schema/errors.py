@@ -17,8 +17,6 @@ from good import Invalid, MultipleInvalid
 ```
 """
 
-import six
-
 
 class BaseError(Exception):
     """ Base validation exception """
@@ -84,9 +82,6 @@ class Invalid(BaseError):
             .format(self, cls=type(self).__name__,)
 
     def __str__(self):
-        return six.text_type(self).encode('utf8')
-
-    def __unicode__(self):
         return u'{message}: expected {0.expected}, got {0.provided}'.format(
             self,
             message=self.message if not self.path else u'{} @ {}'.format(
@@ -148,9 +143,6 @@ class Invalid(BaseError):
             # path prefix
             e.path = (path or []) + e.path
         return self
-
-    if six.PY3:
-        __bytes__, __str__ = __str__, __unicode__
 
 
 class MultipleInvalid(Invalid):

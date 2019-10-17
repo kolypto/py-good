@@ -1,6 +1,5 @@
 wheel
 nose
-enum34
 pytz
 
 exdoc

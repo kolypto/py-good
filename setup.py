@@ -21,11 +21,8 @@ setup(
     scripts=[],
     entry_points={},
 
-    install_requires=[
-        'six >= 1.7.3',
-    ],
-    extras_require={
-    },
+    install_requires=[],
+    extras_require={},
     include_package_data=True,
     test_suite='nose.collector',
 

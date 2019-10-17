@@ -1,5 +1,4 @@
 from __future__ import print_function
-import six
 import unittest
 import collections
 from datetime import datetime, date, time, timedelta
@@ -22,8 +21,8 @@ class s:
     t_bool = get_type_name(bool)
     t_int = get_type_name(int)
     t_float = get_type_name(float)
-    t_str = get_type_name(six.binary_type)  # Binary string
-    t_unicode = get_type_name(six.text_type)  # Unicode string
+    t_bytes = get_type_name(bytes)  # Binary string
+    t_str = get_type_name(str)  # Unicode string
     t_list = get_type_name(list)
     t_dict = get_type_name(dict)
     t_enum = get_type_name(enum.Enum)
@@ -45,13 +44,13 @@ class s:
     try:
         int(None)
     except TypeError as e:
-        PY_NONE2INT_MESSAGE = six.text_type(e)
+        PY_NONE2INT_MESSAGE = str(e)
 
     # Remember what error message does Python use for int('a')
     try:
         int('a')
     except ValueError as e:
-        PY_STR2INT_MESSAGE = six.text_type(e)
+        PY_STR2INT_MESSAGE = str(e)
 
 
 class GoodTestBase(unittest.TestCase):
@@ -67,7 +66,7 @@ class GoodTestBase(unittest.TestCase):
         :param expected: Expected exception
         :type expected: Invalid
         """
-        repr(actual), six.text_type(actual)  # repr() works fine
+        repr(actual), str(actual)  # repr() works fine
         self.assertEqual(type(expected), type(actual))  # type matches
 
         if isinstance(actual, MultipleInvalid):
@@ -82,9 +81,9 @@ class GoodTestBase(unittest.TestCase):
 
         # Also test that Errors always have the desired types
         self.assertTrue(isinstance(actual.path,     list))           # Always a list
-        self.assertTrue(isinstance(actual.message,  six.text_type))  # Unicode
-        self.assertTrue(isinstance(actual.provided, six.text_type))  # Unicode
-        self.assertTrue(isinstance(actual.expected, six.text_type))  # Unicode
+        self.assertTrue(isinstance(actual.message,  str))  # Unicode
+        self.assertTrue(isinstance(actual.provided, str))  # Unicode
+        self.assertTrue(isinstance(actual.expected, str))  # Unicode
         self.assertTrue(isinstance(actual.info,     dict))           # Dict
         # Check path: all components should always be literals.
         for p in actual.path:
@@ -92,7 +91,7 @@ class GoodTestBase(unittest.TestCase):
             self.assertNotIsInstance(p, Marker)
             # Make sure path is a list of literals.
             # (They're not limited to the listed types, but our tests only use these.)
-            self.assertIsInstance(p, (six.string_types, six.integer_types))
+            self.assertIsInstance(p, (str, int))
 
     def assertMultipleInvalidError(self, actual, expected):
         """ Assert that the two MultipleInvalid exceptions are the same
@@ -166,7 +165,7 @@ class GoodTestBase(unittest.TestCase):
         :param e: Expected exception, or `None` if you don't care about it
         :type e: Invalid|MultipleInvalid
         """
-        repr(schema), six.text_type(schema)  # no errors
+        repr(schema), str(schema)  # no errors
 
         try:
             sanitized = schema(value)
@@ -223,15 +222,15 @@ class SchemaCoreTest(GoodTestBase):
         # String
         schema = Schema(b'1')
         self.assertValid(schema,   b'1')
-        self.assertInvalid(schema,   1,   Invalid(s.es_value_type,  s.t_str,             s.t_int,               [], b'1'))
-        self.assertInvalid(schema, u'1',  Invalid(s.es_value_type,  s.t_str,             s.t_unicode,           [], b'1'))
-        self.assertInvalid(schema, b'2',  Invalid(s.es_value,       six.text_type(b'1'), six.text_type(b'2'),   [], b'1'))
+        self.assertInvalid(schema, 1, Invalid(s.es_value_type, s.t_bytes, s.t_int, [], b'1'))
+        self.assertInvalid(schema, u'1', Invalid(s.es_value_type, s.t_bytes, s.t_str, [], b'1'))
+        self.assertInvalid(schema, b'2',  Invalid(s.es_value,       str(b'1'), str(b'2'),   [], b'1'))
 
         # Unicode
         schema = Schema(u'1')
         self.assertValid(schema, u'1')
-        self.assertInvalid(schema,   1,   Invalid(s.es_value_type,  s.t_unicode,         s.t_int,               [], u'1'))
-        self.assertInvalid(schema, b'1',  Invalid(s.es_value_type,  s.t_unicode,         s.t_str,               [], u'1'))
+        self.assertInvalid(schema, 1, Invalid(s.es_value_type, s.t_str, s.t_int, [], u'1'))
+        self.assertInvalid(schema, b'1', Invalid(s.es_value_type, s.t_str, s.t_bytes, [], u'1'))
         self.assertInvalid(schema, u'2',  Invalid(s.es_value,       u'1',                u'2',                  [], u'1'))
 
     def test_type(self):
@@ -259,38 +258,31 @@ class SchemaCoreTest(GoodTestBase):
         self.assertInvalid(schema, 1,    Invalid(s.es_type, s.t_float,   s.t_int,     [], float))
 
         # Binary
-        schema = Schema(six.binary_type)
+        schema = Schema(bytes)
         self.assertValid(schema, b'a')
-        self.assertInvalid(schema, u'a', Invalid(s.es_type, s.t_str,     s.t_unicode, [], six.binary_type))
-        self.assertInvalid(schema, 1,    Invalid(s.es_type, s.t_str,     s.t_int,     [], six.binary_type))
+        self.assertInvalid(schema, u'a', Invalid(s.es_type, s.t_bytes, s.t_str, [], bytes))
+        self.assertInvalid(schema, 1, Invalid(s.es_type, s.t_bytes, s.t_int, [], bytes))
 
-        # Basestring
-        if six.PY2:
-            # Relaxed basestring for Py2
-            schema = Schema(basestring)
-            self.assertValid(schema, u'a')
-            self.assertValid(schema, b'a')
-        else:
-            # Strict typecheck for Py3
-            schema = Schema(str)
-            self.assertValid(schema, u'a')
-            self.assertInvalid(schema, b'a',
-                               Invalid(s.es_type, s.t_unicode, s.t_str, [], str))
+        # String
+        schema = Schema(str)
+        self.assertValid(schema, u'a')
+        self.assertInvalid(schema, b'a',
+                           Invalid(s.es_type, s.t_str, s.t_bytes, [], str))
 
-            schema = Schema(bytes)
-            self.assertValid(schema, b'a')
-            self.assertInvalid(schema, u'a',
-                               Invalid(s.es_type, s.t_str, s.t_unicode, [], bytes))
+        schema = Schema(bytes)
+        self.assertValid(schema, b'a')
+        self.assertInvalid(schema, u'a',
+                           Invalid(s.es_type, s.t_bytes, s.t_str, [], bytes))
 
         # Unicode
-        schema = Schema(six.text_type)
+        schema = Schema(str)
         self.assertValid(schema, u'a')
-        self.assertInvalid(schema, b'a', Invalid(s.es_type, s.t_unicode, s.t_str,     [], six.text_type))
-        self.assertInvalid(schema, 1,    Invalid(s.es_type, s.t_unicode, s.t_int,     [], six.text_type))
+        self.assertInvalid(schema, b'a', Invalid(s.es_type, s.t_str, s.t_bytes, [], str))
+        self.assertInvalid(schema, 1, Invalid(s.es_type, s.t_str, s.t_int, [], str))
 
     def test_iterable(self):
         """ Test Schema(<iterable>) """
-        list_schema = [1, 2, six.text_type]
+        list_schema = [1, 2, str]
 
         # Test common cases
         schemas = (
@@ -322,7 +314,7 @@ class SchemaCoreTest(GoodTestBase):
         self.assertInvalid(schema, [1, 4],  Invalid(s.es_value,      u'List[1|2|String]', u'4',     [1], list_schema))
 
         # Remove() marker
-        schema = Schema([six.text_type, Remove(int)])
+        schema = Schema([str, Remove(int)])
         self.assertValid(schema, [u'a', u'b'])
         self.assertValid(schema, [u'a', u'b', 1, 2], [u'a', u'b'])
 
@@ -370,7 +362,7 @@ class SchemaCoreTest(GoodTestBase):
         # Nested callable
         str_or_int = [
             intify,
-            six.text_type
+            str
         ]
         schema = Schema(str_or_int)
 
@@ -379,7 +371,7 @@ class SchemaCoreTest(GoodTestBase):
         self.assertValid(schema, [u'1', 1], [1, 1])
         self.assertValid(schema, [b'1'], [1])
 
-        self.assertInvalid(schema, [b'abc'], Invalid(u'Invalid value', u'List[intify()|String]', six.text_type(b'abc'), [0], str_or_int))
+        self.assertInvalid(schema, [b'abc'], Invalid(u'Invalid value', u'List[intify()|String]', str(b'abc'), [0], str_or_int))
 
     def test_schema_schema(self):
         """ Test Schema(Schema) """
@@ -393,7 +385,7 @@ class SchemaCoreTest(GoodTestBase):
     def test_mapping_literal(self):
         """ Test Schema(<mapping>), literal keys """
         structure = {
-            'name': six.text_type,
+            'name': str,
             'age': int,
             'sex': u'f',  # girls only :)
         }
@@ -408,27 +400,27 @@ class SchemaCoreTest(GoodTestBase):
 
         # Wrong 'sex'
         self.assertInvalid(schema, {'name': u'A', 'age': 18, 'sex': None},
-                           Invalid(s.es_value_type, s.t_unicode,            s.t_none,               ['sex'],    u'f'))
+                           Invalid(s.es_value_type, s.t_str, s.t_none, ['sex'], u'f'))
         self.assertInvalid(schema, {'name': u'A', 'age': 18, 'sex': u'm'},
                            Invalid(s.es_value,      u'f',                   u'm',                   ['sex'],    u'f'))
         # Wrong 'name' and 'age'
         self.assertInvalid(schema, {'name': None, 'age': None, 'sex': u'f'}, MultipleInvalid([
-                           Invalid(s.es_type,       s.t_unicode,            s.t_none,               ['name'],   six.text_type),
+                           Invalid(s.es_type, s.t_str, s.t_none, ['name'], str),
                            Invalid(s.es_type,       s.t_int,                s.t_none,               ['age'],    int),
         ]))
 
         # Missing key 'sex'
         self.assertInvalid(schema, {'name': u'A', 'age': 18},
-                           Invalid(s.es_required,   six.text_type('sex'),   s.v_no,                 ['sex'],    Required('sex')))
+                           Invalid(s.es_required,   str('sex'),   s.v_no,                 ['sex'],    Required('sex')))
         # Extra key 'lol'
         self.assertInvalid(schema, {'name': u'A', 'age': 18, 'sex': u'f', 'lol': 1},
-                           Invalid(s.es_extra,      s.v_no,                 six.text_type('lol'),   ['lol'],    Extra))
+                           Invalid(s.es_extra,      s.v_no,                 str('lol'),   ['lol'],    Extra))
         # Missing keys 'age', 'sex', extra keys 'lol', 'hah'
         self.assertInvalid(schema, {'name': u'A', 'lol': 1, 'hah': 2}, MultipleInvalid([
-                           Invalid(s.es_required,   six.text_type('age'),   s.v_no,                 ['age'],    Required),
-                           Invalid(s.es_required,   six.text_type('sex'),   s.v_no,                 ['sex'],    Required),
-                           Invalid(s.es_extra,      s.v_no,                 six.text_type('lol'),   ['lol'],    Extra),
-                           Invalid(s.es_extra,      s.v_no,                 six.text_type('hah'),   ['hah'],    Extra),
+                           Invalid(s.es_required,   str('age'),   s.v_no,                 ['age'],    Required),
+                           Invalid(s.es_required,   str('sex'),   s.v_no,                 ['sex'],    Required),
+                           Invalid(s.es_extra,      s.v_no,                 str('lol'),   ['lol'],    Extra),
+                           Invalid(s.es_extra,      s.v_no,                 str('hah'),   ['hah'],    Extra),
         ]))
 
     def test_mapping_type(self):
@@ -445,7 +437,7 @@ class SchemaCoreTest(GoodTestBase):
         self.assertInvalid(schema, {'name': 1},
                            Invalid(s.es_required,   s.t_int,  s.v_no,      [],  Required(int)))
         self.assertInvalid(schema, {'name': 1, 1: True, 2: u'WROOONG'},
-                           Invalid(s.es_type,       s.t_bool, s.t_unicode, [2], bool))
+                           Invalid(s.es_type, s.t_bool, s.t_str, [2], bool))
 
         # Wrong key type (meaning, `int` not provided, and extra key `'2'`)
         self.assertInvalid(schema, {'name': 1, u'1': True}, MultipleInvalid([
@@ -554,7 +546,7 @@ class SchemaCoreTest(GoodTestBase):
         self.assertValid(schema, {u'b': 1})
         self.assertValid(schema, {u'b': 1, u'c': 1, 1: 2})
         self.assertInvalid(schema, {u'b': 1, u'c': u'abc'},
-                           Invalid(s.es_type, s.t_int, s.t_unicode, [u'c'], int))
+                           Invalid(s.es_type, s.t_int, s.t_str, [u'c'], int))
 
         # Extra: Reject
         schema = Schema({
@@ -582,16 +574,16 @@ class SchemaCoreTest(GoodTestBase):
         # Reject: as key
         schema = Schema({
             u'a': 1,
-            Reject(six.text_type): int,
+            Reject(str): int,
         })
         self.assertValid(schema,   {u'a': 1})
         self.assertInvalid(schema, {u'a': 1, u'b': 1},
-                           Invalid(s.es_rejected, s.v_no, u'b', [u'b'], Reject(six.text_type)))
+                           Invalid(s.es_rejected, s.v_no, u'b', [u'b'], Reject(str)))
 
         # Reject: as value
         schema = Schema({
             u'a': 1,
-            Optional(six.text_type): Reject,
+            Optional(str): Reject,
         })
         self.assertValid(schema, {u'a': 1})
         self.assertInvalid(schema, {u'a': 1, u'b': 1},
@@ -604,7 +596,7 @@ class SchemaCoreTest(GoodTestBase):
             return d
 
         schema = Schema({
-            six.text_type: int,
+            str: int,
             Entire: max3keys
         })
 
@@ -769,7 +761,7 @@ class HelpersTest(GoodTestBase):
                 raise Invalid(s.es_value, u'Number')
 
         # Class
-        class OPerson(object):
+        class OPerson:
             category = u'Something'  # Not validated
 
             def __init__(self, name, age):
@@ -790,7 +782,7 @@ class HelpersTest(GoodTestBase):
         for Person in (OPerson, TPerson, SPerson):
             # Object()
             object_validator = Object({
-                u'name': six.text_type,
+                u'name': str,
                 u'age': intify,
             })
             schema = Schema(object_validator)
@@ -809,7 +801,7 @@ class HelpersTest(GoodTestBase):
 
             # Object() with typecheck
             object_validator = Object({
-                u'name': six.text_type,
+                u'name': str,
                 u'age': intify,
             }, Person)
             schema = Schema(object_validator)
@@ -826,7 +818,7 @@ class HelpersTest(GoodTestBase):
 
         self.assertValid(schema, 1)
         self.assertInvalid(schema, u'a',
-                           Invalid(u'Need a number', s.t_int, s.t_unicode, [], int))
+                           Invalid(u'Need a number', s.t_int, s.t_str, [], int))
 
         # Test Msg() with ValueError
         intify = lambda v: int(v)
@@ -995,9 +987,9 @@ class PredicatesTest(GoodTestBase):
                 exclusive_group = Exclusive(mode, 'login', 'email')
 
             schema = Schema({
-                Optional('login'): six.text_type,
-                Optional('email'): six.text_type,
-                'password': six.text_type,
+                Optional('login'): str,
+                Optional('email'): str,
+                'password': str,
                 Entire: exclusive_group
             })
 
@@ -1035,7 +1027,7 @@ class TypesTest(GoodTestBase):
                            Invalid(s.es_type, s.t_int, s.t_float, [], type))
 
         # Multiple
-        type = Type(six.binary_type, six.text_type)
+        type = Type(bytes, str)
         schema = Schema(type)
 
         self.assertValid(schema,  'a')
@@ -1131,7 +1123,7 @@ class ValuesTest(GoodTestBase):
         # Mapping: 2..3
         lencheck = Length(1, 3)
         schema = Schema({
-            six.text_type: int,
+            str: int,
             Entire: lencheck
         })
 
@@ -1140,7 +1132,7 @@ class ValuesTest(GoodTestBase):
         self.assertValid(schema, {u'a': 1, u'b': 2, u'c': 3})
 
         self.assertInvalid(schema, {}, MultipleInvalid([
-            Invalid(s.es_required, s.t_unicode, s.v_no, [], Required(six.text_type)),
+            Invalid(s.es_required, s.t_str, s.v_no, [], Required(str)),
             Invalid(u'Too short (1 is the least)', u'1', u'0', [], lencheck)
         ]))
 
@@ -1167,7 +1159,7 @@ class ValuesTest(GoodTestBase):
 
             # Test with mapping
             schema = Schema({
-                u'name': six.text_type,
+                u'name': str,
                 u'age': any  # Default() is detected deep inside (using Undefined)
             })
 
@@ -1333,7 +1325,7 @@ class BooleansTest(GoodTestBase):
 class NumbersTest(GoodTestBase):
     """ Test: Validators.Numbers """
 
-    class Incomparable(object):
+    class Incomparable:
         """ A class that cannot be compared to an integer """
         def _nope(self, other):
             raise TypeError()  # mimic Py3 behavior

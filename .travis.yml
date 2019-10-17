@@ -12,8 +12,6 @@ matrix:
       env: TOXENV=py
     - python: 3.8-dev
       env: TOXENV=py
-    - python: pypy
-      env: TOXENV=py
     - python: pypy3
       env: TOXENV=py
 
