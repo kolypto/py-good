@@ -11,7 +11,7 @@ try:
 except ImportError:
     _EnumMeta = None
 
-
+ 
 class In(ValidatorBase):
     """ Validate that a value is in a collection.
 
